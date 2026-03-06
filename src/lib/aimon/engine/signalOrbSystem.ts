@@ -10,6 +10,12 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function pickOrbKind(agent: AiMonInstance, market: MarketState): OrbKind {
+  if (agent.team === 'player') {
+    if (agent.plannedAction === 'LONG') return 'LONG';
+    if (agent.plannedAction === 'SHORT') return 'SHORT';
+    if (agent.plannedAction === 'FLAT') return agent.role === 'RISK' ? 'RISK' : 'NEUTRAL';
+  }
+
   if (agent.type === 'Momentum') return market.regime === 'TREND' ? 'LONG' : 'RISK';
   if (agent.type === 'MeanReversion') return market.regime === 'RANGE' ? 'LONG' : 'SHORT';
   if (agent.type === 'Flow') return market.priceChange5m >= 0 ? 'LONG' : 'SHORT';
@@ -120,4 +126,3 @@ export function computeConsensus(orbs: SignalOrb[]): number {
 
   return clamp(Math.round(50 + score / 10), 0, 100);
 }
-

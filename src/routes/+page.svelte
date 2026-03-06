@@ -1,24 +1,33 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { AiMonDexEntry } from '$lib/aimon/types';
+  import type { OwnedAgent } from '$lib/aimon/types';
   import { aimonDexById } from '$lib/aimon/data/aimonDex';
-  import { getTrainingProfile } from '$lib/aimon/data/trainingProfiles';
+  import { createEvalScenario } from '$lib/aimon/data/evalScenarios';
   import { getEvolutionPreview } from '$lib/aimon/engine/evolutionSystem';
   import { gameStore, setScreen } from '$lib/aimon/stores/gameStore';
+  import { matchStore } from '$lib/aimon/stores/matchStore';
   import { playerStore } from '$lib/aimon/stores/playerStore';
+  import { rosterStore } from '$lib/aimon/stores/rosterStore';
+  import { squadStore } from '$lib/aimon/stores/squadStore';
   import PokemonFrame from '../components/shared/PokemonFrame.svelte';
 
   let player = $derived($playerStore);
   let game = $derived($gameStore);
+  let matches = $derived($matchStore);
+  let roster = $derived($rosterStore);
+  let squad = $derived($squadStore);
+  let selectedScenario = $derived(matches.activeScenario ?? createEvalScenario(matches.selectedScenarioId));
 
-  let rosterEntries = $derived(
-    player.unlockedDexIds.map((id) => aimonDexById[id]).filter((entry): entry is AiMonDexEntry => Boolean(entry))
+  let rosterAgents = $derived(roster.agents);
+  let squadAgents = $derived(
+    squad.activeSquad.memberAgentIds
+      .map((id) => rosterAgents.find((agent) => agent.id === id))
+      .filter((agent): agent is OwnedAgent => Boolean(agent))
   );
-  let squadEntries = $derived(
-    player.teamDexIds.map((id) => aimonDexById[id]).filter((entry): entry is AiMonDexEntry => Boolean(entry))
-  );
-  let featuredEntry = $derived(squadEntries[0] ?? rosterEntries[0] ?? null);
-  let evolutionReady = $derived(rosterEntries.filter((entry) => getEvolutionPreview(entry.id, player.xp).canEvolve));
+  let featuredAgent = $derived(squadAgents[0] ?? rosterAgents[0] ?? null);
+  let featuredEntry = $derived(featuredAgent ? aimonDexById[featuredAgent.speciesId] ?? null : null);
+  let evolutionReady = $derived(rosterAgents.filter((agent) => getEvolutionPreview(agent.speciesId, agent.xp).canEvolve));
+  let totalXp = $derived(rosterAgents.reduce((sum, agent) => sum + agent.xp, 0));
 
   onMount(() => {
     setScreen('hub');
@@ -41,6 +50,9 @@
             squad 상태를 보고 다음 배틀에 들어가게 만듭니다.
           </p>
           <div class="hero-actions">
+            {#if featuredAgent}
+              <a href={`/agent/${featuredAgent.id}`}>Lead Console</a>
+            {/if}
             <a href="/roster">Open Roster</a>
             <a href="/team">Build Squad</a>
             <a href="/battle">Start Battle</a>
@@ -48,17 +60,16 @@
         </div>
 
         <div class="featured" style={`--hero-color:${featuredEntry?.color ?? '#00e5ff'}; --hero-accent:${featuredEntry?.accent ?? '#0b2c49'};`}>
-          {#if featuredEntry}
-            {@const profile = getTrainingProfile(featuredEntry.id)}
+          {#if featuredEntry && featuredAgent}
             <div class="sprite-shell">
               <div class="sprite">
-                <span>{featuredEntry.name.slice(0, 2).toUpperCase()}</span>
+                <span>{featuredAgent.name.slice(0, 2).toUpperCase()}</span>
               </div>
             </div>
             <div class="featured-meta">
               <span>{featuredEntry.dexNo}</span>
-              <strong>{featuredEntry.name}</strong>
-              <small>{profile.archetype}</small>
+              <strong>{featuredAgent.name}</strong>
+              <small>{featuredAgent.loadout.retrainingPath}</small>
             </div>
           {/if}
         </div>
@@ -77,12 +88,12 @@
           <span class="chip">{game.prototypeScope.pveOnly ? 'PvE Prototype' : 'Expanded'}</span>
         </div>
         <div class="stat-grid">
-          <span>Total XP</span><strong>{player.xp}</strong>
+          <span>Total XP</span><strong>{totalXp}</strong>
           <span>Research</span><strong>{player.researchPoints}</strong>
           <span>Wins</span><strong>{player.wins}</strong>
           <span>Battles</span><strong>{player.battleCount}</strong>
-          <span>Roster</span><strong>{rosterEntries.length} owned</strong>
-          <span>Squad</span><strong>{squadEntries.length}/4 active</strong>
+          <span>Roster</span><strong>{rosterAgents.length} owned</strong>
+          <span>Squad</span><strong>{squadAgents.length}/4 active</strong>
         </div>
       </div>
     </PokemonFrame>
@@ -99,7 +110,11 @@
         <div class="list">
           <div>
             <span>Active squad</span>
-            <strong>{squadEntries.map((entry) => entry.name).join(' / ') || 'No squad selected'}</strong>
+            <strong>{squadAgents.map((agent) => agent.name).join(' / ') || 'No squad selected'}</strong>
+          </div>
+          <div>
+            <span>Selected eval</span>
+            <strong>{selectedScenario.label} · {selectedScenario.symbol} · {selectedScenario.timeframe}</strong>
           </div>
           <div>
             <span>Evolution ready</span>
@@ -124,25 +139,27 @@
     </div>
 
     <div class="squad-grid">
-      {#each squadEntries as entry (entry.id)}
-        {@const profile = getTrainingProfile(entry.id)}
-        <PokemonFrame variant="dark" padding="14px">
-          <article class="squad-card" style={`--card-color:${entry.color}; --card-accent:${entry.accent};`}>
-            <div class="squad-art">
-              <span>{entry.name.slice(0, 2).toUpperCase()}</span>
-            </div>
-            <div class="squad-meta">
-              <span>{entry.dexNo}</span>
-              <strong>{entry.name}</strong>
-              <p>{profile.retrainingPath}</p>
-            </div>
-            <div class="signals">
-              {#each profile.indicators.slice(0, 2) as indicator}
-                <span>{indicator}</span>
-              {/each}
-            </div>
-          </article>
-        </PokemonFrame>
+      {#each squadAgents as agent (agent.id)}
+        {@const entry = aimonDexById[agent.speciesId]}
+        {#if entry}
+          <PokemonFrame variant="dark" padding="14px">
+            <a class="squad-card" href={`/agent/${agent.id}`} style={`--card-color:${entry.color}; --card-accent:${entry.accent};`}>
+              <div class="squad-art">
+                <span>{agent.name.slice(0, 2).toUpperCase()}</span>
+              </div>
+              <div class="squad-meta">
+                <span>{entry.dexNo} · LVL {agent.level}</span>
+                <strong>{agent.name}</strong>
+                <p>{agent.loadout.retrainingPath}</p>
+              </div>
+              <div class="signals">
+                {#each agent.loadout.indicators.slice(0, 2) as indicator}
+                  <span>{indicator}</span>
+                {/each}
+              </div>
+            </a>
+          </PokemonFrame>
+        {/if}
       {/each}
     </div>
   </section>
@@ -158,15 +175,17 @@
           <a href="/roster">View all</a>
         </div>
         <div class="roster-strip">
-          {#each rosterEntries.slice(0, 4) as entry (entry.id)}
-            {@const profile = getTrainingProfile(entry.id)}
-            <a class="mini-card" href="/roster" style={`--mini-color:${entry.color}; --mini-accent:${entry.accent};`}>
-              <div class="mini-avatar">
-                <span>{entry.name.slice(0, 2).toUpperCase()}</span>
-              </div>
-              <strong>{entry.name}</strong>
-              <small>{profile.archetype}</small>
-            </a>
+          {#each rosterAgents.slice(0, 4) as agent (agent.id)}
+            {@const entry = aimonDexById[agent.speciesId]}
+            {#if entry}
+              <a class="mini-card" href={`/agent/${agent.id}`} style={`--mini-color:${entry.color}; --mini-accent:${entry.accent};`}>
+                <div class="mini-avatar">
+                  <span>{agent.name.slice(0, 2).toUpperCase()}</span>
+                </div>
+                <strong>{agent.name}</strong>
+                <small>{agent.role}</small>
+              </a>
+            {/if}
           {/each}
         </div>
       </div>
@@ -184,15 +203,15 @@
         <div class="alerts">
           <div class="alert-card ready">
             <span>Evolution Ready</span>
-            <strong>{evolutionReady.map((entry) => entry.name).join(', ') || 'No units ready yet'}</strong>
+            <strong>{evolutionReady.map((agent) => agent.name).join(', ') || 'No units ready yet'}</strong>
           </div>
           <div class="alert-card">
             <span>Current Focus</span>
-            <strong>{featuredEntry ? getTrainingProfile(featuredEntry.id).focusSkill : 'Select a lead agent'}</strong>
+            <strong>{featuredAgent ? featuredAgent.loadout.focusSkill : 'Select a lead agent'}</strong>
           </div>
           <div class="alert-card">
             <span>Next Step</span>
-            <strong>{player.teamDexIds.length < 4 ? 'Complete your 4-agent squad' : 'Enter battle and level the squad'}</strong>
+            <strong>{squadAgents.length < 4 ? 'Complete your 4-agent squad' : 'Enter battle and level the squad'}</strong>
           </div>
         </div>
       </div>
@@ -401,6 +420,8 @@
   .squad-card {
     display: grid;
     gap: 12px;
+    color: var(--text-0);
+    text-decoration: none;
   }
 
   .squad-art {

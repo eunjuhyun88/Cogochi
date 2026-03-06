@@ -2,34 +2,63 @@
 
 Last updated: 2026-03-06
 
-## 1. 아키텍처 목표
+## 1. Architecture Goal
 
-Cogochi의 기술 구조는 아래 목표를 따라야 한다.
+Cogochi should support a local-first AI agent training loop where:
 
-- 독립 repo로 운영 가능해야 한다
-- 배틀 로직은 UI와 분리되어야 한다
-- 초기에는 simulator-first로 빠르게 반복 가능해야 한다
-- 나중에 async PvP와 per-agent progression으로 자연스럽게 확장 가능해야 한다
+- agent configuration is explicit
+- retrieval and memory are visible systems
+- evaluation matches are deterministic enough to compare setups
+- the app can later expand to async PvP without rewriting the core model
 
-## 2. 현재 기술 스택
+## 2. Current Stack
 
 - SvelteKit 2
 - Svelte 5
 - TypeScript 5
 - Vite
-- localStorage 기반 클라이언트 저장
+- localStorage for MVP persistence
 
-현재는 standalone frontend app이며 서버 의존 없이 동작한다.
+## 3. Layer Model
 
-## 3. 현재 디렉토리 구조
+```text
+Routes
+  -> Stores
+  -> Services
+  -> Engine / Resolver
+  -> Model and Embedding Providers
+```
+
+### Routes
+
+- compose UI
+- trigger actions
+- do not own domain logic
+
+### Stores
+
+- own durable client state
+- handle persistence
+- coordinate services and routes
+
+### Services
+
+- own RAG, context assembly, scoring, and reflection logic
+
+### Engine
+
+- owns evaluation phase transitions and deterministic resolution logic
+
+## 4. Target Directory Shape
 
 ```text
 src/
   routes/
     +page.svelte
-    battle/+page.svelte
     roster/+page.svelte
+    agent/[id]/+page.svelte
     team/+page.svelte
+    battle/+page.svelte
     lab/+page.svelte
   components/
     aimon/
@@ -37,214 +66,142 @@ src/
   lib/
     aimon/
       data/
-      engine/
-      market/
+      services/
       stores/
+      engine/
       types.ts
 ```
 
-주의:
+The internal `aimon` namespace is still a historical artifact and can remain until the systems stabilize.
 
-- `aimon` namespace는 제품명이 아니라 초기 프로토타입의 내부 네임스페이스 흔적이다
-- 문서와 제품명은 `Cogochi` 기준으로 유지한다
-- namespace rename은 기능 안정화 이후 별도 작업으로 다룬다
+## 5. Core Stores
 
-## 4. 레이어 분리 원칙
+### `playerStore`
 
-### Routes
-
-- 화면 조립과 화면 단위 상태 진입만 담당
-- 복잡한 계산과 도메인 규칙을 직접 가지지 않는다
-
-### Components
-
-- 시각 표현과 상호작용 표시 담당
-- 배틀 규칙, 성장 규칙은 포함하지 않는다
-
-### Stores
-
-- 화면 orchestration
-- persistence 연결
-- engine 호출과 state sync 담당
-
-### Engine
-
-- 순수 규칙 계층
-- battle, state machine, orb, evolution, reward 계산 담당
-
-### Data
-
-- dex, type chart, training profile, synergy 같은 정적/준정적 데이터 담당
-
-## 5. 현재 핵심 모듈
-
-### Routes
-
-- `src/routes/+page.svelte`
-  - Trainer Hub
-- `src/routes/roster/+page.svelte`
-  - roster-first 메인 관리 화면
-- `src/routes/battle/+page.svelte`
-  - live battle proof screen
-
-### Stores
-
-- `playerStore.ts`
-  - 현재는 player + roster + squad 성격이 섞여 있음
-- `battleStore.ts`
-  - 배틀 state orchestration
-- `gameStore.ts`
-  - screen state와 prototype scope 관리
-
-### Engine
-
-- `battleEngine.ts`
-- `stateMachine.ts`
-- `signalOrbSystem.ts`
-- `evolutionSystem.ts`
-- `marketSimulator.ts`
-
-## 6. 현재 문제점
-
-### 6.1 playerStore 과적재
-
-현재 `playerStore`가:
-
-- 전체 XP
-- unlockedDexIds
-- teamDexIds
-
-를 한 번에 들고 있다.
-
-이 구조는 `내 개체` 기반 게임으로 확장하기 어렵다.
-
-### 6.2 Dex-driven state
-
-현재 상태는 개체가 아니라 dex id 중심이다.
-
-필요한 목표 상태:
-
-- species definition
-- owned agent instance
-- active squad
-- opponent snapshot
-
-### 6.3 route naming and internal namespace mismatch
-
-- 제품명은 Cogochi
-- 내부 namespace는 `aimon`
-
-이건 즉시 문제는 아니지만, 장기적으로 정리 포인트다.
-
-## 7. 목표 도메인 모델
-
-### SpeciesDexEntry
-
-- 종족 데이터
-- 타입, 기본 스탯, 진화 규칙, 학습 가능 지표
-
-### OwnedAgent
-
-- 플레이어가 소유한 개체
-- 레벨, XP, bond, temperament, IV, loadout 포함
-
-### TrainingLoadout
-
-- 개체별 관측 지표
-- behavior bias
-- retraining path
-- focus skill
-
-### Squad
-
-- 현재 출전하는 4개체 조합
-
-### OpponentSnapshot
-
-- PvE, ghost battle, async PvP에 공통 사용 가능한 상대 표현
-
-### MatchResult
-
-- 승패 결과와 개체별 보상 정보
-
-## 8. 목표 상태 저장 구조
-
-### playerStore
-
-- trainer level
+- trainer profile
 - research points
-- currency
-- unlocked systems
+- unlock states
 
-### rosterStore
+### `rosterStore`
 
 - owned agents
-- selected agent
-- agent history
+- selected agent id
+- progression updates
 
-### squadStore
+### `squadStore`
 
-- active squad ids
-- squad presets
-- synergy summary
+- active squad
+- presets
+- role assignment validation
 
-### battleStore
+### `labStore`
 
-- runtime battle state only
-- match start / tick / end orchestration
+- data source catalog
+- tool catalog
+- training runs
+- prompt variants
+- memory maintenance actions
 
-## 9. 데이터 플로우
+### `matchStore`
+
+- active scenario
+- phase state
+- agent traces
+- match result
+
+## 6. Core Services
+
+### `modelProvider`
+
+- calls Qwen or another compatible inference backend
+- enforces structured outputs
+
+### `embeddingProvider`
+
+- builds embeddings for memory records
+
+### `memoryService`
+
+- retrieves memory
+- writes lesson cards
+- compacts memory banks
+
+### `contextAssembler`
+
+- merges structured state, prompts, memory, and squad messages into one request payload
+
+### `evalService`
+
+- computes scoring metrics
+- creates reward packets
+
+### `reflectionService`
+
+- converts raw traces into memory cards and training suggestions
+
+## 7. Core Data Flow
 
 ```text
-MarketSimulator
-  -> battleStore
-  -> stateMachine
-  -> signalOrbSystem
-  -> battleEngine
-  -> rewardSystem
-  -> rosterStore
-  -> playerStore
+Scenario State
+  -> Retrieval Query Builder
+  -> memoryService.retrieve()
+  -> contextAssembler.build()
+  -> modelProvider.infer()
+  -> evalEngine.resolve()
+  -> evalService.score()
+  -> reflectionService.summarize()
+  -> rosterStore.applyRewards()
+  -> labStore.enqueueTraining()
 ```
 
-route/component는 store를 읽고 action만 호출한다.
+## 8. Persistence Model
 
-## 10. Persistence 전략
+MVP persistence remains client-side, but state must be split by responsibility.
 
-### 현재
+Recommended keys:
 
-- localStorage
-- 프로토타입 개발에 적합
+- `cogochi.player.v2`
+- `cogochi.roster.v2`
+- `cogochi.squad.v2`
+- `cogochi.lab.v2`
+- `cogochi.match-history.v2`
 
-### 다음 단계
+Every store should own its own migration boundary.
 
-- player / roster / squad 분리 저장
-- versioned storage key
-- migration layer 추가
+## 9. RAG Boundary Rules
 
-### 장기
+Current market or scenario values:
 
-- server snapshot
-- async PvP opponent snapshot 저장
-- account 기반 sync
+- direct structured input
 
-## 11. 구현 순서
+Past experience and doctrine:
 
-1. `types.ts`에 target domain type 추가
-2. `playerStore` 분해
-3. battle reward를 per-agent reward로 변경
-4. `/agent/[id]` route 추가
-5. opponent snapshot 구조 도입
-6. 내부 namespace rename 여부 판단
+- RAG memory
 
-## 12. 검증 기준
+Offline policy shifts:
 
-아키텍처 변경 후 최소 검증:
+- training runs
+
+This boundary must not blur or evaluation quality collapses.
+
+## 10. Target Implementation Order
+
+1. extend `types.ts`
+2. split stores
+3. add services for retrieval, reflection, and evaluation
+4. wire `/agent/[id]` and `/lab`
+5. convert battle into an evaluation console
+
+## 11. Validation
+
+Required after changes:
 
 - `npm run check`
 - `npm run build`
 
-추가로 확인할 것:
+Additional engineering checks:
 
-- route가 store 역할을 침범하지 않는지
-- store가 engine 계산을 중복하지 않는지
-- per-agent progression이 UI와 state 양쪽에서 일관적인지
+- routes do not own business logic
+- stores do not duplicate scoring logic
+- retrieval never leaks future information
+- a match result changes roster state through one well-defined path

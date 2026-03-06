@@ -26,7 +26,14 @@
             <span class="state-ring" style={`--ring-color:${entry?.color ?? '#00e5ff'};`} class:focused={agent.focusTapUntil > Date.now()}></span>
             <span class="agent-main">
               <strong>{agent.name}</strong>
-              <small>{agent.state}{agent.currentTarget ? ` · ${agent.currentTarget}` : ''}</small>
+              <small>{agent.role ?? 'UNSET'} · {agent.state}{agent.currentTarget ? ` · ${agent.currentTarget}` : ''}</small>
+              <small>{agent.plannedAction} · {Math.round(agent.recentAccuracy * 100)}% confidence lane</small>
+              <small>{agent.readout}</small>
+              <small>{agent.decisionHint}</small>
+            </span>
+            <span class="intel-stack">
+              <small>MEM {Math.round(agent.memoryScore * 100)}%</small>
+              <small>D{agent.activeDataSourceCount} · T{agent.activeToolCount}</small>
             </span>
             {#if battle.phase === 'EVIDENCE' && battle.focusTapCharges > 0}
               <span class="focus-tag">FOCUS</span>
@@ -150,6 +157,7 @@
   .agent-main {
     display: grid;
     gap: 4px;
+    min-width: 0;
   }
 
   .agent-main strong {
@@ -160,6 +168,22 @@
     color: var(--text-1);
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .intel-stack {
+    margin-left: auto;
+    display: grid;
+    gap: 4px;
+    justify-items: end;
+    min-width: 64px;
+  }
+
+  .intel-stack small {
+    color: #9cefff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
   }
 
   .focus-tag {

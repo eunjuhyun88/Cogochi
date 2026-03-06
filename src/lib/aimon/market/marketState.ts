@@ -16,18 +16,29 @@ export function computeRegime(next: Omit<MarketState, 'regime' | 'regimeStrength
   };
 }
 
-export function createInitialMarketState(seedPrice = 97500): MarketState {
-  return {
+export function createInitialMarketState(
+  seed: Partial<
+    Pick<
+      MarketState,
+      'price' | 'priceChange5m' | 'volatility' | 'fearGreed' | 'fundingRate' | 'openInterestChange' | 'regime'
+    >
+  > = {}
+): MarketState {
+  const base = {
     tick: 0,
     timestamp: Date.now(),
-    price: seedPrice,
-    priceChange5m: 0,
-    volatility: 0.22,
-    fearGreed: 54,
-    fundingRate: 0.0002,
-    openInterestChange: 0.1,
-    regime: 'RANGE',
-    regimeStrength: 0.5
+    price: seed.price ?? 97_500,
+    priceChange5m: seed.priceChange5m ?? 0,
+    volatility: seed.volatility ?? 0.22,
+    fearGreed: seed.fearGreed ?? 54,
+    fundingRate: seed.fundingRate ?? 0.0002,
+    openInterestChange: seed.openInterestChange ?? 0.1
+  };
+  const computed = computeRegime(base);
+
+  return {
+    ...base,
+    regime: seed.regime ?? computed.regime,
+    regimeStrength: computed.regimeStrength
   };
 }
-

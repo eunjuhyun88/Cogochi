@@ -2,198 +2,165 @@
 
 Last updated: 2026-03-06
 
-## 1. UX 목표
+## 1. Experience Goal
 
-Cogochi UI는 `배틀 대시보드`보다 `트레이너 허브 + 개체 관리` 중심으로 읽혀야 한다.
+Cogochi should feel like:
 
-비율로 표현하면:
+- an agent operations console
+- a training lab
+- a readable evaluation arena
 
-- 55% 개체 소유/육성 감각
-- 30% 데이터 실험실 감각
-- 15% live battle HUD 감각
+The center of gravity is not spectacle.
 
-## 2. UX 원칙
+The center of gravity is ownership, tuning, and diagnosis.
 
-### 2.1 개체 애착이 먼저다
+## 2. UX Priorities
 
-- 배틀보다 로스터와 개체 상세가 먼저 보여야 한다
-- 사용자는 내 개체 상태를 먼저 보고 다음 행동을 정해야 한다
+### 2.1 The roster matters before the match
 
-### 2.2 정보는 많아도 시선은 명확해야 한다
+- the player should inspect and edit agents before launching a match
 
-- battle에서는 arena 중심
-- roster에서는 selected agent 중심
-- team에서는 active squad 중심
+### 2.2 The battle explains itself
 
-### 2.3 숫자는 의미로 번역되어야 한다
+- the player should see retrieved memory, not just animations
 
-- raw stat만 나열하지 않는다
-- retraining path, focus skill, readiness 상태처럼 해석 가능한 라벨이 같이 보여야 한다
+### 2.3 Every screen should imply the next action
 
-## 3. 정보 구조
+- edit prompt
+- compact memory
+- swap squad role
+- run benchmark
+
+## 3. Information Architecture
 
 ```text
 /
-  Trainer Hub
+  Agent Ops Hub
 /roster
-  Owned Agents
+  Owned Agent List
 /agent/[id]
   Agent Detail
 /team
-  Squad Builder
+  Squad Role Board
 /battle
-  Live Battle
+  Evaluation Console
 /lab
-  Growth / Evolution / Research
+  Training Lab
 ```
 
-현재 구현은 `/agent/[id]`가 아직 없고, `/roster` 우측 패널이 이를 부분 대체한다.
+## 4. Screen Responsibilities
 
-## 4. 화면별 역할
+### `/`
 
-### 4.1 `/` Trainer Hub
+Must show:
 
-보여줘야 하는 것:
+- active squad summary
+- key agent cards
+- recent match outcomes
+- training queue
+- recommended next actions
 
-- 대표 스쿼드
-- 현재 성장 상태
-- 진화 가능 개체
-- 바로 해야 할 다음 행동
+### `/roster`
 
-가장 중요한 CTA:
+Must show:
 
-- Roster
-- Team
-- Battle
+- owned agent grid or table
+- filters by role, base model, status, specialization
+- performance and memory health indicators
 
-### 4.2 `/roster`
+### `/agent/[id]`
 
-실질적 메인 화면이다.
+This is the core screen.
 
-필수 레이아웃:
+It must show:
 
-- 좌측: collection grid
-- 우측: selected agent detail
+- agent identity
+- base model
+- prompt stack
+- data bindings
+- retrieval policy
+- memory bank preview
+- training history
+- recent evaluation logs
 
-플레이어는 여기서:
+### `/team`
 
-- 어떤 개체를 집중 육성할지
-- 어떤 개체를 스쿼드에 넣을지
-- 어떤 retraining이 필요한지
+Must behave as a 4-slot assignment board:
 
-를 결정한다.
+- scout
+- analyst
+- risk
+- executor
 
-### 4.3 `/team`
+### `/battle`
 
-목표:
+Must show:
 
-- 4개체 출전 보드 구성
-- 역할/상성/레짐 대응 확인
+- phase timeline
+- agent decisions
+- retrieved memories
+- squad messages
+- score breakdown
 
-현재는 선택 UI 수준이지만, 목표는 slot-first builder다.
+### `/lab`
 
-### 4.4 `/battle`
+Must show:
 
-목표:
+- data source setup
+- prompt variants
+- memory compaction controls
+- training queue
+- benchmark presets
 
-- 배틀을 예쁘게 보여주는 것보다 왜 이기고 지는지 읽히게 만드는 것
+## 5. Visual Direction
 
-핵심 정보:
-
-- phase
-- regime
-- consensus
-- orb interaction
-- 각 개체 상태
-
-### 4.5 `/lab`
-
-목표:
-
-- 성장과 해금을 관리하는 공간
-- 숫자 창고가 아니라 실험실처럼 느껴져야 한다
-
-## 5. 비주얼 시스템
-
-### 5.1 톤
+### Mood
 
 - deep navy background
-- cyan glow
-- subtle grid
-- arcade terminal panel
+- cyan and green accent signals
+- restrained red for failure
+- amber for caution and pending training
 
-### 5.2 컬러 역할
+### Typography
 
-- cyan: global accent
-- orange: active interaction
-- green: positive/growth
-- yellow: evolution/readiness
-- red: danger/loss
-- purple: advanced systems
+- display: Orbitron or equivalent
+- data and metrics: JetBrains Mono
+- body: current readable sans
 
-타입 컬러는 전체 UI를 칠하지 말고 개체 카드, 링, 배지에 집중 사용한다.
+### Panels
 
-### 5.3 타이포
+- hard-rounded technical panels
+- visible section hierarchy
+- stronger contrast between current state and historical logs
 
-- Display: Orbitron
-- HUD / numeric: JetBrains Mono
-- Body: Rajdhani
+## 6. Interaction Rules
 
-원칙:
+### Selection
 
-- 제목은 짧고 강하게
-- 숫자는 monospace
-- 설명문은 길지 않게
+- selected agent should remain visually pinned across routes when relevant
 
-### 5.4 쉐이프
+### Editing
 
-- hard-rounded rectangle
-- arcade panel frame
-- 명확한 grid alignment
+- prompt and policy edits can autosave
+- large training actions should create a queued run card
 
-pill button 일변도로 가지 않는다.
+### Battle feedback
 
-## 6. 상호작용 원칙
+- retrieved memory cards should be visible per phase
+- reasoning and score changes should be traceable
+- the result view should link directly to the affected agents
 
-### 선택
+## 7. Mobile Rules
 
-- hover: 약한 lift
-- selected: line 강조 + glow
-- active squad: badge 표시
+- roster becomes a stacked list with sticky filters
+- agent detail becomes tabbed
+- battle collapses detail panes into drawers
+- squad assignment becomes tap-first, not drag-first
 
-### 훈련 편집
+## 8. UX Check Questions
 
-- 작은 변경은 즉시 반영
-- 큰 retraining path 변경은 confirm 필요
-
-### 전투 피드백
-
-- focus tap은 개체와 orb 둘 다 반응해야 한다
-- clash / counter / amplify는 색과 궤적이 구분돼야 한다
-- result는 WIN/LOSS만 아니라 MVP와 성장 포인트도 함께 보여야 한다
-
-## 7. 모바일 원칙
-
-### Desktop
-
-- hub: multi-panel dashboard
-- roster: 2-column
-- battle: arena + right HUD
-
-### Mobile
-
-- roster: vertical card stack + bottom sheet detail
-- battle: canvas 우선, detail drawer 접기
-- team: drag 대신 tap assign
-
-모바일에서도 `내 개체 정보`와 `전장 정보` 둘 다 유지해야 한다.
-
-## 8. 현재 구현 기준 체크포인트
-
-현재 UI가 맞는지 확인하는 질문:
-
-1. 첫 화면이 battle dashboard처럼 보이지 않는가
-2. `/roster`가 실제 메인 화면처럼 느껴지는가
-3. 사용자가 개체 하나를 골라 애착을 느낄 수 있는가
-4. battle 정보가 많아도 시선이 흐트러지지 않는가
-5. growth와 retraining의 다음 행동이 보이는가
+1. does the first screen look like agent operations rather than a spectator dashboard
+2. can the player understand an agent's setup from one detail screen
+3. can the player see retrieved memory during evaluation
+4. does a failed match suggest a next training action
+5. does the squad builder read like role assignment rather than species selection

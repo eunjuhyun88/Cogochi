@@ -1,36 +1,44 @@
 <script lang="ts">
   import PokemonFrame from '../shared/PokemonFrame.svelte';
-  import type { AiMonDexEntry } from '$lib/aimon/types';
+  import { aimonDexById } from '$lib/aimon/data/aimonDex';
+  import type { OwnedAgent } from '$lib/aimon/types';
 
-  const { entry, selected = false, onSelect = undefined } = $props<{
-    entry: AiMonDexEntry;
+  const { agent, selected = false, onSelect = undefined } = $props<{
+    agent: OwnedAgent;
     selected?: boolean;
     onSelect?: ((id: string) => void) | undefined;
   }>();
+
+  const entry = $derived(aimonDexById[agent.speciesId]);
 </script>
 
-<button class="card-button" type="button" onclick={() => onSelect?.(entry.id)}>
+{#if entry}
   <PokemonFrame variant={selected ? 'accent' : 'default'} padding="10px">
-    <div class="aimon-card" class:selected>
-      <div class="card-top">
-        <span class="dex-no">{entry.dexNo}</span>
-        <span class="type-pill" style:color={entry.color}>{entry.type}</span>
+    <article class="aimon-card" class:selected>
+      <button class="card-button" type="button" onclick={() => onSelect?.(agent.id)}>
+        <div class="card-top">
+          <span class="dex-no">{entry.dexNo} · LVL {agent.level}</span>
+          <span class="type-pill" style:color={entry.color}>{entry.type}</span>
+        </div>
+        <div class="avatar" style={`--card-color:${entry.color}; --card-accent:${entry.accent};`}>
+          <span>{agent.name.slice(0, 2).toUpperCase()}</span>
+        </div>
+        <div class="meta">
+          <strong>{agent.name}</strong>
+          <p>{agent.role} · {agent.loadout.retrainingPath}</p>
+        </div>
+        <div class="stats">
+          <span>DET {entry.baseStats.detection}</span>
+          <span>PRED {entry.baseStats.prediction}</span>
+          <span>XP {agent.xp}</span>
+        </div>
+      </button>
+      <div class="card-actions">
+        <a href={`/agent/${agent.id}`}>Agent Console</a>
       </div>
-      <div class="avatar" style={`--card-color:${entry.color}; --card-accent:${entry.accent};`}>
-        <span>{entry.name.slice(0, 2).toUpperCase()}</span>
-      </div>
-      <div class="meta">
-        <strong>{entry.name}</strong>
-        <p>{entry.description}</p>
-      </div>
-      <div class="stats">
-        <span>DET {entry.baseStats.detection}</span>
-        <span>PRED {entry.baseStats.prediction}</span>
-        <span>RISK {entry.baseStats.risk}</span>
-      </div>
-    </div>
+    </article>
   </PokemonFrame>
-</button>
+{/if}
 
 <style>
   .card-button {
@@ -40,6 +48,8 @@
     padding: 0;
     cursor: pointer;
     text-align: left;
+    display: grid;
+    gap: 10px;
   }
 
   .aimon-card {
@@ -97,5 +107,24 @@
   .stats {
     color: #b9c8e8;
   }
-</style>
 
+  .card-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .card-actions a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-0);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+</style>

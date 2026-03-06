@@ -4,7 +4,7 @@ import { PHASE_DURATIONS_MS } from '../types';
 import { advanceMarketState, createSimulatorState } from '../market/marketSimulator';
 import { advanceAiMonState, transitionAiMonState } from './stateMachine';
 import { computeConsensus, createSignalOrb, resolveSignalOrbInteractions, stepSignalOrbs } from './signalOrbSystem';
-import type { AiMonDexEntry, AiMonInstance, BattlePhase, BattleResult, BattleState, PlayerProgress, TeamSide } from '../types';
+import type { AiMonDexEntry, AiMonInstance, BattlePhase, BattleResult, BattleState, EvalScenario, OwnedAgent, TeamSide } from '../types';
 
 const PLAYER_POSITIONS = [
   { x: 18, y: 22 },
@@ -35,11 +35,12 @@ function shuffle<T>(values: T[]): T[] {
   return next;
 }
 
-function buildInstance(entry: AiMonDexEntry, slot: number, team: TeamSide, now: number): AiMonInstance {
+function buildEnemyInstance(entry: AiMonDexEntry, slot: number, team: TeamSide, now: number): AiMonInstance {
   const positions = team === 'player' ? PLAYER_POSITIONS : ENEMY_POSITIONS;
   const pos = positions[slot] ?? positions[positions.length - 1];
   return {
     instanceId: `${team}-${slot}-${entry.id}`,
+    ownedAgentId: `${team}-${slot}-${entry.id}`,
     dexId: entry.id,
     slot,
     team,
@@ -54,12 +55,57 @@ function buildInstance(entry: AiMonDexEntry, slot: number, team: TeamSide, now: 
     lastOrbAt: 0,
     position: pos,
     recentAccuracy: 0.62 + Math.random() * 0.18,
-    stats: entry.baseStats
+    stats: entry.baseStats,
+    role: null,
+    readout: `${entry.type} shell`,
+    decisionHint: 'No retrieved battle context.',
+    memoryScore: 0,
+    activeDataSourceCount: 0,
+    activeToolCount: 0,
+    retrievedMemories: [],
+    plannedAction: 'FLAT'
   };
 }
 
-function buildTeam(ids: string[], team: TeamSide, now: number): AiMonInstance[] {
-  return ids.slice(0, 4).map((id, slot) => buildInstance(pickEntry(id), slot, team, now));
+function buildPlayerInstance(agent: OwnedAgent, slot: number, now: number): AiMonInstance {
+  const entry = pickEntry(agent.speciesId);
+  const pos = PLAYER_POSITIONS[slot] ?? PLAYER_POSITIONS[PLAYER_POSITIONS.length - 1];
+
+  return {
+    instanceId: `player-${slot}-${agent.id}`,
+    ownedAgentId: agent.id,
+    dexId: agent.speciesId,
+    slot,
+    team: 'player',
+    name: agent.name,
+    type: entry.type,
+    level: agent.level,
+    xp: agent.xp,
+    state: 'IDLE',
+    stateEnteredAt: now,
+    focusTapUntil: 0,
+    currentTarget: undefined,
+    lastOrbAt: 0,
+    position: pos,
+    recentAccuracy: 0.62 + Math.random() * 0.18,
+    stats: entry.baseStats,
+    role: agent.role,
+    readout: agent.loadout.readout,
+    decisionHint: agent.loadout.behaviorNote,
+    memoryScore: 0,
+    activeDataSourceCount: agent.loadout.enabledDataSourceIds.length,
+    activeToolCount: agent.loadout.enabledToolIds.length,
+    retrievedMemories: [],
+    plannedAction: 'FLAT'
+  };
+}
+
+function buildPlayerTeam(agents: OwnedAgent[], now: number): AiMonInstance[] {
+  return agents.slice(0, 4).map((agent, slot) => buildPlayerInstance(agent, slot, now));
+}
+
+function buildEnemyTeam(ids: string[], now: number): AiMonInstance[] {
+  return ids.slice(0, 4).map((id, slot) => buildEnemyInstance(pickEntry(id), slot, 'enemy', now));
 }
 
 function nextPhase(phase: BattlePhase): BattlePhase {
@@ -101,13 +147,14 @@ function buildEnemyTeamIds(): string[] {
   return shuffle(AIMON_DEX.map((entry) => entry.id)).slice(0, 4);
 }
 
-export function createInitialBattleState(player: PlayerProgress): BattleState {
+export function createInitialBattleState(playerAgents: OwnedAgent[], scenario?: EvalScenario | null): BattleState {
   const now = Date.now();
-  const playerTeamIds =
-    player.teamDexIds.length >= 4 ? player.teamDexIds.slice(0, 4) : AIMON_DEX.slice(0, 4).map((entry) => entry.id);
+  const resolvedAgents = playerAgents.length > 0 ? playerAgents.slice(0, 4) : [];
+  const playerTeamIds = resolvedAgents.map((agent) => agent.speciesId);
   const enemyTeamIds = buildEnemyTeamIds();
-  const market = createSimulatorState();
+  const market = createSimulatorState(scenario ?? undefined);
   const synergy = summarizeTeamSynergy(playerTeamIds);
+  const scenarioLabel = scenario?.label ?? 'Ad hoc sandbox';
 
   return {
     phase: 'OPEN',
@@ -115,15 +162,17 @@ export function createInitialBattleState(player: PlayerProgress): BattleState {
     phaseRemainingMs: PHASE_DURATIONS_MS.OPEN,
     market,
     openingPrice: market.price,
-    playerTeam: buildTeam(playerTeamIds, 'player', now),
-    enemyTeam: buildTeam(enemyTeamIds, 'enemy', now),
+    playerTeam: buildPlayerTeam(resolvedAgents, now),
+    enemyTeam: buildEnemyTeam(enemyTeamIds, now),
     orbs: [],
     consensus: 50,
     focusTapCharges: 2,
     round: 1,
     running: true,
-    eventBanner: `Prototype Ready · Team Synergy ${synergy.score}`,
+    eventBanner: `${scenarioLabel} · Team Synergy ${synergy.score}`,
     interactions: [],
+    retrievalFeed: [],
+    decisionFeed: [],
     result: null,
     rewardsApplied: false
   };
@@ -220,4 +269,3 @@ export function advanceBattleState(state: BattleState, now: number): BattleState
     result
   };
 }
-

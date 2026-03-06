@@ -1,5 +1,5 @@
 import { computeRegime, createInitialMarketState } from './marketState';
-import type { MarketState } from '../types';
+import type { EvalScenarioTemplate, MarketState } from '../types';
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -9,8 +9,29 @@ function randCentered(scale: number): number {
   return (Math.random() - 0.5) * scale;
 }
 
-export function createSimulatorState(seedPrice?: number): MarketState {
-  return createInitialMarketState(seedPrice);
+export function createSimulatorState(scenario?: Pick<
+  EvalScenarioTemplate,
+  | 'startingPrice'
+  | 'baselinePriceChange5m'
+  | 'baselineVolatility'
+  | 'baselineFearGreed'
+  | 'baselineFundingRate'
+  | 'baselineOpenInterestChange'
+  | 'targetRegime'
+>): MarketState {
+  return createInitialMarketState(
+    scenario
+      ? {
+          price: scenario.startingPrice,
+          priceChange5m: scenario.baselinePriceChange5m,
+          volatility: scenario.baselineVolatility,
+          fearGreed: scenario.baselineFearGreed,
+          fundingRate: scenario.baselineFundingRate,
+          openInterestChange: scenario.baselineOpenInterestChange,
+          regime: scenario.targetRegime
+        }
+      : {}
+  );
 }
 
 export function advanceMarketState(prev: MarketState): MarketState {
@@ -37,4 +58,3 @@ export function advanceMarketState(prev: MarketState): MarketState {
     ...regime
   };
 }
-

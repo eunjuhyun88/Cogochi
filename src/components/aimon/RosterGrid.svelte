@@ -1,58 +1,63 @@
 <script lang="ts">
   import PokemonFrame from '../shared/PokemonFrame.svelte';
+  import { aimonDexById } from '$lib/aimon/data/aimonDex';
   import { getEvolutionPreview } from '$lib/aimon/engine/evolutionSystem';
-  import { getTrainingProfile } from '$lib/aimon/data/trainingProfiles';
-  import type { AiMonDexEntry } from '$lib/aimon/types';
+  import type { OwnedAgent } from '$lib/aimon/types';
 
-  const { entries, selectedId, squadIds, trainerXp, onSelect } = $props<{
-    entries: AiMonDexEntry[];
+  const { agents, selectedId, squadIds, onSelect } = $props<{
+    agents: OwnedAgent[];
     selectedId: string;
     squadIds: string[];
-    trainerXp: number;
     onSelect: (id: string) => void;
   }>();
 </script>
 
 <section class="roster-grid">
-  {#each entries as entry (entry.id)}
-    {@const profile = getTrainingProfile(entry.id)}
-    {@const evo = getEvolutionPreview(entry.id, trainerXp)}
-    <button class="card-button" type="button" onclick={() => onSelect(entry.id)}>
-      <PokemonFrame variant={selectedId === entry.id ? 'accent' : 'dark'} padding="12px">
-        <article class="roster-card" class:selected={selectedId === entry.id} style={`--type-color:${entry.color}; --type-accent:${entry.accent};`}>
-          <div class="card-head">
-            <span class="dex-no">{entry.dexNo}</span>
-            <div class="state-row">
-              {#if squadIds.includes(entry.id)}
-                <span class="badge squad">IN SQUAD</span>
-              {/if}
-              {#if evo.canEvolve}
-                <span class="badge evolve">EVOLVE READY</span>
-              {/if}
+  {#each agents as agent (agent.id)}
+    {@const entry = aimonDexById[agent.speciesId]}
+    {#if entry}
+      {@const evo = getEvolutionPreview(entry.id, agent.xp)}
+      <PokemonFrame variant={selectedId === agent.id ? 'accent' : 'dark'} padding="12px">
+        <article class="roster-card" class:selected={selectedId === agent.id} style={`--type-color:${entry.color}; --type-accent:${entry.accent};`}>
+          <button class="card-button" type="button" onclick={() => onSelect(agent.id)}>
+            <div class="card-head">
+              <span class="dex-no">{entry.dexNo} · LVL {agent.level}</span>
+              <div class="state-row">
+                {#if squadIds.includes(agent.id)}
+                  <span class="badge squad">IN SQUAD</span>
+                {/if}
+                {#if evo.canEvolve}
+                  <span class="badge evolve">EVOLVE READY</span>
+                {/if}
+              </div>
             </div>
-          </div>
 
-          <div class="sprite-wrap">
-            <div class="sprite">
-              <span>{entry.name.slice(0, 2).toUpperCase()}</span>
+            <div class="sprite-wrap">
+              <div class="sprite">
+                <span>{entry.name.slice(0, 2).toUpperCase()}</span>
+              </div>
             </div>
-          </div>
 
-          <div class="meta">
-            <div>
-              <strong>{entry.name}</strong>
-              <p>{profile.archetype}</p>
+            <div class="meta">
+              <div>
+                <strong>{agent.name}</strong>
+                <p>{agent.role} · {agent.loadout.retrainingPath}</p>
+              </div>
+              <span class="type-pill" style:color={entry.color}>{entry.type}</span>
             </div>
-            <span class="type-pill" style:color={entry.color}>{entry.type}</span>
-          </div>
 
-          <div class="readout">
-            <span>READOUT</span>
-            <strong>{profile.readout}</strong>
+            <div class="readout">
+              <span>READOUT</span>
+              <strong>{agent.loadout.readout}</strong>
+            </div>
+          </button>
+
+          <div class="card-actions">
+            <a href={`/agent/${agent.id}`}>Open Console</a>
           </div>
         </article>
       </PokemonFrame>
-    </button>
+    {/if}
   {/each}
 </section>
 
@@ -69,6 +74,9 @@
     border: 0;
     background: transparent;
     text-align: left;
+    display: grid;
+    gap: 12px;
+    cursor: pointer;
   }
 
   .roster-card {
@@ -78,10 +86,30 @@
     transition: transform 160ms ease, filter 160ms ease;
   }
 
-  .card-button:hover .roster-card,
+  .roster-card:hover,
   .roster-card.selected {
     transform: translateY(-2px);
     filter: brightness(1.03);
+  }
+
+  .card-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .card-actions a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-0);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
   }
 
   .card-head,

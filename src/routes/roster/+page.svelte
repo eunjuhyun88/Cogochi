@@ -1,36 +1,32 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { AiMonDexEntry } from '$lib/aimon/types';
-  import { aimonDexById } from '$lib/aimon/data/aimonDex';
-  import { getTrainingProfile } from '$lib/aimon/data/trainingProfiles';
   import { getEvolutionPreview } from '$lib/aimon/engine/evolutionSystem';
   import { setScreen } from '$lib/aimon/stores/gameStore';
-  import { playerStore } from '$lib/aimon/stores/playerStore';
+  import { rosterStore, selectRosterAgent } from '$lib/aimon/stores/rosterStore';
+  import { squadStore } from '$lib/aimon/stores/squadStore';
   import AgentDetailPanel from '../../components/aimon/AgentDetailPanel.svelte';
   import RosterGrid from '../../components/aimon/RosterGrid.svelte';
   import PokemonFrame from '../../components/shared/PokemonFrame.svelte';
 
-  let player = $derived($playerStore);
-  let rosterEntries = $derived(
-    player.unlockedDexIds.map((id) => aimonDexById[id]).filter((entry): entry is AiMonDexEntry => Boolean(entry))
-  );
-
-  let selectedId = $state('');
+  let roster = $derived($rosterStore);
+  let squad = $derived($squadStore);
+  let rosterAgents = $derived(roster.agents);
 
   $effect(() => {
-    if (!rosterEntries.length) {
-      selectedId = '';
+    if (!rosterAgents.length) {
+      selectRosterAgent(null);
       return;
     }
 
-    if (!selectedId || !rosterEntries.some((entry) => entry.id === selectedId)) {
-      selectedId = player.teamDexIds[0] ?? rosterEntries[0].id;
+    if (!roster.selectedAgentId || !rosterAgents.some((agent) => agent.id === roster.selectedAgentId)) {
+      selectRosterAgent(squad.activeSquad.memberAgentIds[0] ?? rosterAgents[0].id);
     }
   });
 
-  let selectedEntry = $derived(rosterEntries.find((entry) => entry.id === selectedId) ?? null);
-  let selectedProfile = $derived(selectedEntry ? getTrainingProfile(selectedEntry.id) : null);
-  let selectedEvolution = $derived(selectedEntry ? getEvolutionPreview(selectedEntry.id, player.xp) : null);
+  let selectedAgent = $derived(rosterAgents.find((agent) => agent.id === roster.selectedAgentId) ?? null);
+  let selectedEvolution = $derived(
+    selectedAgent ? getEvolutionPreview(selectedAgent.speciesId, selectedAgent.xp) : null
+  );
 
   onMount(() => {
     setScreen('roster');
@@ -51,6 +47,7 @@
       </p>
     </div>
     <div class="header-actions">
+      <a href={selectedAgent ? `/agent/${selectedAgent.id}` : '/roster'}>Agent Console</a>
       <a href="/team">Squad Builder</a>
       <a href="/battle">Battle</a>
       <a href="/lab">Lab</a>
@@ -60,17 +57,17 @@
   <section class="summary-grid">
     <PokemonFrame variant="dark" padding="14px">
       <div class="summary">
-        <span>Owned agents</span><strong>{rosterEntries.length}</strong>
-        <span>In active squad</span><strong>{player.teamDexIds.length}</strong>
-        <span>Evolution ready</span><strong>{rosterEntries.filter((entry) => getEvolutionPreview(entry.id, player.xp).canEvolve).length}</strong>
+        <span>Owned agents</span><strong>{rosterAgents.length}</strong>
+        <span>In active squad</span><strong>{squad.activeSquad.memberAgentIds.length}</strong>
+        <span>Evolution ready</span><strong>{rosterAgents.filter((agent) => getEvolutionPreview(agent.speciesId, agent.xp).canEvolve).length}</strong>
       </div>
     </PokemonFrame>
 
     <PokemonFrame variant="dark" padding="14px">
       <div class="summary">
-        <span>Selected agent</span><strong>{selectedEntry?.name ?? 'None'}</strong>
-        <span>Retraining</span><strong>{selectedProfile?.retrainingPath ?? '—'}</strong>
-        <span>Focus skill</span><strong>{selectedProfile?.focusSkill ?? '—'}</strong>
+        <span>Selected agent</span><strong>{selectedAgent?.name ?? 'None'}</strong>
+        <span>Retraining</span><strong>{selectedAgent?.loadout.retrainingPath ?? '—'}</strong>
+        <span>Focus skill</span><strong>{selectedAgent?.loadout.focusSkill ?? '—'}</strong>
       </div>
     </PokemonFrame>
 
@@ -88,24 +85,22 @@
       <div class="section-head">
         <div>
           <p class="eyebrow">COLLECTION GRID</p>
-          <h2>Signal Creatures Under Your Control</h2>
+          <h2>Owned Agents Under Your Control</h2>
         </div>
       </div>
 
       <RosterGrid
-        entries={rosterEntries}
-        selectedId={selectedId}
-        squadIds={player.teamDexIds}
-        trainerXp={player.xp}
-        onSelect={(id) => (selectedId = id)}
+        agents={rosterAgents}
+        selectedId={roster.selectedAgentId ?? ''}
+        squadIds={squad.activeSquad.memberAgentIds}
+        onSelect={selectRosterAgent}
       />
     </div>
 
     <div class="right-column">
       <AgentDetailPanel
-        entry={selectedEntry}
-        trainerXp={player.xp}
-        inSquad={selectedEntry ? player.teamDexIds.includes(selectedEntry.id) : false}
+        agent={selectedAgent}
+        inSquad={selectedAgent ? squad.activeSquad.memberAgentIds.includes(selectedAgent.id) : false}
       />
     </div>
   </section>

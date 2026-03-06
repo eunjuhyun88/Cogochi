@@ -1,14 +1,15 @@
 <script lang="ts">
   import PokemonFrame from '../shared/PokemonFrame.svelte';
+  import { aimonDexById } from '$lib/aimon/data/aimonDex';
   import { getEvolutionPreview } from '$lib/aimon/engine/evolutionSystem';
-  import { getTrainingProfile } from '$lib/aimon/data/trainingProfiles';
-  import type { AiMonDexEntry } from '$lib/aimon/types';
+  import type { OwnedAgent } from '$lib/aimon/types';
 
-  const { entry, trainerXp, inSquad = false } = $props<{
-    entry: AiMonDexEntry | null;
-    trainerXp: number;
+  const { agent, inSquad = false } = $props<{
+    agent: OwnedAgent | null;
     inSquad?: boolean;
   }>();
+
+  const entry = $derived(agent ? aimonDexById[agent.speciesId] ?? null : null);
 
   const statRows = $derived(
     entry
@@ -21,26 +22,26 @@
       : []
   );
 
-  const profile = $derived(entry ? getTrainingProfile(entry.id) : null);
-  const evolution = $derived(entry ? getEvolutionPreview(entry.id, trainerXp) : null);
+  const evolution = $derived(agent && entry ? getEvolutionPreview(entry.id, agent.xp) : null);
 </script>
 
 <PokemonFrame variant={entry ? 'accent' : 'dark'} padding="16px">
-  {#if entry && profile && evolution}
+  {#if agent && entry && evolution}
     <section class="detail">
       <div class="hero" style={`--type-color:${entry.color}; --type-accent:${entry.accent};`}>
         <div class="hero-art">
           <div class="sprite">
-            <span>{entry.name.slice(0, 2).toUpperCase()}</span>
+            <span>{agent.name.slice(0, 2).toUpperCase()}</span>
           </div>
         </div>
         <div class="hero-copy">
-          <p class="eyebrow">{entry.dexNo} · {entry.type}</p>
-          <h2>{entry.name}</h2>
+          <p class="eyebrow">{entry.dexNo} · {entry.type} · LVL {agent.level}</p>
+          <h2>{agent.name}</h2>
           <p class="description">{entry.description}</p>
           <div class="hero-badges">
-            <span>{profile.archetype}</span>
-            <span>{profile.retrainingPath}</span>
+            <span>{agent.role}</span>
+            <span>{agent.loadout.retrainingPath}</span>
+            <span>{agent.baseModelId}</span>
             {#if inSquad}
               <span class="active">ACTIVE SQUAD</span>
             {/if}
@@ -51,7 +52,7 @@
       <div class="section">
         <div class="section-head">
           <h3>Signal Readout</h3>
-          <span>{profile.readout}</span>
+          <span>{agent.loadout.readout}</span>
         </div>
         <div class="stats">
           {#each statRows as [label, value]}
@@ -70,11 +71,11 @@
         <div>
           <div class="section-head">
             <h3>Training Loadout</h3>
-            <span>{profile.focusSkill}</span>
+            <span>{agent.loadout.focusSkill}</span>
           </div>
-          <p class="support">{profile.behavior}</p>
+          <p class="support">{agent.loadout.behaviorNote}</p>
           <div class="chips">
-            {#each profile.indicators as indicator}
+            {#each agent.loadout.indicators as indicator}
               <span>{indicator}</span>
             {/each}
           </div>
@@ -86,7 +87,7 @@
             <span>{evolution.canEvolve ? 'READY' : 'TRAINING'}</span>
           </div>
           <div class="evolution-meta">
-            <span>Current XP</span><strong>{evolution.currentXp}</strong>
+            <span>Current XP</span><strong>{agent.xp}</strong>
             <span>Required XP</span><strong>{evolution.requiredXp ?? 'Final Form'}</strong>
             <span>Next Form</span><strong>{evolution.evolvesTo ?? 'Final Form'}</strong>
             <span>Counter Type</span><strong>{entry.counterType}</strong>
@@ -95,6 +96,7 @@
       </div>
 
       <div class="actions">
+        <a href={`/agent/${agent.id}`}>Open Console</a>
         <a href="/team">Adjust Squad</a>
         <a href="/battle">Enter Battle</a>
         <a href="/lab">Open Lab</a>
@@ -103,7 +105,7 @@
   {:else}
     <section class="empty">
       <p class="eyebrow">AGENT DETAIL</p>
-      <h2>Select an AI Mon</h2>
+      <h2>Select an Owned Agent</h2>
       <p>Roster에서 개체를 선택하면 loadout, evolution, squad 상태가 이 패널에 표시됩니다.</p>
     </section>
   {/if}

@@ -4,21 +4,21 @@ Last updated: 2026-03-06
 
 ## One-Line Definition
 
-Cogochi is a creature-raising strategy game where the player owns AI agents, tunes how they read the world, builds a squad, and wins through better preparation.
+Cogochi is an AI agent raising and evaluation game where the player owns agent instances, tunes their prompts, data sources, and memory, builds a squad, and wins through better preparation.
 
 ## Player Fantasy
 
 The player should feel:
 
 - `this is my agent`
-- `I trained it this way`
+- `I trained its memory and policy this way`
 - `my squad won because of my setup`
 
 If the game feels like selecting anonymous units from a dex, the product is off-target.
 
 ## Core Loop
 
-`owned agent -> roster -> training/retraining -> squad -> battle -> result -> growth/evolution`
+`base model -> owned agent -> data and memory setup -> prompt/retraining -> squad -> eval match -> reflection -> progression`
 
 ## Product Pillars
 
@@ -31,6 +31,7 @@ Required implications:
 - per-agent identity
 - per-agent growth
 - per-agent training setup
+- per-agent memory history
 
 ### 2. Setup Creates Outcome
 
@@ -38,8 +39,9 @@ Battles should reflect the player's preparation.
 
 Required implications:
 
-- indicator choices matter
-- retraining path matters
+- data source choices matter
+- retrieval policy matters
+- prompt and policy changes matter
 - squad composition matters
 
 ### 3. Battles Prove, They Do Not Define
@@ -52,15 +54,29 @@ Required implications:
 - growth must be visible outside battle
 - the game still makes sense when not inside the arena
 
+### 4. Memory Is A System, Not Flavor
+
+The product should feel like the agents remember and improve.
+
+Required implications:
+
+- past lessons are stored
+- retrieved memory is visible at decision time
+- match results write back into future behavior
+
 ## Current Information Architecture
 
-- `/` -> Trainer Hub
+- `/` -> Agent Ops Hub
 - `/roster` -> Owned Agents
-- `/battle` -> Live Battle
+- `/battle` -> Eval Battle
 - `/team` -> Squad Builder
-- `/lab` -> Growth Lab
+- `/lab` -> Agent Lab
 
 ## Domain Model Target
+
+### BaseModelDefinition
+
+The inference model each owned agent is built on top of.
 
 ### OwnedAgent
 
@@ -68,7 +84,15 @@ The actual unit the player owns.
 
 ### TrainingLoadout
 
-The indicator set, behavior bias, risk profile, and retraining path attached to one agent.
+The prompt stack, data bindings, retrieval policy, risk profile, and tool setup attached to one agent.
+
+### MemoryBank
+
+The searchable long-term memory attached to one agent.
+
+### TrainingRun
+
+The recorded improvement job attached to one agent.
 
 ### Squad
 
@@ -78,9 +102,9 @@ The active 4-agent team.
 
 The opponent squad representation used for PvE, ghost battles, or async PvP.
 
-### MatchResult
+### EvalMatchResult
 
-The result package that feeds growth back into the roster.
+The result package that feeds reflection and progression back into the roster.
 
 ## Current Technical Reality
 
@@ -91,8 +115,8 @@ The result package that feeds growth back into the roster.
 
 ## Next Build Priorities
 
-1. Introduce true `OwnedAgent` data
-2. Split `playerStore` into player/roster/squad stores
-3. Make battle rewards per-agent
+1. Introduce true `OwnedAgent`, `MemoryBank`, and `TrainingRun` data
+2. Split `playerStore` into player/roster/squad/lab/match stores
+3. Turn battle into a readable evaluation console
 4. Add agent detail route and training controls
-5. Move from dex selection to roster management
+5. Connect reflection and memory writeback to per-agent progression

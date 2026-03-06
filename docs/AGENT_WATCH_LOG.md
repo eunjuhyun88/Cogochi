@@ -142,3 +142,84 @@ Purpose: Cogochi 작업 중복을 막고, 작업 전/후 실제 변경 이력을
   - no code commit
   - `main` successfully pushed and upstream configured
 - Status: DONE
+
+---
+
+### W-20260306-2159-cogochi-codex
+
+- Start (KST): 2026-03-06 21:59
+- End (KST): 2026-03-06 22:08
+- Branch: `main`
+- Scope (planned):
+  - agent-sim 방향으로 제품 설계를 재고정
+  - RAG, training, eval battle 중심의 buildable design 문서 추가
+  - source-of-truth 문서 체계를 새 설계 기준으로 정렬
+- Overlap check (before work):
+  - 문서 파일만 수정
+  - 앱 코드와 현재 battle shell은 변경하지 않음
+- Changes (actual):
+  - `docs/AGENT_SYSTEM_DESIGN.md` 신규 추가
+  - `README.md`, `CLAUDE.md`, `docs/PROJECT_CONTEXT.md`, `docs/PRODUCT_BLUEPRINT.md`를 agent-sim 기준으로 수정
+  - `docs/GAME_DESIGN.md`, `docs/TECH_ARCHITECTURE.md`, `docs/UIUX_SYSTEM.md`, `docs/PROGRESSION_MODEL.md`를 agent-sim 기준으로 재작성
+  - git 상태 확인 결과 `git version 2.50.1`, remote는 `git@github.com:eunjuhyun88/Cogochi.git`
+- Diff vs plan:
+  - user가 채팅에 공유한 GitHub PAT는 보안상 사용하지 않고 폐기 대상으로 처리
+- Commit / Push:
+  - pending
+- Status: DONE
+
+---
+
+### W-20260306-2209-cogochi-codex
+
+- Start (KST): 2026-03-06 22:09
+- End (KST): 2026-03-06 22:24
+- Branch: `main`
+- Scope (planned):
+  - `types.ts`를 OwnedAgent / MemoryBank / TrainingRun / Squad / MatchState 중심으로 확장
+  - `playerStore` 분리 후 `rosterStore`, `squadStore`, `labStore`, `matchStore` 추가
+  - 현재 허브/로스터/팀/랩/배틀 화면이 새 stores를 읽도록 최소 리와이어
+- Overlap check (before work):
+  - 앱 코드와 문서 모두 변경
+  - 현재 battle shell은 유지하되 데이터 경계만 교체
+- Changes (actual):
+  - `src/lib/aimon/types.ts`에 agent-sim 도메인 타입 대량 추가
+  - `src/lib/aimon/data/baseModels.ts`, `src/lib/aimon/data/labCatalog.ts`, `src/lib/aimon/data/agentSeeds.ts` 추가
+  - `src/lib/aimon/stores/rosterStore.ts`, `squadStore.ts`, `labStore.ts`, `matchStore.ts` 추가
+  - `playerStore.ts`를 trainer profile 전용으로 축소
+  - `battleStore.ts`, `battleEngine.ts`를 roster/squad 기준으로 수정하고 battle 결과를 roster/lab/match에 반영
+  - `/`, `/roster`, `/team`, `/lab`, `/battle` 및 관련 컴포넌트를 owned-agent 중심으로 리와이어
+  - `npm run check`, `npm run build` 통과
+- Diff vs plan:
+  - `/agent/[id]` route 생성은 이번 범위에서 제외
+  - eval battle은 full redesign 대신 기존 shell 위에 match history / memory writeback만 최소 연결
+- Commit / Push:
+  - pending
+- Status: DONE
+
+---
+
+### W-20260307-0030-cogochi-codex
+
+- Start (KST): 2026-03-07 00:30
+- End (KST): 2026-03-07 01:06
+- Branch: `main`
+- Scope (planned):
+  - runtime/provider 타입 오류 정리
+  - eval scenario를 battle/runtime/memory 흐름에 연결
+  - AI runtime/training 상세 설계와 implementation contracts 문서화
+  - context engineering 구조를 repo 내부에 실제로 세팅
+- Overlap check (before work):
+  - 기존 Cogochi 변경분이 아직 commit되지 않은 상태였고, 모두 같은 agent-sim 방향 작업으로 판단
+  - 별도 사용자 수동 변경과 충돌하는 파일은 확인되지 않음
+- Changes (actual):
+  - `modelProvider`, `battleStore`, `agent/[id]` 타입 오류 수정 후 `npm run check`, `npm run build` 통과
+  - `evalScenarios`, `matchStore`, `battleEngine`, `marketSimulator`, `contextAssembler`를 scenario-driven eval 구조로 확장
+  - `docs/AI_RUNTIME_TRAINING_SPEC.md`, `docs/AI_IMPLEMENTATION_CONTRACTS.md` 추가
+  - `AGENTS.md`, `docs/INDEX.md`, `docs/CONTEXT_ENGINEERING.md`, `docs/RELIABILITY.md`, `docs/PLANS.md`, `docs/QUALITY_SCORE.md`, `docs/exec-plans/` 추가
+  - `scripts/check-context-docs.mjs` 추가 및 `npm run check`에 context-doc validation 연결
+- Diff vs plan:
+  - Anthropic 글은 context 관리 자체보다 eval noise 통제 문서로 반영했고, OpenAI 글은 repo map/progressive disclosure/mechanical validation 규칙으로 반영
+- Commit / Push:
+  - pending
+- Status: DONE

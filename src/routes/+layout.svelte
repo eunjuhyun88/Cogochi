@@ -16,6 +16,7 @@
 
   function isActive(href: string): boolean {
     if (href === '/') return pathname === '/';
+    if (href === '/roster') return pathname === '/roster' || pathname.startsWith('/agent/');
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 </script>

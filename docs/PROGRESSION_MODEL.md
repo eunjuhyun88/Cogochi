@@ -2,202 +2,150 @@
 
 Last updated: 2026-03-06
 
-## 1. 성장 철학
+## 1. Progression Philosophy
 
-Cogochi의 성장은 `전역 레벨 숫자`보다 `내 개체가 어떻게 변했는가`를 우선해야 한다.
+Cogochi progression should answer one question:
 
-중요도 순서는 아래다.
+`How is this specific agent getting better at making decisions?`
 
-1. 개체 성장
-2. 개체 세팅 변화
-3. 스쿼드 운영 변화
-4. 플레이어 계정 성장
+That means progression is primarily:
 
-## 2. 성장 단위
+- per-agent
+- setup-sensitive
+- reflected in future evaluation quality
+
+## 2. Progression Units
 
 ### Player Profile
 
-플레이어 전체 진행.
+Account-level meta progression:
 
-예시 항목:
-
-- trainer level
 - research points
-- currency
 - unlocked systems
+- benchmark access
 
 ### Owned Agent
 
-성장의 핵심 단위.
-
-예시 항목:
+Primary progression unit:
 
 - level
-- xp
+- XP
 - bond
-- evolution state
-- learned indicators
-- retraining progress
+- specialization
+- memory quality
+- tool access
 
 ### Squad
 
-성장의 결과가 표현되는 조합 단위.
+A composition-level progression unit:
 
-- 어떤 개체를 같이 쓸지
-- 어떤 레짐에서 강한지
-- 어떤 역할 조합인지
+- saved presets
+- role synergy
+- scenario suitability
 
-## 3. 현재 문제
+## 3. What Counts As Growth
 
-현재 구현은:
+Growth is not only more XP.
 
-- global XP 중심
-- dex id 기반 squad 선택
-- per-agent progression 부재
+Growth includes:
 
-따라서 육성 게임 감각이 약하다.
+- better prompt and policy quality
+- better memory retrieval quality
+- better lesson retention
+- better score consistency
+- better coordination with squad roles
 
-## 4. 목표 성장 자원
+## 4. Progression Resources
 
 ### Agent XP
 
-- 배틀 참여 개체가 직접 획득
-- 레벨업의 기본 자원
+- awarded per match
+- used for levels and unlock thresholds
 
 ### Bond
 
-- 특정 개체를 오래 쓰거나 좋은 결과를 낼수록 증가
-- focus skill 안정성, 특수 반응, cosmetic unlock에 연결 가능
+- measures trust and familiarity with an agent
+- can gate specializations and cosmetic identity
 
-### Research Point
+### Research Points
 
-- 플레이어 계정 단위 자원
-- 새 지표, 새 retraining path, 시스템 unlock에 사용
+- account-wide resource
+- unlocks tools, data sources, and lab systems
 
-### Retraining Progress
+### Specialization Progress
 
-- 특정 학습 경로를 얼마나 진행했는지 표시
-- 단순 레벨업이 아니라 플레이스타일 변화에 연결
+- advances an agent toward role clarity
+- examples: trend scout, macro analyst, risk disciplinarian
 
-## 5. 레벨업 모델
+### Memory Quality
 
-### 개체 레벨업
+- a soft progression axis
+- improves through curation, compaction, and repeated useful lessons
 
-- 전투 결과 후 per-agent XP 분배
-- MVP, participation, synergy contribution으로 가중치 가능
+## 5. Training As Progression
 
-레벨업 효과:
+Training is not a side menu. It is part of growth.
 
-- 기본 스탯 소폭 증가
-- 새 지표 슬롯 해금
-- retraining tier 개방
+Main training actions:
 
-### 플레이어 레벨업
+- prompt tune
+- retrieval tune
+- memory compaction
+- benchmark comparison
+- SFT or LoRA later
 
-- 연구 시스템 해금
-- squad preset 수 증가
-- 더 높은 난이도/리그 접근
+Each training run should leave an audit trail.
 
-## 6. 리트레이닝 모델
+## 6. Reward Model
 
-리트레이닝은 단순 수치 버프가 아니라 `행동 스타일 변경`이어야 한다.
-
-예시 경로:
-
-- Trend Hunter
-- Contrarian Loop
-- Liquidity Oracle
-- Volatility Sniper
-- Crowd Whisper
-- Macro Compass
-
-경로 선택 결과:
-
-- 읽는 지표 우선순위 변화
-- behavior bias 변화
-- focus skill 변화
-- 특정 레짐에서 강약 변화
-
-## 7. 진화 모델
-
-진화는 개체 단위로 처리한다.
-
-필수 조건 예시:
-
-- 최소 레벨
-- 특정 XP 도달
-- 특정 이벤트 누적
-- 특정 retraining tier 달성
-
-진화 결과:
-
-- 외형 변화
-- 스킬/패시브 업그레이드
-- 역할 명확화
-
-## 8. 전투 보상 분배
-
-### Match Result 기준 분배
-
-배틀 종료 후 `MatchResult`는 아래 단위로 나뉘어야 한다.
-
-#### Trainer Rewards
+### Trainer rewards
 
 - research points
-- ladder/rank delta
-- unlock fragments
+- unlock progress
 
-#### Agent Rewards
+### Agent rewards
 
-- xp
+- XP
 - bond
-- retraining progress
-- evolution trigger counter
+- memory cards
+- specialization progress
 
-핵심은 `팀이 이겼다`와 `누가 성장했다`를 분리해서 보여주는 것이다.
+The match result must separate team success from individual agent growth.
 
-## 9. 성장 루프 예시
+## 7. Reflection Loop
 
-1. Flowling을 roster에서 선택
-2. Whale-flow 중심 loadout 장착
-3. squad에 투입
-4. battle에서 승리
-5. Flowling이 XP와 retraining progress 획득
-6. Lab에서 evolution requirement 확인
-7. 다음 battle 전에 build 재조정
+After a match:
 
-이 감각이 살아야 Cogochi가 된다.
+1. score the run
+2. extract lessons
+3. write durable memory cards
+4. suggest one or more training actions
+5. show the changed agent state in roster and detail screens
 
-## 10. 구현 우선순위
+If the player cannot see what changed after a match, progression has failed.
 
-### Step 1
+## 8. Example Loop
 
-- `OwnedAgent` 타입 도입
-- 초기 starter/roster 생성
+1. pick one agent from the roster
+2. change its prompt or retrieval policy
+3. run the squad in a benchmark scenario
+4. review score and reasoning trace
+5. save one lesson card
+6. queue one training action
+7. run the next benchmark
 
-### Step 2
+## 9. Implementation Priorities
 
-- `rosterStore`, `squadStore` 분리
-- per-agent XP 저장
+1. add per-agent progression fields to `OwnedAgent`
+2. replace global reward-only logic with reward packets
+3. connect reflection output to memory writeback
+4. show progression changes in `/roster` and `/agent/[id]`
+5. expose training queue state in `/lab`
 
-### Step 3
+## 10. Design Check Questions
 
-- battle reward를 개체 단위로 연결
-- evolution counters 저장
-
-### Step 4
-
-- `/agent/[id]` 상세 페이지
-- retraining path UI
-
-### Step 5
-
-- async PvP용 opponent snapshot reward loop
-
-## 11. 설계 체크 질문
-
-1. battle을 한 뒤 특정 개체가 성장했다는 감각이 남는가
-2. 같은 종이라도 서로 다른 개체로 키워지는가
-3. retraining이 +5 stat이 아니라 플레이스타일 차이로 느껴지는가
-4. roster 관리가 실제 전략 행위가 되는가
-5. 성장 결과가 다음 squad 선택을 바꾸는가
+1. after one match, can the player point to what improved
+2. do two agents on the same base model diverge over time
+3. does better memory lead to better future performance
+4. is progression visible outside the battle screen
+5. does the product reward experimentation, not only grinding
