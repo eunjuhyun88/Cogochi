@@ -21,7 +21,7 @@ This file tracks repo readability and agent-operability, not just user-facing po
 | Plan hygiene | C | Plan directories and tracker are added, but active plan inventory is still sparse |
 | Mechanical context validation | B | `check-context-docs.mjs` added, but it only validates structure, not freshness |
 | Eval reliability discipline | B | Reliability policy exists and eval/reflection services are separated, but runtime manifests are not yet emitted |
-| Artifact lineage and promotion rigor | B | Contracts exist, eval/reflection services and dataset bundle capture are in code, artifact registry is still pending |
+| Artifact lineage and promotion rigor | B | Contracts exist, dataset bundles feed a local training orchestrator and artifact manifests, provider-backed registry is still pending |
 | Async PvP snapshot readiness | C | Storage model is designed, implementation is pending |
 
 ## Next Upgrades

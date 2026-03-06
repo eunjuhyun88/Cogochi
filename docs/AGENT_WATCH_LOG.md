@@ -281,3 +281,32 @@ Purpose: Cogochi 작업 중복을 막고, 작업 전/후 실제 변경 이력을
 - Commit / Push:
   - pending
 - Status: DONE
+
+---
+
+### W-20260307-0215-cogochi-codex
+
+- Start (KST): 2026-03-07 02:15
+- End (KST): 2026-03-07 02:45
+- Branch: `main`
+- Scope (planned):
+  - `trainingOrchestrator`와 `fineTuneService`를 추가해 dataset bundle 이후 학습 잡 상태머신 구현
+  - agent/lab UI에서 queue/start/promote 흐름 노출
+  - artifact와 active promotion 상태를 agent profile에 연결
+- Overlap check (before work):
+  - 직전 dataset builder 단계 이후 동일한 AIMON runtime 흐름
+  - 기존 uncommitted 상태가 없어 충돌 없음
+- Changes (actual):
+  - `types.ts`에 `TrainingJobState`, `TrainingJobResult`, `FineTuneJobPayload`, `FineTuneArtifactManifest`, `ModelArtifact`, `activeArtifactId` 추가
+  - `labStore.ts`에 training job migration, artifact persistence, upsert/update helpers 추가
+  - `rosterStore.ts`가 `activeArtifactId`와 agent status patch를 지원하도록 확장
+  - `trainingOrchestrator.ts` 추가: queue/validate/start/cancel/promote 상태머신 구현
+  - `fineTuneService.ts` 추가: local manifest packaging, artifact registration, benchmark compare, promotion hook 구현
+  - `/agent/[id]`에서 queue 즉시 실행과 promotable candidate 승격 버튼 연결
+  - `/lab`에서 artifact 상태와 training job state 표시 보강
+  - `npm run check`, `npm run build` 통과
+- Diff vs plan:
+  - real GPU fine-tune 대신 local artifact manifest 기반 MVP로 마감
+- Commit / Push:
+  - pending
+- Status: DONE

@@ -6,8 +6,9 @@
   import { getEvolutionPreview } from '$lib/aimon/engine/evolutionSystem';
   import { buildAgentDecisionContext } from '$lib/aimon/services/contextAssembler';
   import { retrieveRelevantMemories } from '$lib/aimon/services/memoryService';
+  import { promoteTrainingJob, queueTrainingJob, startTrainingJob } from '$lib/aimon/services/trainingOrchestrator';
   import { setScreen } from '$lib/aimon/stores/gameStore';
-  import { addUserNoteMemory, compactMemoryBank, labStore, queueTrainingRun, savePromptVariantFromAgent } from '$lib/aimon/stores/labStore';
+  import { addUserNoteMemory, compactMemoryBank, labStore, savePromptVariantFromAgent } from '$lib/aimon/stores/labStore';
   import { matchStore } from '$lib/aimon/stores/matchStore';
   import { rosterStore, selectRosterAgent, updateAgentConfiguration } from '$lib/aimon/stores/rosterStore';
   import { runtimeStore, setRuntimeStatus, updateRuntimeConfig } from '$lib/aimon/stores/runtimeStore';
@@ -38,6 +39,7 @@
   );
   let enabledTools = $derived(agent ? lab.tools.filter((tool) => agent.loadout.enabledToolIds.includes(tool.id)) : []);
   let trainingRuns = $derived(agent ? lab.trainingRuns.filter((run) => run.agentId === agent.id).slice(0, 4) : []);
+  let modelArtifacts = $derived(agent ? lab.modelArtifacts.filter((artifact) => artifact.agentId === agent.id).slice(0, 4) : []);
   let promptVariants = $derived(agent ? lab.promptVariants.filter((variant) => variant.agentId === agent.id).slice(0, 4) : []);
   let recentMatches = $derived(
     agent ? matches.recentResults.filter((result) => result.agentResults.some((row) => row.agentId === agent.id)).slice(0, 5) : []
@@ -124,6 +126,7 @@
   let decisionTest = $state<AgentDecisionTrace | null>(null);
   let decisionTestMessage = $state('Runtime decision test is idle.');
   let testingRuntime = $state(false);
+  let runningTraining = $state(false);
 
   $effect(() => {
     if (!agent || loadedAgentId === agent.id) return;
@@ -280,17 +283,39 @@
     saveMessage = 'Saved prompt snapshot to lab variants.';
   }
 
-  function enqueueTrainingRun(): void {
+  async function enqueueTrainingRun(): Promise<void> {
     if (!agent) return;
     const changes = saveConfiguration();
-    queueTrainingRun(
-      agent.id,
-      trainingTypeDraft,
-      trainingHypothesisDraft.trim() || 'Evaluate whether the current prompt and retrieval settings improve consistency.',
-      changes.length > 0 ? changes : ['configuration sync']
-    );
-    saveMessage = `Queued ${trainingTypeDraft} run.`;
+    const benchmarkPackId = `benchmark-${selectedScenario.id}`;
+    const datasetBundleIds = lab.datasetBundles
+      .filter((bundle) => bundle.agentIds.includes(agent.id) && bundle.benchmarkPackId === benchmarkPackId)
+      .map((bundle) => bundle.id);
+    const jobId = queueTrainingJob({
+      agentId: agent.id,
+      type: trainingTypeDraft,
+      requestedBy: 'PLAYER',
+      hypothesis: trainingHypothesisDraft.trim() || 'Evaluate whether the current prompt and retrieval settings improve consistency.',
+      benchmarkPackId,
+      payload: {
+        scenarioId: selectedScenario.id,
+        datasetBundleIds,
+        activeArtifactId: agent.activeArtifactId ?? null
+      },
+      changes: changes.length > 0 ? changes : ['configuration sync']
+    });
+
+    runningTraining = true;
+    const result = await startTrainingJob(jobId);
+    runningTraining = false;
+    saveMessage = result.validationErrors?.length
+      ? `${result.message} · ${result.validationErrors.join(', ')}`
+      : result.message;
     trainingHypothesisDraft = '';
+  }
+
+  async function promoteRun(jobId: string): Promise<void> {
+    const result = await promoteTrainingJob(jobId);
+    saveMessage = result.message;
   }
 
   function compactMemory(): void {
@@ -815,7 +840,9 @@
               <span>Hypothesis</span>
               <textarea bind:value={trainingHypothesisDraft} rows="4"></textarea>
             </label>
-            <button type="button" onclick={enqueueTrainingRun}>Queue Training Run</button>
+            <button type="button" onclick={enqueueTrainingRun} disabled={runningTraining}>
+              {runningTraining ? 'Running Training Job…' : 'Queue And Start Training'}
+            </button>
           </div>
 
           <div class="action-card">
@@ -993,7 +1020,7 @@
         <section class="panel">
           <div class="section-head">
             <h3>Training Queue</h3>
-            <span>{trainingRuns.length} runs</span>
+            <span>{trainingRuns.length} runs · {modelArtifacts.length} artifacts</span>
           </div>
           <div class="list">
             {#if trainingRuns.length > 0}
@@ -1001,10 +1028,23 @@
                 <article class="list-card">
                   <div class="list-head">
                     <strong>{run.type}</strong>
-                    <span>{run.status}</span>
+                    <span>{run.state}</span>
                   </div>
                   <p>{run.hypothesis}</p>
-                  <small>{run.changes.join(' / ')}</small>
+                  <small>{run.benchmarkPackId} · {run.changes.join(' / ') || 'No recorded delta'}</small>
+                  {#if run.validationErrors.length > 0}
+                    <div class="chips">
+                      {#each run.validationErrors as error}
+                        <span>{error}</span>
+                      {/each}
+                    </div>
+                  {/if}
+                  {#if run.resultArtifactId}
+                    <small>Artifact {run.resultArtifactId}</small>
+                  {/if}
+                  {#if run.state === 'PROMOTABLE'}
+                    <button type="button" class="secondary" onclick={() => promoteRun(run.id)}>Promote Candidate</button>
+                  {/if}
                 </article>
               {/each}
             {:else}

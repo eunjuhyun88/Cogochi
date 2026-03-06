@@ -28,6 +28,7 @@
   let queuedRuns = $derived(lab.trainingRuns.slice(0, 6));
   let promptVariants = $derived(lab.promptVariants.slice(0, 8));
   let recentDatasetBundles = $derived(lab.datasetBundles.slice(0, 5));
+  let recentArtifacts = $derived(lab.modelArtifacts.slice(0, 4));
   let doctrineCount = $derived(
     lab.memoryBanks.reduce((sum, bank) => sum + bank.records.filter((record) => record.kind === 'USER_NOTE').length, 0)
   );
@@ -90,7 +91,7 @@
       <div class="summary-card">
         <span>Queued Runs</span>
         <strong>{lab.trainingRuns.length}</strong>
-        <small>{lab.datasetBundles.length} dataset bundles · {promptVariants.length} prompt variants</small>
+        <small>{lab.datasetBundles.length} dataset bundles · {lab.modelArtifacts.length} artifacts</small>
       </div>
     </PokemonFrame>
 
@@ -125,10 +126,10 @@
               <article class="list-card">
                 <div class="list-head">
                   <strong>{run.type}</strong>
-                  <span>{run.status}</span>
+                  <span>{run.state}</span>
                 </div>
                 <p>{run.hypothesis}</p>
-                <small>{agent?.name ?? 'Unknown agent'} · {run.changes.join(' / ')}</small>
+                <small>{agent?.name ?? 'Unknown agent'} · {run.benchmarkPackId} · {run.changes.join(' / ') || 'No delta recorded'}</small>
               </article>
             {/each}
           {:else}
@@ -241,6 +242,7 @@
           <span>Tools</span><strong>{lab.tools.length}</strong>
           <span>Memory Banks</span><strong>{lab.memoryBanks.length}</strong>
           <span>Dataset Bundles</span><strong>{lab.datasetBundles.length}</strong>
+          <span>Artifacts</span><strong>{lab.modelArtifacts.length}</strong>
           <span>Prompt Variants</span><strong>{lab.promptVariants.length}</strong>
           <span>Training Runs</span><strong>{lab.trainingRuns.length}</strong>
         </div>
@@ -258,6 +260,20 @@
             {/each}
           {:else}
             <p class="empty-copy">No dataset bundles captured yet.</p>
+          {/if}
+        </div>
+        <div class="list compact-list">
+          {#if recentArtifacts.length > 0}
+            {#each recentArtifacts as artifact (artifact.id)}
+              <article class="list-card compact">
+                <div class="list-head">
+                  <strong>{artifact.kind}</strong>
+                  <span>{artifact.status}</span>
+                </div>
+                <p>{artifact.label}</p>
+                <small>{artifact.id}</small>
+              </article>
+            {/each}
           {/if}
         </div>
         <div class="chip-row">

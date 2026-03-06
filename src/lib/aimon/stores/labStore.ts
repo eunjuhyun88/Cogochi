@@ -3,7 +3,16 @@ import { BASE_MODELS } from '../data/baseModels';
 import { createStarterAgents, createStarterMemoryBanks } from '../data/agentSeeds';
 import { DEFAULT_DATA_SOURCES, DEFAULT_TOOLS } from '../data/labCatalog';
 import { rosterStore } from './rosterStore';
-import type { LabState, MemoryBank, MemoryRecord, PromptVariant, TrainingDatasetBundle, TrainingRun, TrainingRunType } from '../types';
+import type {
+  LabState,
+  MemoryBank,
+  MemoryRecord,
+  ModelArtifact,
+  PromptVariant,
+  TrainingDatasetBundle,
+  TrainingRun,
+  TrainingRunType
+} from '../types';
 
 const STORAGE_KEY = 'cogochi.lab.v2';
 
@@ -16,13 +25,65 @@ function defaultState(): LabState {
     memoryBanks: createStarterMemoryBanks(starterAgents),
     trainingRuns: [],
     promptVariants: [],
-    datasetBundles: []
+    datasetBundles: [],
+    modelArtifacts: []
   };
 }
 
 function normalizeMemoryBanks(rawBanks: unknown): MemoryBank[] {
   if (!Array.isArray(rawBanks)) return defaultState().memoryBanks;
   return rawBanks.filter((bank): bank is MemoryBank => Boolean(bank && typeof bank === 'object'));
+}
+
+function normalizeTrainingRuns(rawRuns: unknown): TrainingRun[] {
+  if (!Array.isArray(rawRuns)) return [];
+
+  return rawRuns
+    .filter((run): run is Partial<TrainingRun> => Boolean(run && typeof run === 'object'))
+    .map((run) => {
+      const now = typeof run.updatedAt === 'number' ? run.updatedAt : Date.now();
+      const legacyStatus = (run as Record<string, unknown>).status;
+      const state =
+        typeof run.state === 'string'
+          ? run.state
+          : legacyStatus === 'DONE'
+            ? 'PROMOTED'
+            : legacyStatus === 'FAILED'
+              ? 'FAILED'
+              : legacyStatus === 'RUNNING'
+                ? 'RUNNING'
+                : 'QUEUED';
+
+      return {
+        id: typeof run.id === 'string' ? run.id : `training-run-${now}`,
+        agentId: typeof run.agentId === 'string' ? run.agentId : '',
+        type: run.type ?? 'PROMPT_TUNE',
+        state,
+        status: state,
+        requestedBy: run.requestedBy ?? 'PLAYER',
+        hypothesis: typeof run.hypothesis === 'string' ? run.hypothesis : 'Queued training job.',
+        benchmarkPackId: typeof run.benchmarkPackId === 'string' ? run.benchmarkPackId : 'benchmark-ad-hoc',
+        changes: Array.isArray(run.changes) ? run.changes : [],
+        payload: run.payload && typeof run.payload === 'object' ? run.payload : {},
+        validationErrors: Array.isArray(run.validationErrors) ? run.validationErrors.filter((item): item is string => typeof item === 'string') : [],
+        beforeVersion: typeof run.beforeVersion === 'string' ? run.beforeVersion : 'current',
+        afterVersion: typeof run.afterVersion === 'string' ? run.afterVersion : `pending-${now}`,
+        metricsBefore: run.metricsBefore,
+        metricsAfter: run.metricsAfter,
+        resultArtifactId: typeof run.resultArtifactId === 'string' ? run.resultArtifactId : undefined,
+        resultMetrics: run.resultMetrics,
+        promotion: run.promotion,
+        createdAt: typeof run.createdAt === 'number' ? run.createdAt : now,
+        updatedAt: now,
+        startedAt: typeof run.startedAt === 'number' ? run.startedAt : undefined,
+        finishedAt: typeof run.finishedAt === 'number' ? run.finishedAt : undefined
+      };
+    });
+}
+
+function normalizeArtifacts(rawArtifacts: unknown): ModelArtifact[] {
+  if (!Array.isArray(rawArtifacts)) return [];
+  return rawArtifacts.filter((artifact): artifact is ModelArtifact => Boolean(artifact && typeof artifact === 'object'));
 }
 
 function loadState(): LabState {
@@ -38,9 +99,10 @@ function loadState(): LabState {
       dataSources: Array.isArray(parsed?.dataSources) ? parsed.dataSources : DEFAULT_DATA_SOURCES,
       tools: Array.isArray(parsed?.tools) ? parsed.tools : DEFAULT_TOOLS,
       memoryBanks: normalizeMemoryBanks(parsed?.memoryBanks),
-      trainingRuns: Array.isArray(parsed?.trainingRuns) ? parsed.trainingRuns : [],
+      trainingRuns: normalizeTrainingRuns(parsed?.trainingRuns),
       promptVariants: Array.isArray(parsed?.promptVariants) ? parsed.promptVariants : [],
-      datasetBundles: Array.isArray(parsed?.datasetBundles) ? parsed.datasetBundles : []
+      datasetBundles: Array.isArray(parsed?.datasetBundles) ? parsed.datasetBundles : [],
+      modelArtifacts: normalizeArtifacts(parsed?.modelArtifacts)
     };
   } catch {
     return defaultState();
@@ -94,13 +156,46 @@ function createTrainingRun(agentId: string, type: TrainingRunType, hypothesis: s
     id: `training-run-${agentId}-${now}`,
     agentId,
     type,
+    state: 'QUEUED',
+    requestedBy: 'PLAYER',
     hypothesis,
+    benchmarkPackId: 'benchmark-ad-hoc',
     changes,
+    payload: {},
+    validationErrors: [],
     beforeVersion: 'current',
     afterVersion: `${type.toLowerCase()}-${now}`,
     status: 'QUEUED',
-    startedAt: now
+    createdAt: now,
+    updatedAt: now
   };
+}
+
+export function upsertTrainingRun(run: TrainingRun): void {
+  labStore.update((state) => ({
+    ...state,
+    trainingRuns: [
+      {
+        ...run,
+        status: run.state
+      },
+      ...state.trainingRuns.filter((item) => item.id !== run.id)
+    ].slice(0, 32)
+  }));
+}
+
+export function updateTrainingRunRecord(runId: string, updater: (run: TrainingRun) => TrainingRun): void {
+  labStore.update((state) => ({
+    ...state,
+    trainingRuns: state.trainingRuns.map((run) => {
+      if (run.id !== runId) return run;
+      const next = updater(run);
+      return {
+        ...next,
+        status: next.state
+      };
+    })
+  }));
 }
 
 export function appendMemoryRecords(records: MemoryRecord[]): MemoryRecord[] {
@@ -149,11 +244,7 @@ export function savePromptVariantFromAgent(agentId: string, label: string): void
 
 export function queueTrainingRun(agentId: string, type: TrainingRunType, hypothesis: string, changes: string[]): void {
   const run = createTrainingRun(agentId, type, hypothesis, changes);
-
-  labStore.update((state) => ({
-    ...state,
-    trainingRuns: [run, ...state.trainingRuns].slice(0, 24)
-  }));
+  upsertTrainingRun(run);
 }
 
 export function compactMemoryBank(agentId: string): void {
@@ -220,5 +311,27 @@ export function appendDatasetBundle(bundle: TrainingDatasetBundle): void {
   labStore.update((state) => ({
     ...state,
     datasetBundles: [bundle, ...state.datasetBundles.filter((item) => item.id !== bundle.id)].slice(0, 48)
+  }));
+}
+
+export function registerModelArtifact(artifact: ModelArtifact): void {
+  labStore.update((state) => ({
+    ...state,
+    modelArtifacts: [artifact, ...state.modelArtifacts.filter((item) => item.id !== artifact.id)].slice(0, 32)
+  }));
+}
+
+export function setModelArtifactStatus(artifactId: string, status: ModelArtifact['status']): void {
+  labStore.update((state) => ({
+    ...state,
+    modelArtifacts: state.modelArtifacts.map((artifact) =>
+      artifact.id !== artifactId
+        ? artifact
+        : {
+            ...artifact,
+            status,
+            promotedAt: status === 'ACTIVE' ? Date.now() : artifact.promotedAt
+          }
+    )
   }));
 }

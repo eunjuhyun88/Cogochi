@@ -20,7 +20,21 @@ export type DataSourceKind = 'PRICE' | 'NEWS' | 'ONCHAIN' | 'SOCIAL' | 'USER_NOT
 export type ToolKind = 'RETRIEVER' | 'SUMMARIZER' | 'SCORER' | 'RISK_FILTER';
 export type MemoryKind = 'MATCH_SUMMARY' | 'FAILURE_CASE' | 'SUCCESS_CASE' | 'PLAYBOOK' | 'USER_NOTE';
 export type TrainingRunType = 'PROMPT_TUNE' | 'RETRIEVAL_TUNE' | 'MEMORY_COMPACT' | 'SFT' | 'LORA' | 'CPT';
-export type TrainingRunStatus = 'QUEUED' | 'RUNNING' | 'DONE' | 'FAILED';
+export type TrainingJobType = TrainingRunType;
+export type TrainingJobState =
+  | 'DRAFT'
+  | 'QUEUED'
+  | 'VALIDATING'
+  | 'READY'
+  | 'RUNNING'
+  | 'EVALUATING'
+  | 'PROMOTABLE'
+  | 'PROMOTED'
+  | 'REJECTED'
+  | 'FAILED'
+  | 'CANCELED';
+export type TrainingRunStatus = TrainingJobState;
+export type TrainingJobId = string;
 export type MatchMode = 'PVE_BENCHMARK' | 'GHOST_DUEL' | 'ASYNC_PVP';
 export type AgentConfidenceStyle = 'CONSERVATIVE' | 'BALANCED' | 'AGGRESSIVE';
 export type AgentHorizon = 'SCALP' | 'INTRADAY' | 'SWING';
@@ -148,6 +162,7 @@ export interface OwnedAgent {
   name: string;
   archetypeId: string;
   baseModelId: string;
+  activeArtifactId?: string;
   role: AgentRole;
   status: AgentStatus;
   level: number;
@@ -402,19 +417,91 @@ export interface TrainingDatasetBundle {
   createdAt: number;
 }
 
-export interface TrainingRun {
+export interface FineTuneJobPayload {
+  trainingJobId: string;
+  agentId: string;
+  baseModelId: string;
+  benchmarkPackId: string;
+  kind: 'SFT' | 'LORA';
+  trainSftExamples: SftTrainingExample[];
+  validSftExamples: SftTrainingExample[];
+  testSftExamples: SftTrainingExample[];
+  preferenceExamples: PreferenceTrainingExample[];
+  createdAt: number;
+}
+
+export interface FineTuneArtifactManifest {
+  artifactId: string;
+  agentId: string;
+  baseModelId: string;
+  trainingJobId: string;
+  benchmarkPackId: string;
+  kind: 'PROMPT_VARIANT' | 'SFT' | 'LORA';
+  formatVersion: string;
+  storageUri: string;
+  metrics: EvalMetrics;
+  config: {
+    provider: 'OLLAMA' | 'OPENAI_COMPAT' | 'LOCAL';
+    model: string;
+    epochs?: number;
+    learningRate?: number;
+    rank?: number;
+    alpha?: number;
+    batchSize?: number;
+  };
+  createdAt: number;
+}
+
+export interface ModelArtifact {
   id: string;
   agentId: string;
-  type: TrainingRunType;
+  baseModelId: string;
+  benchmarkPackId: string;
+  trainingJobId: string;
+  kind: 'PROMPT_VARIANT' | 'SFT' | 'LORA';
+  label: string;
+  storageUri: string;
+  status: 'CANDIDATE' | 'ACTIVE' | 'ROLLED_BACK';
+  metrics: EvalMetrics;
+  createdAt: number;
+  promotedAt?: number;
+}
+
+export interface TrainingRun {
+  id: TrainingJobId;
+  agentId: string;
+  type: TrainingJobType;
+  state: TrainingJobState;
   hypothesis: string;
+  requestedBy: 'PLAYER' | 'SYSTEM';
+  benchmarkPackId: string;
   changes: string[];
+  payload: Record<string, unknown>;
+  validationErrors: string[];
   beforeVersion: string;
   afterVersion: string;
   metricsBefore?: EvalMetrics;
   metricsAfter?: EvalMetrics;
+  resultArtifactId?: string;
+  resultMetrics?: EvalMetrics;
+  promotion?: PromotionCandidateComparison;
   status: TrainingRunStatus;
+  createdAt: number;
+  updatedAt: number;
   startedAt?: number;
   finishedAt?: number;
+}
+
+export type TrainingJob = TrainingRun;
+
+export interface TrainingJobResult {
+  ok: boolean;
+  state: TrainingJobState;
+  message: string;
+  artifactId?: string;
+  metrics?: EvalMetrics;
+  comparison?: PromotionCandidateComparison;
+  validationErrors?: string[];
 }
 
 export interface SquadRoleMap {
@@ -488,6 +575,23 @@ export interface EvalMetrics {
   totalScore: number;
 }
 
+export interface PromotionCandidateComparison {
+  benchmarkPackId: string;
+  baselineArtifactId?: string;
+  candidateArtifactId?: string;
+  passed: boolean;
+  reasons: string[];
+  deltas: {
+    total: number;
+    returnScore: number;
+    riskScore: number;
+    accuracyScore: number;
+    calibrationScore: number;
+    reasoningScore: number;
+    coordinationScore: number;
+  };
+}
+
 export interface ReflectionNote {
   id: string;
   agentId: string;
@@ -558,6 +662,7 @@ export interface LabState {
   trainingRuns: TrainingRun[];
   promptVariants: PromptVariant[];
   datasetBundles: TrainingDatasetBundle[];
+  modelArtifacts: ModelArtifact[];
 }
 
 export interface MatchState {

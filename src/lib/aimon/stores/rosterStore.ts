@@ -117,6 +117,8 @@ export function updateAgentConfiguration(
   agentId: string,
   patch: {
     baseModelId?: string;
+    activeArtifactId?: string;
+    status?: OwnedAgent['status'];
     loadout?: Partial<TrainingLoadout>;
     retrievalPolicy?: Partial<RetrievalPolicy>;
   }
@@ -125,6 +127,8 @@ export function updateAgentConfiguration(
     updateAgentById(state, agentId, (agent, now) => ({
       ...agent,
       baseModelId: patch.baseModelId ?? agent.baseModelId,
+      activeArtifactId: patch.activeArtifactId ?? agent.activeArtifactId,
+      status: patch.status ?? agent.status,
       loadout: {
         ...agent.loadout,
         ...patch.loadout,

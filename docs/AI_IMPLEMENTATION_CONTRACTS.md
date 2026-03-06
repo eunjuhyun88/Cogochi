@@ -274,6 +274,7 @@ export interface QueueTrainingJobInput {
   hypothesis: string;
   benchmarkPackId: string;
   payload: Record<string, unknown>;
+  changes?: string[];
 }
 
 export function queueTrainingJob(input: QueueTrainingJobInput): TrainingJobId;
@@ -302,7 +303,13 @@ import type {
   TrainingDatasetBundle
 } from '$lib/aimon/types';
 
-export function buildFineTuneBundle(bundle: TrainingDatasetBundle): FineTuneJobPayload;
+export function buildFineTuneBundle(
+  bundle: TrainingDatasetBundle,
+  agentId: string,
+  baseModelId: string,
+  trainingJobId: string,
+  kind: 'SFT' | 'LORA'
+): FineTuneJobPayload;
 export function runSftJob(payload: FineTuneJobPayload): Promise<FineTuneArtifactManifest>;
 export function runLoraJob(payload: FineTuneJobPayload): Promise<FineTuneArtifactManifest>;
 export function registerArtifact(manifest: FineTuneArtifactManifest): ModelArtifact;

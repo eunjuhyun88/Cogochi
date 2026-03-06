@@ -8,6 +8,7 @@ import type {
   EvalMetrics,
   EvalScenario,
   OwnedAgent,
+  PromotionCandidateComparison,
   ReflectionNote,
   RewardPacket
 } from '../types';
@@ -29,23 +30,6 @@ export interface BuildEvalMatchResultInput {
   reflectionsByAgent?: Record<string, ReflectionNote>;
   squadId?: string;
   createdAt?: number;
-}
-
-export interface PromotionCandidateComparison {
-  benchmarkPackId: string;
-  baselineArtifactId?: string;
-  candidateArtifactId?: string;
-  passed: boolean;
-  reasons: string[];
-  deltas: {
-    total: number;
-    returnScore: number;
-    riskScore: number;
-    accuracyScore: number;
-    calibrationScore: number;
-    reasoningScore: number;
-    coordinationScore: number;
-  };
 }
 
 function clamp(value: number, min = 0, max = 1): number {
