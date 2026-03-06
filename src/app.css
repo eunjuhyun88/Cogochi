@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-0: #040812;
+  --bg-1: #09111e;
+  --bg-2: #0f1b2f;
+  --panel-0: rgba(11, 18, 34, 0.88);
+  --panel-1: rgba(16, 27, 48, 0.88);
+  --line: rgba(255, 255, 255, 0.1);
+  --text-0: #eef4ff;
+  --text-1: #afc0de;
+  --text-2: #7386aa;
+  --cyan: #00e5ff;
+  --orange: #ff6b35;
+  --green: #00ff88;
+  --yellow: #ffd700;
+  --red: #ff3355;
+  --purple: #7b2fff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(0, 229, 255, 0.16), transparent 22%),
+    radial-gradient(circle at 85% 12%, rgba(123, 47, 255, 0.12), transparent 18%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1) 38%, var(--bg-2) 100%);
+  color: var(--text-0);
+  font-family: 'Rajdhani', sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at 50% 20%, black, transparent 82%);
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+}
+
+::selection {
+  background: rgba(0, 229, 255, 0.2);
+}

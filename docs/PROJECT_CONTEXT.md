@@ -1,0 +1,77 @@
+# Cogochi Project Context
+
+Last updated: 2026-03-06
+
+## Product Definition
+
+Cogochi is not a trading interface reskin.
+
+It is a creature-raising game built by extracting the battle shell feel from STOCKCLAW arena and rebuilding the product around:
+
+`owned agents -> roster -> training/retraining -> squad -> battle -> growth`
+
+The player fantasy is:
+
+- own individual AI agents
+- choose what they watch and how they learn
+- send them into battle against another squad
+- see who wins
+- grow, evolve, and refine the team
+
+## Current State
+
+Implemented:
+
+- standalone SvelteKit app under `Cogochi/`
+- Trainer Hub at `/`
+- Roster screen at `/roster`
+- Battle screen moved to `/battle`
+- Team Builder at `/team`
+- Lab screen at `/lab`
+- separate git repository initialized for this app
+
+Current limitation:
+
+- UI is roster-first, but data model is still prototype-level
+- `playerStore` still uses `unlockedDexIds`, `teamDexIds`, and global XP
+- real `OwnedAgent`, `rosterStore`, `squadStore`, and per-agent progression are not implemented yet
+
+## Important Files
+
+- `src/routes/+page.svelte`
+- `src/routes/roster/+page.svelte`
+- `src/routes/battle/+page.svelte`
+- `src/components/aimon/RosterGrid.svelte`
+- `src/components/aimon/AgentDetailPanel.svelte`
+- `src/lib/aimon/stores/playerStore.ts`
+- `src/lib/aimon/data/trainingProfiles.ts`
+
+## Design Priorities
+
+1. make the game feel like raising `my agents`, not selecting dex entries
+2. keep the arena battle readability from STOCKCLAW
+3. make training and retraining decisions affect battle outcomes
+4. move toward async PvP or opponent snapshots after the roster model is real
+
+## Next Engineering Steps
+
+1. Add domain types for:
+   - `OwnedAgent`
+   - `TrainingLoadout`
+   - `Squad`
+   - `OpponentSnapshot`
+   - `MatchResult`
+2. Split stores:
+   - `playerStore`
+   - `rosterStore`
+   - `squadStore`
+3. Replace global XP rewards with per-agent progression
+4. Connect battle results to growth, evolution, and retraining progress
+5. Add agent detail route like `/agent/[id]`
+
+## Validation
+
+Expected to pass after changes:
+
+- `npm run check`
+- `npm run build`
