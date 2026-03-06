@@ -1,4 +1,13 @@
-import type { AgentDecisionContext, BattleRetrievedMemory, DataSourceKind, EvalScenario, MarketState, OwnedAgent } from '../types';
+import type {
+  AgentContextPacket,
+  AgentDecisionContext,
+  BattleRetrievedMemory,
+  DataSourceBinding,
+  DataSourceKind,
+  EvalScenario,
+  MarketState,
+  OwnedAgent
+} from '../types';
 
 export function buildAgentDecisionContext(
   agent: OwnedAgent,
@@ -47,5 +56,51 @@ export function buildAgentDecisionContext(
     },
     retrievedMemories,
     squadNotes
+  };
+}
+
+export function buildAgentContextPacket(
+  agent: OwnedAgent,
+  decisionContext: AgentDecisionContext,
+  activeDataSources: DataSourceBinding[] = []
+): AgentContextPacket {
+  return {
+    agentId: agent.id,
+    agentName: agent.name,
+    role: agent.role,
+    baseModelId: agent.baseModelId,
+    scenario: {
+      scenarioId: decisionContext.scenario.id,
+      label: decisionContext.scenario.label,
+      symbol: decisionContext.market.symbol,
+      timeframe: decisionContext.market.timeframe,
+      objective: decisionContext.scenario.objective,
+      allowedDataKinds: decisionContext.allowedDataSourceKinds,
+      market: { ...decisionContext.market },
+      evidence: activeDataSources.map((source) => ({
+        kind: source.kind,
+        sourceId: source.id,
+        title: source.name,
+        summary: Object.entries(source.config)
+          .map(([key, value]) => `${key}:${String(value)}`)
+          .join(' · ') || 'configured source',
+        score: source.qualityScore
+      })),
+      generatedAt: Date.now()
+    },
+    policy: {
+      systemPrompt: agent.loadout.systemPrompt,
+      rolePrompt: agent.loadout.rolePrompt,
+      policyPrompt: agent.loadout.policyPrompt,
+      riskTolerance: agent.loadout.riskTolerance,
+      confidenceStyle: agent.loadout.confidenceStyle,
+      horizon: agent.loadout.horizon
+    },
+    activeDataKinds: decisionContext.activeDataSourceKinds,
+    disallowedDataKinds: decisionContext.disallowedDataSourceKinds,
+    activeToolIds: decisionContext.activeToolIds,
+    retrievedMemories: decisionContext.retrievedMemories,
+    squadNotes: decisionContext.squadNotes,
+    outputSchemaVersion: agent.loadout.outputSchemaVersion
   };
 }

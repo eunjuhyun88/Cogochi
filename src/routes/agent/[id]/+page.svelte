@@ -1073,7 +1073,7 @@
                     <strong>{row.result.outcome}</strong>
                     <span>{formatDate(row.result.createdAt)}</span>
                   </div>
-                  <p>{row.agentResult.reasoningSummary ?? row.result.lessons[0] ?? 'No lesson recorded.'}</p>
+                  <p>{row.agentResult.reflection?.lesson ?? row.agentResult.reasoningSummary ?? row.result.lessons[0] ?? 'No lesson recorded.'}</p>
                   <div class="metric-row">
                     <span>{row.agentResult.action}</span>
                     <span>Conf {formatPercent(row.agentResult.confidence)}</span>
@@ -1081,6 +1081,12 @@
                     <span>Bond +{row.agentResult.bondGain}</span>
                     <span>Total {formatPercent(row.result.teamMetrics.totalScore)}</span>
                   </div>
+                  <small>Dataset {row.result.datasetBundleId ?? 'pending'} · {createEvalScenario(row.result.scenarioId, row.result.createdAt).label}</small>
+                  {#if row.agentResult.failureMode}
+                    <div class="chips">
+                      <span>{row.agentResult.failureMode}</span>
+                    </div>
+                  {/if}
                   {#if row.agentResult.evidenceTitles && row.agentResult.evidenceTitles.length > 0}
                     <div class="chips">
                       {#each row.agentResult.evidenceTitles as title}

@@ -26,6 +26,23 @@ export type AgentConfidenceStyle = 'CONSERVATIVE' | 'BALANCED' | 'AGGRESSIVE';
 export type AgentHorizon = 'SCALP' | 'INTRADAY' | 'SWING';
 export type SquadTacticPreset = 'BALANCED' | 'TREND' | 'DEFENSIVE' | 'EXPERIMENTAL';
 export type RuntimeInferenceMode = 'HEURISTIC' | 'OLLAMA' | 'OPENAI_COMPAT';
+export type FailureMode =
+  | 'REGIME_MISMATCH'
+  | 'OVERCONFIDENCE'
+  | 'UNDERCONFIDENCE'
+  | 'LATE_ENTRY'
+  | 'EARLY_EXIT'
+  | 'RETRIEVAL_MISS'
+  | 'RETRIEVAL_NOISE'
+  | 'EVIDENCE_CONFLICT_IGNORED'
+  | 'RISK_GUARD_BREACH'
+  | 'TOOL_MISUSE'
+  | 'SQUAD_COORDINATION_BREAK'
+  | 'POLICY_DOCTRINE_VIOLATION'
+  | 'DATA_SCOPE_VIOLATION'
+  | 'JSON_SCHEMA_INVALID'
+  | 'PROVIDER_TIMEOUT'
+  | 'PROVIDER_EMPTY_OUTPUT';
 
 export interface AiMonStats {
   detection: number;
@@ -208,6 +225,34 @@ export interface BattleRetrievedMemory {
   score: number;
 }
 
+export interface ScenarioEvidenceItem {
+  kind: DataSourceKind;
+  sourceId: string;
+  title: string;
+  summary: string;
+  score?: number;
+}
+
+export interface ScenarioPacket {
+  scenarioId: string;
+  label: string;
+  symbol: string;
+  timeframe: string;
+  objective: string;
+  allowedDataKinds: DataSourceKind[];
+  market: {
+    regime: MarketRegime;
+    price: number;
+    priceChange5m: number;
+    volatility: number;
+    fearGreed: number;
+    fundingRate: number;
+    openInterestChange: number;
+  };
+  evidence: ScenarioEvidenceItem[];
+  generatedAt: number;
+}
+
 export interface BattleRetrievalFeedItem {
   ownedAgentId: string;
   agentName: string;
@@ -270,6 +315,28 @@ export interface AgentDecisionTrace {
   fallbackUsed?: boolean;
 }
 
+export interface AgentContextPacket {
+  agentId: string;
+  agentName: string;
+  role: AgentRole;
+  baseModelId: string;
+  scenario: ScenarioPacket;
+  policy: {
+    systemPrompt: string;
+    rolePrompt: string;
+    policyPrompt: string;
+    riskTolerance: number;
+    confidenceStyle: AgentConfidenceStyle;
+    horizon: AgentHorizon;
+  };
+  activeDataKinds: DataSourceKind[];
+  disallowedDataKinds: DataSourceKind[];
+  activeToolIds: string[];
+  retrievedMemories: BattleRetrievedMemory[];
+  squadNotes: string[];
+  outputSchemaVersion: string;
+}
+
 export interface RuntimeConfig {
   mode: RuntimeInferenceMode;
   baseUrl: string;
@@ -293,6 +360,45 @@ export interface PromptVariant {
   systemPrompt: string;
   rolePrompt: string;
   policyPrompt: string;
+  createdAt: number;
+}
+
+export interface SftTrainingExample {
+  id: string;
+  agentId: string;
+  scenarioId: string;
+  benchmarkPackId: string;
+  messages: Array<{
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+  }>;
+  qualityScore: number;
+  createdAt: number;
+}
+
+export interface PreferenceTrainingExample {
+  id: string;
+  agentId: string;
+  scenarioId: string;
+  benchmarkPackId: string;
+  prompt: string;
+  chosen: string;
+  rejected: string;
+  failureMode: FailureMode;
+  qualityScore: number;
+  createdAt: number;
+}
+
+export interface TrainingDatasetBundle {
+  id: string;
+  agentIds: string[];
+  benchmarkPackId: string;
+  sourceMatchId: string;
+  sftExamples: SftTrainingExample[];
+  preferenceExamples: PreferenceTrainingExample[];
+  trainIds: string[];
+  validIds: string[];
+  testIds: string[];
   createdAt: number;
 }
 
@@ -382,6 +488,20 @@ export interface EvalMetrics {
   totalScore: number;
 }
 
+export interface ReflectionNote {
+  id: string;
+  agentId: string;
+  scenarioId: string;
+  verdict: 'GOOD' | 'MIXED' | 'BAD';
+  failureMode: FailureMode | null;
+  lesson: string;
+  actionChange?: string;
+  confidenceDelta?: number;
+  retrievalDelta?: string;
+  promptDelta?: string;
+  createdAt: number;
+}
+
 export interface AgentEvalResult {
   agentId: string;
   action: AgentAction;
@@ -394,6 +514,8 @@ export interface AgentEvalResult {
   memoryWrites: MemoryRecord[];
   reasoningSummary?: string;
   evidenceTitles?: string[];
+  failureMode?: FailureMode | null;
+  reflection?: ReflectionNote;
 }
 
 export interface RewardPacket {
@@ -412,6 +534,9 @@ export interface EvalMatchResult {
   agentResults: AgentEvalResult[];
   rewards: RewardPacket;
   lessons: string[];
+  reflections?: ReflectionNote[];
+  contextPackets?: Record<string, AgentContextPacket>;
+  datasetBundleId?: string;
   createdAt: number;
 }
 
@@ -432,6 +557,7 @@ export interface LabState {
   memoryBanks: MemoryBank[];
   trainingRuns: TrainingRun[];
   promptVariants: PromptVariant[];
+  datasetBundles: TrainingDatasetBundle[];
 }
 
 export interface MatchState {

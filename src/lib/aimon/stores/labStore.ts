@@ -3,7 +3,7 @@ import { BASE_MODELS } from '../data/baseModels';
 import { createStarterAgents, createStarterMemoryBanks } from '../data/agentSeeds';
 import { DEFAULT_DATA_SOURCES, DEFAULT_TOOLS } from '../data/labCatalog';
 import { rosterStore } from './rosterStore';
-import type { BattleResult, EvalScenario, LabState, MemoryBank, MemoryRecord, PromptVariant, TrainingRun, TrainingRunType } from '../types';
+import type { LabState, MemoryBank, MemoryRecord, PromptVariant, TrainingDatasetBundle, TrainingRun, TrainingRunType } from '../types';
 
 const STORAGE_KEY = 'cogochi.lab.v2';
 
@@ -15,7 +15,8 @@ function defaultState(): LabState {
     tools: DEFAULT_TOOLS,
     memoryBanks: createStarterMemoryBanks(starterAgents),
     trainingRuns: [],
-    promptVariants: []
+    promptVariants: [],
+    datasetBundles: []
   };
 }
 
@@ -38,7 +39,8 @@ function loadState(): LabState {
       tools: Array.isArray(parsed?.tools) ? parsed.tools : DEFAULT_TOOLS,
       memoryBanks: normalizeMemoryBanks(parsed?.memoryBanks),
       trainingRuns: Array.isArray(parsed?.trainingRuns) ? parsed.trainingRuns : [],
-      promptVariants: Array.isArray(parsed?.promptVariants) ? parsed.promptVariants : []
+      promptVariants: Array.isArray(parsed?.promptVariants) ? parsed.promptVariants : [],
+      datasetBundles: Array.isArray(parsed?.datasetBundles) ? parsed.datasetBundles : []
     };
   } catch {
     return defaultState();
@@ -101,80 +103,38 @@ function createTrainingRun(agentId: string, type: TrainingRunType, hypothesis: s
   };
 }
 
-function createBattleMemory(
-  agentId: string,
-  result: BattleResult,
-  scenario: Pick<EvalScenario, 'id' | 'symbol' | 'timeframe'> | null,
-  regime: string,
-  titlePrefix: string,
-  role: MemoryRecord['role']
-): MemoryRecord {
-  const now = Date.now();
-
-  return {
-    id: `memory-record-${agentId}-${now}`,
-    agentId,
-    kind: result.outcome === 'WIN' ? 'SUCCESS_CASE' : result.outcome === 'LOSS' ? 'FAILURE_CASE' : 'MATCH_SUMMARY',
-    title: `${titlePrefix} ${result.outcome}`,
-    summary: result.note,
-    lesson:
-      result.outcome === 'WIN'
-        ? 'This setup aligned with the scenario and should be retained as a repeatable pattern.'
-        : result.outcome === 'LOSS'
-          ? 'The setup misread the scenario and should be reviewed before the next run.'
-          : 'The setup produced an inconclusive read and needs sharper evidence weighting.',
-    tags: ['legacy-battle', scenario?.id ?? 'ad-hoc', result.outcome.toLowerCase(), regime.toLowerCase()],
-    role,
-    regime,
-    symbol: scenario?.symbol ?? 'BTCUSDT',
-    timeframe: scenario?.timeframe ?? '15m',
-    sourceIds: ['ds-price-core'],
-    successScore: result.outcome === 'WIN' ? 0.8 : result.outcome === 'DRAW' ? 0.2 : -0.6,
-    importance: 0.6,
-    retrievalCount: 0,
-    createdAt: now
-  };
-}
-
-export function appendBattleMemories(
-  agentIds: string[],
-  result: BattleResult,
-  scenario: Pick<EvalScenario, 'id' | 'symbol' | 'timeframe'> | null,
-  regime: string
-): MemoryRecord[] {
-  const uniqueIds = [...new Set(agentIds)];
-  if (uniqueIds.length === 0) return [];
-  const createdRecords: MemoryRecord[] = [];
+export function appendMemoryRecords(records: MemoryRecord[]): MemoryRecord[] {
+  if (records.length === 0) return [];
 
   labStore.update((state) => {
     const rosterAgents = get(rosterStore).agents;
     let next = state;
 
-    for (const agentId of uniqueIds) {
-      const agent = rosterAgents.find((item) => item.id === agentId);
+    for (const record of records) {
+      const agent = rosterAgents.find((item) => item.id === record.agentId);
       if (!agent) continue;
       next = ensureMemoryBank(next, agent.id, agent.memoryBankId);
     }
 
-    const memoryBanks = next.memoryBanks.map((bank) => {
-      if (!uniqueIds.includes(bank.agentId)) return bank;
-      const agent = rosterAgents.find((item) => item.id === bank.agentId);
-      const record = createBattleMemory(bank.agentId, result, scenario, regime, agent?.name ?? 'Agent', agent?.role ?? 'ANALYST');
-      createdRecords.push(record);
-
-      return {
-        ...bank,
-        records: [record, ...bank.records].slice(0, bank.capacity)
-      };
-    });
+    const grouped = records.reduce<Record<string, MemoryRecord[]>>((acc, record) => {
+      acc[record.agentId] = [...(acc[record.agentId] ?? []), record];
+      return acc;
+    }, {});
 
     return {
       ...next,
-      memoryBanks
+      memoryBanks: next.memoryBanks.map((bank) =>
+        grouped[bank.agentId]
+          ? {
+              ...bank,
+              records: [...grouped[bank.agentId], ...bank.records].slice(0, bank.capacity)
+            }
+          : bank
+      )
     };
   });
 
-  return createdRecords;
+  return records;
 }
 
 export function savePromptVariantFromAgent(agentId: string, label: string): void {
@@ -254,4 +214,11 @@ export function addUserNoteMemory(agentId: string, title: string, lesson: string
       )
     };
   });
+}
+
+export function appendDatasetBundle(bundle: TrainingDatasetBundle): void {
+  labStore.update((state) => ({
+    ...state,
+    datasetBundles: [bundle, ...state.datasetBundles.filter((item) => item.id !== bundle.id)].slice(0, 48)
+  }));
 }

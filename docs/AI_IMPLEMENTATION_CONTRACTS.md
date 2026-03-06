@@ -211,6 +211,7 @@ export function scoreMemoryHybrid(
 Purpose:
 
 - convert matches and reflections into trainable examples
+- emit one match-level dataset bundle containing per-agent examples
 
 ```ts
 import type {
@@ -453,8 +454,9 @@ export interface PreferenceTrainingExample {
 
 export interface TrainingDatasetBundle {
   id: string;
-  agentId: string;
+  agentIds: string[];
   benchmarkPackId: string;
+  sourceMatchId: string;
   sftExamples: SftTrainingExample[];
   preferenceExamples: PreferenceTrainingExample[];
   trainIds: string[];

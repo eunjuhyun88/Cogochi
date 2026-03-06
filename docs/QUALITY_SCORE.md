@@ -20,8 +20,8 @@ This file tracks repo readability and agent-operability, not just user-facing po
 | Repo entrypoint clarity | B | `AGENTS.md` and docs index added, but code-level doc drift still possible |
 | Plan hygiene | C | Plan directories and tracker are added, but active plan inventory is still sparse |
 | Mechanical context validation | B | `check-context-docs.mjs` added, but it only validates structure, not freshness |
-| Eval reliability discipline | B | Reliability policy exists, but runtime manifests are not yet emitted in code |
-| Artifact lineage and promotion rigor | C | Contracts exist, implementation is pending |
+| Eval reliability discipline | B | Reliability policy exists and eval/reflection services are separated, but runtime manifests are not yet emitted |
+| Artifact lineage and promotion rigor | B | Contracts exist, eval/reflection services and dataset bundle capture are in code, artifact registry is still pending |
 | Async PvP snapshot readiness | C | Storage model is designed, implementation is pending |
 
 ## Next Upgrades

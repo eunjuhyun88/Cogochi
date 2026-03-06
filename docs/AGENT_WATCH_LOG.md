@@ -224,3 +224,60 @@ Purpose: Cogochi 작업 중복을 막고, 작업 전/후 실제 변경 이력을
   - local commit `8427797` created
   - pushed to `origin/main`
 - Status: DONE
+
+---
+
+### W-20260307-0115-cogochi-codex
+
+- Start (KST): 2026-03-07 01:15
+- End (KST): 2026-03-07 01:30
+- Branch: `main`
+- Scope (planned):
+  - eval/reflection 로직을 store에서 서비스로 분리
+  - execution plan 기준으로 battle -> eval -> reflection -> memory writeback 흐름 정리
+- Overlap check (before work):
+  - 직전 context-engineering 정리 이후 동일 repo 내부 AI runtime 작업만 ادامه
+  - 기존 UI와 runtime adapter는 유지하고 scoring/writeback 경계만 이동
+- Changes (actual):
+  - `src/lib/aimon/services/evalService.ts` 추가
+  - `src/lib/aimon/services/reflectionService.ts` 추가
+  - `src/lib/aimon/types.ts`에 `FailureMode`, `ReflectionNote` 추가
+  - `matchStore.ts`에서 inline scoring 제거, `recordEvalMatchResult`로 단순화
+  - `labStore.ts`에서 battle memory 생성 제거, `appendMemoryRecords`로 변경
+  - `battleStore.ts`를 `draft eval -> reflection -> durable memory -> final match result` 흐름으로 리와이어
+  - `/agent/[id]`, `/lab`에서 reflection lesson과 failure mode 표시 보강
+  - 실행 계획을 `docs/exec-plans/completed/2026-03-07-eval-reflection-services.md`로 완료 처리
+  - `npm run check`, `npm run build` 통과
+- Diff vs plan:
+  - reward packet 적용은 기존 `playerStore`/`rosterStore` 함수와의 호환성을 위해 이번 단계에서는 유지
+- Commit / Push:
+  - pending
+- Status: DONE
+
+---
+
+### W-20260307-0140-cogochi-codex
+
+- Start (KST): 2026-03-07 01:40
+- End (KST): 2026-03-07 02:05
+- Branch: `main`
+- Scope (planned):
+  - eval 결과를 SFT/preference dataset bundle로 변환하는 `datasetBuilder` 구현
+  - battle 종료 시 `contextPackets`와 `datasetBundleId`를 match history에 연결
+  - `labStore`에 dataset bundle 영속화 및 랩 UI 표시 추가
+- Overlap check (before work):
+  - 직전 eval/reflection 분리 작업과 동일한 agent-sim 범위
+  - 기존 local 미커밋 변경은 모두 같은 AIMON runtime 흐름 연장선으로 판단
+- Changes (actual):
+  - `src/lib/aimon/services/datasetBuilder.ts` 추가
+  - `TrainingDatasetBundle`를 match-level bundle + `agentIds`/`sourceMatchId` 구조로 정리
+  - `battleStore.ts`에서 `contextPackets` 생성 후 dataset bundle 저장 및 `datasetBundleId`를 eval result에 기록
+  - `labStore.ts`에 `datasetBundles` persistence 추가
+  - `/lab`, `/agent/[id]`에 dataset bundle 상태와 match 연결 표시 추가
+  - `docs/AI_IMPLEMENTATION_CONTRACTS.md`, 실행 계획, 품질표, tech debt tracker 갱신
+  - `npm run check`, `npm run build` 통과
+- Diff vs plan:
+  - bundle은 per-agent가 아니라 per-match 구조로 잡아 `matchResult.datasetBundleId` 단일 참조를 유지
+- Commit / Push:
+  - pending
+- Status: DONE

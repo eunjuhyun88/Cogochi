@@ -27,6 +27,7 @@
   );
   let queuedRuns = $derived(lab.trainingRuns.slice(0, 6));
   let promptVariants = $derived(lab.promptVariants.slice(0, 8));
+  let recentDatasetBundles = $derived(lab.datasetBundles.slice(0, 5));
   let doctrineCount = $derived(
     lab.memoryBanks.reduce((sum, bank) => sum + bank.records.filter((record) => record.kind === 'USER_NOTE').length, 0)
   );
@@ -89,7 +90,7 @@
       <div class="summary-card">
         <span>Queued Runs</span>
         <strong>{lab.trainingRuns.length}</strong>
-        <small>{promptVariants.length} prompt variants saved</small>
+        <small>{lab.datasetBundles.length} dataset bundles · {promptVariants.length} prompt variants</small>
       </div>
     </PokemonFrame>
 
@@ -215,9 +216,9 @@
                   <strong>{match.outcome}</strong>
                   <span>{formatDate(match.createdAt)}</span>
                 </div>
-                <p>{match.lessons[0] ?? 'No lesson recorded.'}</p>
+                <p>{match.reflections?.[0]?.lesson ?? match.lessons[0] ?? 'No lesson recorded.'}</p>
                 <small>
-                  {createEvalScenario(match.scenarioId, match.createdAt).label} · {match.agentResults.map((result) => `${roster.agents.find((agent) => agent.id === result.agentId)?.name ?? 'Agent'}:${result.action}`).join(' / ')}
+                  {createEvalScenario(match.scenarioId, match.createdAt).label} · dataset {match.datasetBundleId ?? 'pending'} · {match.agentResults.map((result) => `${roster.agents.find((agent) => agent.id === result.agentId)?.name ?? 'Agent'}:${result.action}`).join(' / ')}
                 </small>
               </article>
             {/each}
@@ -239,8 +240,25 @@
           <span>Data Sources</span><strong>{lab.dataSources.length}</strong>
           <span>Tools</span><strong>{lab.tools.length}</strong>
           <span>Memory Banks</span><strong>{lab.memoryBanks.length}</strong>
+          <span>Dataset Bundles</span><strong>{lab.datasetBundles.length}</strong>
           <span>Prompt Variants</span><strong>{lab.promptVariants.length}</strong>
           <span>Training Runs</span><strong>{lab.trainingRuns.length}</strong>
+        </div>
+        <div class="list compact-list">
+          {#if recentDatasetBundles.length > 0}
+            {#each recentDatasetBundles as bundle (bundle.id)}
+              <article class="list-card compact">
+                <div class="list-head">
+                  <strong>{bundle.benchmarkPackId}</strong>
+                  <span>{formatDate(bundle.createdAt)}</span>
+                </div>
+                <p>{bundle.sftExamples.length} SFT · {bundle.preferenceExamples.length} preference · {bundle.agentIds.length} agents</p>
+                <small>{bundle.sourceMatchId}</small>
+              </article>
+            {/each}
+          {:else}
+            <p class="empty-copy">No dataset bundles captured yet.</p>
+          {/if}
         </div>
         <div class="chip-row">
           {#each lab.dataSources as source (source.id)}
@@ -371,6 +389,15 @@
     border-radius: 18px;
     border: 1px solid rgba(255,255,255,0.08);
     background: rgba(255,255,255,0.03);
+  }
+
+  .compact-list {
+    margin-top: 8px;
+  }
+
+  .list-card.compact {
+    gap: 6px;
+    padding: 12px;
   }
 
   .panel-section {

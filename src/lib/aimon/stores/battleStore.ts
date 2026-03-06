@@ -1,16 +1,19 @@
 import { get, writable } from 'svelte/store';
 import { createEvalScenario } from '../data/evalScenarios';
 import { advanceBattleState, applyFocusTap, createInitialBattleState } from '../engine/battleEngine';
-import { buildAgentDecisionContext } from '../services/contextAssembler';
+import { buildAgentContextPacket, buildAgentDecisionContext } from '../services/contextAssembler';
+import { buildDatasetFromEval } from '../services/datasetBuilder';
+import { buildEvalMatchResult } from '../services/evalService';
 import { retrieveRelevantMemories } from '../services/memoryService';
 import { runAgentDecision } from '../services/modelProvider';
+import { buildBattleReflections } from '../services/reflectionService';
 import { applyBattleRewards } from './playerStore';
 import { applyBattleRewardsToRoster, rosterStore } from './rosterStore';
 import { runtimeStore } from './runtimeStore';
 import { squadStore } from './squadStore';
-import { appendBattleMemories, labStore } from './labStore';
-import { beginLegacyMatch, matchStore, recordLegacyBattleResult, syncMatchPhase } from './matchStore';
-import type { BattleState, OwnedAgent } from '../types';
+import { appendDatasetBundle, appendMemoryRecords, labStore } from './labStore';
+import { beginLegacyMatch, matchStore, recordEvalMatchResult, syncMatchPhase } from './matchStore';
+import type { AgentContextPacket, BattleState, EvalScenario, OwnedAgent, SquadTacticPreset } from '../types';
 
 let timer: ReturnType<typeof setInterval> | null = null;
 
@@ -35,6 +38,36 @@ export const battleStore = writable<BattleState>(buildState());
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function buildContextPackets(
+  state: BattleState,
+  agents: OwnedAgent[],
+  scenario: EvalScenario,
+  tacticPreset: SquadTacticPreset
+): Record<string, AgentContextPacket> {
+  const lab = get(labStore);
+  const squadLabels = agents.map((agent) => `${agent.role}:${agent.name}`);
+
+  return agents.reduce<Record<string, AgentContextPacket>>((acc, agent) => {
+    const instance = state.playerTeam.find((item) => item.ownedAgentId === agent.id);
+    if (!instance) return acc;
+
+    const activeDataSources = lab.dataSources.filter((source) => agent.loadout.enabledDataSourceIds.includes(source.id));
+    const activeDataSourceKinds = activeDataSources.map((source) => source.kind);
+    const decisionContext = buildAgentDecisionContext(
+      agent,
+      state.market,
+      instance.retrievedMemories,
+      squadLabels.filter((label) => label !== `${agent.role}:${agent.name}`),
+      tacticPreset,
+      scenario,
+      activeDataSourceKinds
+    );
+
+    acc[agent.id] = buildAgentContextPacket(agent, decisionContext, activeDataSources);
+    return acc;
+  }, {});
 }
 
 function hydrateBattleIntel(state: BattleState): BattleState {
@@ -227,24 +260,60 @@ export async function startBattle(): Promise<void> {
       syncMatchPhase(next.phase);
       if (next.result && !next.rewardsApplied) {
         const rosterAgents = get(rosterStore).agents;
-        const activeScenario = get(matchStore).activeScenario;
+        const activeScenario = get(matchStore).activeScenario ?? createEvalScenario(get(matchStore).selectedScenarioId);
+        const activeSquad = get(squadStore).activeSquad;
         const activeAgents = next.playerTeam
           .map((instance) => rosterAgents.find((agent) => agent.id === instance.ownedAgentId))
           .filter((agent): agent is OwnedAgent => Boolean(agent));
         const activeAgentIds = activeAgents.map((agent) => agent.id);
-
-        applyBattleRewards(next.result);
-        applyBattleRewardsToRoster(activeAgentIds, next.result);
-        const writtenRecords = appendBattleMemories(activeAgentIds, next.result, activeScenario, next.market.regime);
-        const memoryWritesByAgent = writtenRecords.reduce<Record<string, typeof writtenRecords>>((acc, record) => {
-          acc[record.agentId] = [...(acc[record.agentId] ?? []), record];
-          return acc;
-        }, {});
         const decisionTracesByAgent = next.decisionFeed.reduce<Record<string, (typeof next.decisionFeed)[number]>>((acc, trace) => {
           acc[trace.ownedAgentId] = trace;
           return acc;
         }, {});
-        recordLegacyBattleResult(next.result, activeAgents, memoryWritesByAgent, decisionTracesByAgent);
+
+        applyBattleRewards(next.result);
+        applyBattleRewardsToRoster(activeAgentIds, next.result);
+        const draftMatchResult = buildEvalMatchResult({
+          scenario: activeScenario,
+          battleResult: next.result,
+          agents: activeAgents,
+          decisionTracesByAgent,
+          squadId: activeSquad.id
+        });
+        const reflectionOutputs = buildBattleReflections(
+          activeScenario,
+          next.result,
+          activeAgents,
+          draftMatchResult.agentResults,
+          decisionTracesByAgent,
+          draftMatchResult.createdAt
+        );
+        const reflectionsByAgent = Object.fromEntries(
+          Object.entries(reflectionOutputs).map(([agentId, output]) => [agentId, output.note])
+        );
+        const writtenRecords = appendMemoryRecords(Object.values(reflectionOutputs).map((output) => output.durableMemory));
+        const memoryWritesByAgent = writtenRecords.reduce<Record<string, typeof writtenRecords>>((acc, record) => {
+          acc[record.agentId] = [...(acc[record.agentId] ?? []), record];
+          return acc;
+        }, {});
+        const finalMatchResult = buildEvalMatchResult({
+          scenario: activeScenario,
+          battleResult: next.result,
+          agents: activeAgents,
+          decisionTracesByAgent,
+          memoryWritesByAgent,
+          reflectionsByAgent,
+          squadId: activeSquad.id,
+          createdAt: draftMatchResult.createdAt
+        });
+        const contextPackets = buildContextPackets(next, activeAgents, activeScenario, activeSquad.tacticPreset);
+        const datasetBundle = buildDatasetFromEval(finalMatchResult, contextPackets, reflectionsByAgent);
+        appendDatasetBundle(datasetBundle);
+        recordEvalMatchResult({
+          ...finalMatchResult,
+          contextPackets,
+          datasetBundleId: datasetBundle.id
+        });
         return { ...next, rewardsApplied: true };
       }
       if (!next.running) clearTimer();
