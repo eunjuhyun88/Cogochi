@@ -44,3 +44,27 @@ Purpose: Cogochi 작업 중복을 막고, 작업 전/후 실제 변경 이력을
   - local commit `35a9c75` created
   - remote push pending
 - Status: DONE
+
+---
+
+### W-20260306-2111-cogochi-codex
+
+- Start (KST): 2026-03-06 21:11
+- End (KST): 2026-03-06 21:11
+- Branch: `main`
+- Scope (planned):
+  - root `CLAUDE.md`의 컨텍스트 관리 규칙을 Cogochi repo 내부에 이식
+  - repo-local watch log / agent-context 자리 생성
+- Overlap check (before work):
+  - standalone Cogochi repo 내부 문서만 수정
+  - 앱 코드와 전투 로직은 건드리지 않음
+- Changes (actual):
+  - `CLAUDE.md`에 작업 시작 전 / Git-Sync 운영 규칙 / Context Engineering 규칙 추가
+  - `.agent-context/README.md` 추가
+  - `docs/AGENT_WATCH_LOG.md` 신설
+- Diff vs plan:
+  - 없음
+- Commit / Push:
+  - local commit `61498fb` created
+  - remote push pending
+- Status: DONE
