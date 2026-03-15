@@ -1,0 +1,6 @@
+{
+  "id": "nightly-memory-distill",
+  "prompt": "runtime/prompts/nightly-memory-distill.md",
+  "command": "npm run runtime:distill",
+  "output": "runtime/generated/nightly-distill-report.md"
+}

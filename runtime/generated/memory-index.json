@@ -1,0 +1,629 @@
+{
+  "count": 78,
+  "entries": [
+    {
+      "id": "src-lib-services-memory-claude-md-1",
+      "source": "src/lib/services/memory/CLAUDE.md",
+      "label": "Memory guardrails",
+      "tierHint": "M0",
+      "heading": "Memory Service Guardrails",
+      "preview": "This directory is the memory and writeback boundary."
+    },
+    {
+      "id": "src-lib-services-memory-claude-md-2",
+      "source": "src/lib/services/memory/CLAUDE.md",
+      "label": "Memory guardrails",
+      "tierHint": "M0",
+      "heading": "Owns",
+      "preview": "- agent memory writeback - reflection artifact persistence - memory shaping and retrieval preparation - tier assignment across `M0`, `M30`, `M90`, and `M365` - source attribution across `SEED`, `TRAINING`, `BATTLE`, and `DISTILL`"
+    },
+    {
+      "id": "src-lib-services-memory-claude-md-3",
+      "source": "src/lib/services/memory/CLAUDE.md",
+      "label": "Memory guardrails",
+      "tierHint": "M0",
+      "heading": "Must Not Do",
+      "preview": "- treat runtime memory as primary product truth - ingest current market data into RAG in ways that contaminate evaluation - overwrite agent history without an explicit writeback rule - decide battle results"
+    },
+    {
+      "id": "src-lib-services-memory-claude-md-4",
+      "source": "src/lib/services/memory/CLAUDE.md",
+      "label": "Memory guardrails",
+      "tierHint": "M0",
+      "heading": "Required Invariants",
+      "preview": "- memory is supportive context, never final authority - writeback must be attributable to a battle, training, or reflection event - retrieval should improve explanation and continuity, not change immutable market facts - raw market input and reflected interpretation must"
+    },
+    {
+      "id": "src-lib-services-memory-claude-md-5",
+      "source": "src/lib/services/memory/CLAUDE.md",
+      "label": "Memory guardrails",
+      "tierHint": "M0",
+      "heading": "If You Change This Layer",
+      "preview": "Re-check: 1. RAG contamination risk 2. writeback attribution 3. boundary between memory, evaluation, and battle resolution"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-1",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "Cogochi Founder Goal",
+      "preview": "Last updated: 2026-03-12"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-2",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "Current Goal",
+      "preview": "Build the first `Pokemon-grade alpha` of Cogochi where the player can move through a chart-native world with a four-agent squad, reach a clash quickly, choose one clear encounter action, resolve a mutation verdict, see the creature visibly change or destabilize,"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-3",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "Product Definition",
+      "preview": "The product the founder wants is: - a game about creating `my own AI agent` - a system where my chart habits, rules, indicators, scripts, and playbooks shape that agent - a game where I travel with that squad instead"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-4",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "1. Owned Agent Creation",
+      "preview": "The player can create or select an owned agent built on top of an OpenClaw starter runtime or deterministic fallback."
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-5",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "2. Personal Training Knobs",
+      "preview": "The player can change at least these knobs: - doctrine or prompt framing - indicator profile - script profile - memory set - risk style"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-6",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "3. Memory And RAG Loop",
+      "preview": "The agent can retrieve: - prior failure cases - prior success cases - user-authored notes - playbook fragments Current market state must stay direct input, not RAG."
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-7",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "4. Visible Growth And Keepsakes",
+      "preview": "The player can see at least one visible change caused by training or battle history: - stance or sprite state shift - accessory, aura, or role mark - lesson ribbon, badge, or keepsake - named growth state such as `Fresh`,"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-8",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "4.5 Mutation And Trust Loop",
+      "preview": "The player can inspect: - the current weak link - the currently trusted instincts or voices - accepted versus reverted mutations - at least one proven historical frame attached to the current build"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-9",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "5. Deterministic Evaluation",
+      "preview": "The player can send the agent into a fixed historical chart scenario and get: - what the agent saw - what memory it used - why it made the decision - how that decision performed"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-10",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "5.5 Field Travel Loop",
+      "preview": "The player can: - move through a compact top-down chart world - see the active squad as a travel party - enter battle from a gate in the world - return from battle with updated squad state"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-11",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "6. Comparison Loop",
+      "preview": "After changing one or more training knobs, the player can rerun evaluation and compare: - before vs after - what changed - why the capability changed"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-12",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "7. Care Loop",
+      "preview": "After a failed run or stale state, the player gets one meaningful next maintenance action such as: - curate memory - rewrite doctrine - spar a safer scenario - repair squad fit"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-13",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "What Counts As Done For This Phase",
+      "preview": "This phase is complete when one player can: 1. spawn into a field or camp surface and understand the next goal within `10 seconds` 2. reach the first meaningful clash within `2 minutes` 3. move with a visible four-agent squad"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-14",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "Hard Constraints",
+      "preview": "- Cogochi remains a judgment RPG, not a chart terminal - the chart remains the battlefield - battle remains deterministic - current market data does not contaminate RAG evaluation - OpenClaw may enrich the loop, but deterministic fallback must exist"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-15",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "What Not To Optimize",
+      "preview": "Do not optimize for these at the expense of the founder goal: - raw battle spectacle - idle pet affection loops - fake PnL theater - model cleverness with no explainability - win rate improvements that make the agent less"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-founder-goal-20260312-md-16",
+      "source": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tierHint": "M365",
+      "heading": "Tie-Break Rules",
+      "preview": "When tradeoffs conflict: 1. choose world-first loop closure over local metric improvement 2. choose explainable improvement over opaque improvement 3. choose visible growth plus battle proof over hidden power gain 4. choose route-and-encounter readability over menu convenience 5. choose return-pressure"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-1",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Atlas Judgment Evolution",
+      "preview": "- Status: proposed - Last updated: 2026-03-12 - Scope: evolutionary agent architecture, trust model, mutation loop, battle-proof model - Depends on: `CLAUDE.md`, `docs/AGENT_SYSTEM_DESIGN.md`, `docs/BATTLEFIELD_DESIGN.md`, `docs/design-docs/judgment-tamagotchi-loop.md`"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-2",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Purpose",
+      "preview": "This document translates the useful parts of the `atlas-gic` pattern into Cogochi without turning the product into a hedge-fund simulator. What Cogochi should borrow: - prompt and policy evolution - trust weights that get louder or quieter from evidence -"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-3",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Applicability Verdict",
+      "preview": "Yes, the pattern applies if it is translated this way: - `prompt weights` -> doctrine, indicator, script, retrieval, and risk genes - `rolling Sharpe` -> rolling composite judgment score on fixed historical proof packs - `worst agent rewrite` -> weakest"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-4",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Core Translation",
+      "preview": "Atlas has a multi-layer debate stack. Cogochi should keep the same principle, but hide most of that complexity behind four visible companions. The product-facing read should be: `4 visible companions -> internal judgment council debates -> one mutation candidate ->"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-5",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Layer 0. Visible Squad",
+      "preview": "The player still owns four visible companions: - `Scout` - `Analyst` - `Risk` - `Executor` These are the creatures the player raises, names, and moves on the chart battlefield."
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-6",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Layer 1. Role Synthesizers",
+      "preview": "Each visible companion is backed by one role synthesizer that combines lower-level voices into a role-specific action tendency. - `Scout Synthesizer` - `Analyst Synthesizer` - `Risk Synthesizer` - `Executor Synthesizer` These are not separate creatures on the roster. They are"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-7",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Layer 2. Specialist Voice Lattice",
+      "preview": "The internal council should be extensible to `25` voices, but v1 does not need to ship all of them live. Recommended target lattice: | Group | Voices | Count | | --- | --- | ---: | | Structure |"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-8",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Layer 3. Squad Captain",
+      "preview": "This is the equivalent of the orchestration or CIO layer from Atlas. Its job is to: - weight role outputs - resolve disagreements - decide which live command should be favored - expose the final explanation to the player This"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-9",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "V1 Runtime Shape",
+      "preview": "V1 should ship a reduced internal council while keeping the same architecture. Recommended v1 active voices: - structure reader - breakout reader - liquidity trap reader - volatility reader - doctrine checker - memory retriever - risk veto critic -"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-10",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Voice",
+      "preview": "A bounded specialist or synthesizer. Required fields: - `id` - `kind` - `roleAffinity` - `promptGene` - `scriptGene` - `indicatorGene` - `retrievalGene` - `riskGene` - `trustWeight` - `rollingJudgmentScore`"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-11",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Mutation Proposal",
+      "preview": "One targeted change against one weak node. Allowed mutation units: - prompt clause rewrite - doctrine law rewrite - indicator binding swap - script binding swap - retrieval priority change - risk threshold change - coordination rule change Each proposal"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-12",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Mutation Decision",
+      "preview": "Every proposal ends in: - `accepted` - `reverted` - `quarantined` `accepted` means it beat the baseline on the proof pack. `reverted` means it underperformed and is rolled back. `quarantined` means the result was ambiguous and should not write to the"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-13",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Proven Frame",
+      "preview": "A named historical chart frame where the current build has been tested. Examples: - `China Crackdown Flush` - `FTX Collapse Flush` - `ETF Headline Whipsaw` These are what make the creature feel battle-tested instead of cosmetically leveled."
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-14",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Loss Function",
+      "preview": "Do not use Sharpe as the primary loss. Cogochi should use a rolling composite judgment score per voice, per role, and per squad. Recommended proof-pack score: | Component | Weight | | --- | ---: | | scenario outcome accuracy"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-15",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Trust Weights",
+      "preview": "Cogochi should adopt Darwinian trust weights, but make them player-readable. Rules: - top-quartile voices get louder - bottom-quartile voices get quieter - no voice can be fully silenced without human review - trust shifts must be visible as squad identity,"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-16",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "1. Debate",
+      "preview": "The council reads: - fixed historical frame - current doctrine - current indicator and script loadout - allowed memories Each voice emits: - thesis - confidence - supporting evidence - risk objection if relevant"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-17",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "2. Role Synthesis",
+      "preview": "Role synths combine the relevant voices into role outputs: - scout discovery - analyst read - risk veto - executor timing"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-18",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "3. Captain Decision",
+      "preview": "The squad captain turns weighted role outputs into: - favored battle command - action confidence - explanation trace"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-19",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "4. Evaluation",
+      "preview": "The proof pack scores: - result quality - explanation quality - coordination quality"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-20",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "5. Mutation Candidate Selection",
+      "preview": "The lowest-value voice is selected by: - weak rolling judgment score - low contribution to successful outcomes - repeated contradiction or noise"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-21",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "6. Mutation Proposal",
+      "preview": "One gene changes. Never mutate several genes at once in the same accept or revert cycle."
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-22",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "7. Keep Or Revert",
+      "preview": "Run the same proof pack plus at least one adjacent scenario. - if better and stable -> keep - if worse -> revert - if unstable -> quarantine"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-23",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "8. Visible Writeback",
+      "preview": "Accepted changes can mint: - trust badge changes - visible accessory change - evolution log entry - proven frame badge - new care state if the change introduced drift"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-24",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Visible Expression Of Learning",
+      "preview": "AI learning must show up in four places at once."
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-25",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "1. Body",
+      "preview": "Accepted mutation categories map to visible changes: - doctrine clarity -> antenna glyph, scroll, halo line - memory mastery -> archive badge, satchel, memory sigil - risk discipline -> shield crest, grounded stance, caution stripe - execution tempo -> scarf,"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-26",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "2. Battle",
+      "preview": "The battle route should answer: - which internal voice dominated - which voices disagreed - why the captain chose this command - which proven frame influenced the call"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-27",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "3. Journal",
+      "preview": "The player should see: - accepted mutations - reverted mutations - current weak link - trusted voices - recent proven frames"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-28",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "4. Field Presence",
+      "preview": "The squad on `/field` should show: - stable role identity - one or more accepted mutation overlays - mood and certainty changes after recent wins or failures"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-29",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "User-Facing Nouns",
+      "preview": "Avoid pure ML language in the UI. Use: - `voice` - `instinct` - `lesson` - `mutation` - `trust` - `proven frame` - `weak link` - `captain call` Avoid exposing raw internal nouns such as: - token logit - policy weight"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-30",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Battle Proof Rules",
+      "preview": "An agent is only considered meaningfully evolved if all three are true: 1. at least one accepted mutation exists 2. the accepted mutation has a matching proven frame 3. the battle explanation can point to the mutation and frame in"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-31",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Autoresearch Implications",
+      "preview": "Cogochi autoresearch should optimize these questions: 1. can the player tell which internal voices are trusted? 2. can the system identify the weak link? 3. can one gene be mutated at a time? 4. can the same proof pack keep"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-32",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Non-Goals",
+      "preview": "- live hedge-fund deployment as the game loop - pure Sharpe leaderboard gameplay - hidden agent optimization with no UI meaning - random evolution trees disconnected from historical proof - replacing the four-companion party fantasy with twenty-five visible widgets"
+    },
+    {
+      "id": "docs-design-docs-atlas-judgment-evolution-md-33",
+      "source": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tierHint": "M90",
+      "heading": "Acceptance Questions",
+      "preview": "The architecture is on target only if the answer trends toward `yes`: 1. Can the player name the current weak link in their squad brain? 2. Can the player see which voice got louder or quieter after recent proofs? 3."
+    },
+    {
+      "id": "docs-design-docs-cogochi-memento-runtime-architecture-20260315-md-1",
+      "source": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tierHint": "M365",
+      "heading": "Cogochi Memento Runtime Architecture",
+      "preview": "Last updated: 2026-03-15"
+    },
+    {
+      "id": "docs-design-docs-cogochi-memento-runtime-architecture-20260315-md-2",
+      "source": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tierHint": "M365",
+      "heading": "Purpose",
+      "preview": "Apply the `memento-kit` layer model to Cogochi without breaking the game's existing product truth. The goal is not to bolt on a generic AI memory system. The goal is to separate: - project truth - owned-agent memory writeback - runtime"
+    },
+    {
+      "id": "docs-design-docs-cogochi-memento-runtime-architecture-20260315-md-3",
+      "source": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tierHint": "M365",
+      "heading": "1. Core",
+      "preview": "Core remains the repo-local source of truth: - `README.md` - `CLAUDE.md` - `context-kit.json` - canonical docs - app routes and deterministic engine code Core answers: - what the product is - what the surfaces are - what deterministic battle truth"
+    },
+    {
+      "id": "docs-design-docs-cogochi-memento-runtime-architecture-20260315-md-4",
+      "source": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tierHint": "M365",
+      "heading": "2. Memory",
+      "preview": "Memory is the owned-agent writeback layer: - `src/lib/services/memory/` - `OwnedAgent.memoryBank` - `M0 / M30 / M90 / M365` tiering Memory answers: - what the agent learned - what is recent versus durable - which lesson came from training versus battle"
+    },
+    {
+      "id": "docs-design-docs-cogochi-memento-runtime-architecture-20260315-md-5",
+      "source": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tierHint": "M365",
+      "heading": "3. Runtime",
+      "preview": "Runtime is the adapter-aware enrichment layer: - `runtime/runtime-config.json` - `runtime/prompts/` - `runtime/jobs/` - `runtime/scripts/` - `runtime/generated/` Runtime answers: - what the session boot bundle should contain - how memory should be indexed and distilled - how OpenClaw-facing prompts stay aligned"
+    },
+    {
+      "id": "docs-design-docs-cogochi-memento-runtime-architecture-20260315-md-6",
+      "source": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tierHint": "M365",
+      "heading": "Memory Tier Intent",
+      "preview": "Use the Memento tier model like this: - `M0` - memory invariants and non-negotiable guardrails - `M30` - recent warnings, quarantine notes, active refactor focus - `M90` - proven playbooks and stable architecture lessons - `M365` - long-lived founder truths"
+    },
+    {
+      "id": "docs-design-docs-cogochi-memento-runtime-architecture-20260315-md-7",
+      "source": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tierHint": "M365",
+      "heading": "Writeback Flow",
+      "preview": "1. The player changes doctrine, indicator, script, or memory emphasis in `/lab`. 2. `rosterStore` delegates writeback construction to `src/lib/services/memory/writeback.ts`. 3. The service emits: - mutation history - proven frame update - care state - memory card with tier and source"
+    },
+    {
+      "id": "docs-design-docs-cogochi-memento-runtime-architecture-20260315-md-8",
+      "source": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tierHint": "M365",
+      "heading": "Why This Refactor Matters",
+      "preview": "Without this split: - stores become giant hidden-memory managers - runtime prompts drift away from canonical docs - battle explanation and training memory become inconsistent - autoresearch cannot score whether the runtime path is actually improving With this split: -"
+    },
+    {
+      "id": "docs-design-docs-cogochi-memento-runtime-architecture-20260315-md-9",
+      "source": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tierHint": "M365",
+      "heading": "Autoresearch Translation",
+      "preview": "Karpathy-style autoresearch becomes: - mutate one bounded part of the product - run fixed evaluators - keep or reject based on weighted founder-goal progress The Memento application adds one more constraint: - do not accept a change that improves visuals"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-1",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Cogochi Memento + Autoresearch Refactor Plan",
+      "preview": "Last updated: 2026-03-15"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-2",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Objective",
+      "preview": "Refactor Cogochi so that: 1. `memento-kit` is applied as a real three-layer architecture 2. `autoresearch` optimizes the actual judgment RPG goal instead of generic model performance 3. owned-agent memory, runtime boot bundles, and proof-driven mutation loops can keep scaling together"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-3",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "User Goal Translation",
+      "preview": "The product goal is: `Create my own AI agent, teach it my chart pattern rules, indicators, scripts, and memories, then test whether different combinations actually change that creature's judgment inside a game loop.` That means the architecture must preserve four"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-4",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Phase 1. Core Surface Map",
+      "preview": "Deliverables: - real `context-kit.json` surfaces - battle and journal surface specs - runtime-aware repo summary"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-5",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Phase 2. Memory Boundary",
+      "preview": "Deliverables: - `src/lib/services/memory/` as the only writeback constructor - memory tiers and sources on memory cards - memory tier summary visible in runtime UI"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-6",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Phase 3. Runtime Layer",
+      "preview": "Deliverables: - `runtime/README.md` - `runtime/runtime-config.json` - boot, index, distill, and relay scripts - generated runtime artifacts"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-7",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Phase 4. Autoresearch Alignment",
+      "preview": "Deliverables: - runtime-readiness evaluator - scorecard weight update - worker/tool manifests for runtime architecture - program rules that explicitly mention Memento boundaries"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-8",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Phase 5. Validation",
+      "preview": "Deliverables: - `npm run check` - `npm run build` - `npm run runtime:all` - `npm run autoresearch:runtime` - `npm run autoresearch:score`"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-9",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Track A. Core",
+      "preview": "- update `context-kit.json` - update product-spec index - add battle and journal specs"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-10",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Track B. Memory",
+      "preview": "- extend `AgentMemoryCard` - move writeback logic out of `rosterStore` - surface tier/source on agent-facing UI"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-11",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Track C. Runtime",
+      "preview": "- create runtime config and prompts - create runtime scripts - generate bundle, index, and distill outputs"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-12",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Track D. Autoresearch",
+      "preview": "- add runtime evaluator - update score assembly - add runtime worker and tool manifests"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-13",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Round Discipline",
+      "preview": "Following the `nanochat` round-1 lesson: - each autoresearch round should stay small and coherent - keep/reject should happen after one bounded experiment, not a sweeping rewrite - accepted rounds should improve a reusable rail such as memory writeback, runtime distill,"
+    },
+    {
+      "id": "docs-exec-plans-active-cogochi-memento-autoresearch-refactor-20260315-md-14",
+      "source": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tierHint": "M90",
+      "heading": "Exit Criteria",
+      "preview": "This refactor is complete only if: - the repo no longer reads like a Memento bootstrap - the memory layer is explicit in code and UI - runtime artifacts can be generated locally - autoresearch scores runtime readiness explicitly -"
+    },
+    {
+      "id": "progress-md-1",
+      "source": "progress.md",
+      "label": "Committed progress log",
+      "tierHint": "M30",
+      "heading": "Overview",
+      "preview": "Original prompt: dinoCharactersVersion1.1.zip 에 들어 있는 dino pixel character assets를 Cogochi에 적용하고 싶다. 2026-03-12 - Confirmed the archive contents: four 24x24 sprite sheets (`doux`, `mort`, `tard`, `vita`), four matching GIFs, two Aseprite sources, a shadow sprite, and a changelog. -"
+    }
+  ]
+}

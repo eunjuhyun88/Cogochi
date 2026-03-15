@@ -1,0 +1,32 @@
+{
+  "id": "asset-curator",
+  "name": "Asset Curator",
+  "role": "researcher",
+  "summary": "Audits itch.io asset packs, records licensing constraints, and prepares one coherent runtime family for Cogochi.",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "CLAUDE.md",
+    "docs/README.md",
+    "docs/VISUAL_WORLD_DESIGN.md",
+    "docs/design-docs/chartfield-fullgame-direction.md",
+    "docs/references/imported/Cogochi_ItchAssetShortlist_20260312.md",
+    "docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md"
+  ],
+  "writes": [
+    "static/assets/",
+    "docs/references/imported/",
+    "docs/design-docs/",
+    ".agent-context/",
+    "docs/AGENT_WATCH_LOG.md"
+  ],
+  "outputs": [
+    "asset-shortlist",
+    "import-manifest"
+  ],
+  "handoff": "asset-shortlist",
+  "prompt": "Choose one coherent itch.io asset family, record the license and fit clearly, reject incompatible packs, and prepare the smallest runtime import plan that removes placeholder art from the main path.",
+  "public": true
+}

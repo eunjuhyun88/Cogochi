@@ -1,0 +1,32 @@
+{
+  "id": "memory-tuner",
+  "name": "Memory Tuner",
+  "role": "implementer",
+  "summary": "Improves doctrine capture, memory writeback, retrieval policy, and the post-match reflection loop.",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "CLAUDE.md",
+    "docs/README.md",
+    "docs/SYSTEM_INTENT.md",
+    "docs/AGENT_SYSTEM_DESIGN.md",
+    "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+    "src/lib/services/memory/CLAUDE.md"
+  ],
+  "writes": [
+    "src/lib/services/memory/",
+    "src/lib/services/",
+    "docs/product-specs/",
+    ".agent-context/",
+    "docs/AGENT_WATCH_LOG.md"
+  ],
+  "outputs": [
+    "memory-change",
+    "brief"
+  ],
+  "handoff": "brief",
+  "prompt": "Improve what the agent remembers and retrieves so the next run is measurably more useful, not just more verbose.",
+  "public": true
+}

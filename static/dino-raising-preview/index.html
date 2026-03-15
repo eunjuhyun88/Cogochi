@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cogochi Sprite Raising Preview</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero-bar panel">
+        <div>
+          <p class="eyebrow">Cogochi asset integration preview</p>
+          <h1>Sprite Raising Bench</h1>
+          <p class="hero-copy">
+            imported dino sheets and a Cogochi-native mascot family, both shaped into a trainer-first roster and
+            training surface.
+          </p>
+        </div>
+        <div class="hero-badges">
+          <span>24x24 role sheets</span>
+          <span>8 owned agents</span>
+          <span>2 visual families</span>
+          <span>chart-aware training preview</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel roster-panel" aria-labelledby="roster-heading">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Owned roster</p>
+              <h2 id="roster-heading">Companion Shelf</h2>
+            </div>
+            <p class="panel-meta" id="rosterMeta">Click a companion to inspect and train it.</p>
+          </div>
+          <div class="family-switch" id="familySwitch"></div>
+          <div class="roster-grid" id="rosterGrid"></div>
+        </section>
+
+        <section class="focus-column">
+          <section class="panel focus-panel" aria-labelledby="focus-heading">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Selected agent</p>
+                <h2 id="focus-heading">Agent Focus</h2>
+              </div>
+              <p class="panel-meta" id="selectedStatus">Ready for the next chart spar.</p>
+            </div>
+
+            <div class="focus-layout">
+              <div class="display-shell">
+                <div class="display-topline">
+                  <span>raising display</span>
+                  <span id="focusModeLabel">doctrine tune</span>
+                </div>
+                <div class="display-screen" id="displayScreen">
+                  <div class="chart-grid"></div>
+                  <div class="candle candle-a"></div>
+                  <div class="candle candle-b"></div>
+                  <div class="candle candle-c"></div>
+                  <div class="support-line"></div>
+                  <div class="breakout-line"></div>
+                  <div class="sprite-stage">
+                    <div class="sprite-shadow sprite-shadow-hero"></div>
+                    <div class="sprite sprite-hero" id="heroSprite"></div>
+                  </div>
+                </div>
+                <div class="display-readout" id="displayReadout"></div>
+              </div>
+
+              <div class="focus-copy">
+                <div class="identity-row">
+                  <div>
+                    <p class="role-tag" id="focusRole"></p>
+                    <h3 id="focusName"></h3>
+                  </div>
+                  <div class="bond-badge">
+                    <span>bond</span>
+                    <strong id="focusBond"></strong>
+                  </div>
+                </div>
+
+                <p class="focus-fantasy" id="focusFantasy"></p>
+
+                <div class="chip-row">
+                  <span class="chip" id="focusSpecialty"></span>
+                  <span class="chip" id="focusMood"></span>
+                  <span class="chip" id="focusFocus"></span>
+                </div>
+
+                <div class="stat-grid">
+                  <div class="stat-card">
+                    <span>memory clarity</span>
+                    <strong id="focusMemory"></strong>
+                  </div>
+                  <div class="stat-card">
+                    <span>chart timing</span>
+                    <strong id="focusTiming"></strong>
+                  </div>
+                  <div class="stat-card">
+                    <span>risk posture</span>
+                    <strong id="focusRisk"></strong>
+                  </div>
+                </div>
+
+                <article class="note-card">
+                  <p class="note-label">Recent lesson</p>
+                  <p id="focusLesson"></p>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel training-panel" aria-labelledby="bench-heading">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Training action</p>
+                <h2 id="bench-heading">Bench Control</h2>
+              </div>
+              <p class="panel-meta">One explicit training action with a visible battlefield forecast.</p>
+            </div>
+
+            <div class="action-grid" id="actionGrid"></div>
+
+            <div class="projection-grid">
+              <article class="projection-card">
+                <p class="note-label">Projected battlefield change</p>
+                <p id="battleProjection"></p>
+              </article>
+              <article class="projection-card">
+                <p class="note-label">Writeback note</p>
+                <p id="memoryProjection"></p>
+              </article>
+              <article class="projection-card">
+                <p class="note-label">Scenario fit</p>
+                <p id="scenarioProjection"></p>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel squad-panel" aria-labelledby="party-heading">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Active party</p>
+                <h2 id="party-heading">Four-Slot Squad</h2>
+              </div>
+              <p class="panel-meta" id="partyMeta">Role family currently loaded into the raising bench.</p>
+            </div>
+
+            <div class="party-strip" id="partyStrip"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
