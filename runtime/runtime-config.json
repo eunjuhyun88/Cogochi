@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "project": {
+    "name": "Cogochi v1",
+    "goal": "chart-native judgment RPG with owned-agent memory, mutation proof, and optional OpenClaw runtime enrichment"
+  },
+  "adapter": {
+    "platform": "openclaw",
+    "fallback": "deterministic-local"
+  },
+  "paths": {
+    "coreRepo": ".",
+    "memoryServiceDir": "src/lib/services/memory",
+    "generatedDir": "runtime/generated",
+    "relayDir": "runtime/generated/relay"
+  },
+  "bundleSources": [
+    {
+      "path": "README.md",
+      "label": "Repo collaboration SSOT"
+    },
+    {
+      "path": "CLAUDE.md",
+      "label": "Product compass"
+    },
+    {
+      "path": "program.md",
+      "label": "Autoresearch program"
+    },
+    {
+      "path": "docs/AGENT_SYSTEM_DESIGN.md",
+      "label": "Agent system truth"
+    },
+    {
+      "path": "docs/BATTLEFIELD_DESIGN.md",
+      "label": "Battlefield grammar"
+    },
+    {
+      "path": "docs/product-specs/raising.md",
+      "label": "Raising surface"
+    },
+    {
+      "path": "docs/product-specs/field.md",
+      "label": "Field surface"
+    },
+    {
+      "path": "docs/product-specs/battle.md",
+      "label": "Battle surface"
+    },
+    {
+      "path": "docs/product-specs/journal.md",
+      "label": "Journal surface"
+    }
+  ],
+  "memorySources": [
+    {
+      "path": "src/lib/services/memory/CLAUDE.md",
+      "label": "Memory guardrails",
+      "tier": "M0"
+    },
+    {
+      "path": "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+      "label": "Founder goal",
+      "tier": "M365"
+    },
+    {
+      "path": "docs/design-docs/atlas-judgment-evolution.md",
+      "label": "Evolution reference",
+      "tier": "M90"
+    },
+    {
+      "path": "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+      "label": "Memento architecture",
+      "tier": "M365"
+    },
+    {
+      "path": "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md",
+      "label": "Current runtime refactor plan",
+      "tier": "M90"
+    },
+    {
+      "path": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tier": "M30"
+    }
+  ]
+}

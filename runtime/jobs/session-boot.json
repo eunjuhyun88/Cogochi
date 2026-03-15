@@ -1,0 +1,6 @@
+{
+  "id": "session-boot",
+  "prompt": "runtime/prompts/session-boot.md",
+  "command": "npm run runtime:bundle",
+  "output": "runtime/generated/project-context-bundle.md"
+}

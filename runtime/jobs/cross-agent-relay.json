@@ -1,0 +1,6 @@
+{
+  "id": "cross-agent-relay",
+  "prompt": "runtime/prompts/cross-agent-relay.md",
+  "command": "npm run runtime:relay -- --from runtime --to raising-ux-shipper --message \"sample relay\"",
+  "output": "runtime/generated/relay/"
+}

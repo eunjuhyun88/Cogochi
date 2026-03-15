@@ -1,0 +1,45 @@
+{
+  "id": "runtime-readiness",
+  "name": "Runtime Readiness",
+  "summary": "Checks whether the Memento-style runtime layer, memory boundary, and generated artifacts are present and runnable.",
+  "scope": "local-command",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "context-kit.json",
+    "runtime/",
+    "src/lib/services/memory/",
+    "src/routes/agent/[id]/+page.svelte",
+    "src/routes/lab/+page.svelte"
+  ],
+  "writes": [
+    ".agent-context/autoresearch/",
+    "runtime/generated/"
+  ],
+  "inputs": [
+    {
+      "name": "surface",
+      "type": "string",
+      "required": false,
+      "description": "Optional surface identifier to bias runtime readiness evaluation."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "report",
+      "type": "json",
+      "description": "Runtime readiness report covering layer contract, memory boundary, automation hooks, and generated artifacts."
+    }
+  ],
+  "invocation": {
+    "kind": "npm-script",
+    "script": "autoresearch:runtime"
+  },
+  "safety": {
+    "sideEffects": "writes-generated",
+    "approvalRequired": false
+  },
+  "public": true
+}

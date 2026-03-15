@@ -1,0 +1,400 @@
+{
+  "version": 1,
+  "agentCount": 11,
+  "agents": [
+    {
+      "id": "asset-curator",
+      "name": "Asset Curator",
+      "role": "researcher",
+      "summary": "Audits itch.io asset packs, records licensing constraints, and prepares one coherent runtime family for Cogochi.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/VISUAL_WORLD_DESIGN.md",
+        "docs/design-docs/chartfield-fullgame-direction.md",
+        "docs/references/imported/Cogochi_ItchAssetShortlist_20260312.md",
+        "docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md"
+      ],
+      "writes": [
+        "static/assets/",
+        "docs/references/imported/",
+        "docs/design-docs/",
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "asset-shortlist",
+        "import-manifest"
+      ],
+      "handoff": "asset-shortlist",
+      "prompt": "Choose one coherent itch.io asset family, record the license and fit clearly, reject incompatible packs, and prepare the smallest runtime import plan that removes placeholder art from the main path.",
+      "manifestPath": "agents/asset-curator.json",
+      "public": true
+    },
+    {
+      "id": "autoresearch-director",
+      "name": "Autoresearch Director",
+      "role": "planner",
+      "summary": "Reads the founder goal, scorecards, and bottlenecks to choose the next bounded experiment for Cogochi.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "README.md",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/SYSTEM_INTENT.md",
+        "docs/AGENT_SYSTEM_DESIGN.md",
+        "docs/CONTEXT_ENGINEERING.md",
+        "docs/AGENT_FACTORY.md",
+        "docs/design-docs/judgment-tamagotchi-loop.md",
+        "docs/design-docs/atlas-judgment-evolution.md",
+        "docs/design-docs/chartfield-fullgame-direction.md",
+        "docs/product-specs/evolution.md",
+        "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+        "docs/exec-plans/active/COGOCHI_judgment_tamagotchi_loop_20260312.md",
+        "docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md",
+        "docs/exec-plans/active/COGOCHI_autoresearch_org_20260312.md",
+        "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md",
+        "docs/exec-plans/active/COGOCHI_autoresearch_bottlenecks_20260312.md",
+        "docs/references/imported/Cogochi_ItchAssetShortlist_20260312.md"
+      ],
+      "writes": [
+        "docs/exec-plans/active/",
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "task-selection",
+        "checkpoint"
+      ],
+      "handoff": "checkpoint",
+      "prompt": "Choose the highest-leverage next experiment for the founder goal, prioritize visible evolution, trust calibration, and keep-or-revert proof before polish, keep scope narrow, and route the relevant worker plus evaluator set.",
+      "manifestPath": "agents/autoresearch-director.json",
+      "public": true
+    },
+    {
+      "id": "battle-researcher",
+      "name": "Battle Researcher",
+      "role": "implementer",
+      "summary": "Improves deterministic battle evaluation, explanation quality, and benchmark readiness for chart scenarios.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/SYSTEM_INTENT.md",
+        "docs/AGENT_SYSTEM_DESIGN.md",
+        "docs/BATTLEFIELD_DESIGN.md",
+        "docs/VISUAL_WORLD_DESIGN.md",
+        "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+        "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md",
+        "src/lib/engine/CLAUDE.md"
+      ],
+      "writes": [
+        "src/lib/engine/",
+        "src/lib/services/",
+        "docs/product-specs/",
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "benchmark-change",
+        "brief"
+      ],
+      "handoff": "brief",
+      "prompt": "Improve battle evaluation without violating determinism, and keep any change explainable in terms of chart judgment quality.",
+      "manifestPath": "agents/battle-researcher.json",
+      "public": true
+    },
+    {
+      "id": "field-loop-builder",
+      "name": "Field Loop Builder",
+      "role": "implementer",
+      "summary": "Builds the top-down field route, party follow behavior, interact nodes, and battle-gate transitions that make Cogochi feel like a real web game.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/BATTLEFIELD_DESIGN.md",
+        "docs/VISUAL_WORLD_DESIGN.md",
+        "docs/product-specs/field.md",
+        "docs/design-docs/chartfield-fullgame-direction.md",
+        "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+        "docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md",
+        "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md"
+      ],
+      "writes": [
+        "src/routes/",
+        "src/components/",
+        "src/lib/stores/",
+        "src/lib/engine/",
+        "static/assets/",
+        "docs/product-specs/",
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "field-surface-change",
+        "brief"
+      ],
+      "handoff": "brief",
+      "prompt": "Ship the smallest real chart-world field loop with travel, follow, interact, battle-gate entry, and return-to-camp writeback while keeping chart readability and route/store/engine boundaries intact.",
+      "manifestPath": "agents/field-loop-builder.json",
+      "public": true
+    },
+    {
+      "id": "implementer",
+      "name": "Implementer",
+      "role": "implementer",
+      "summary": "Implements code changes against declared context and ownership boundaries.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "CLAUDE.md",
+        "README.md",
+        "AGENTS.md",
+        "docs/README.md",
+        "ARCHITECTURE.md",
+        "docs/MASTER_GAME_SPEC.md",
+        "docs/BATTLEFIELD_DESIGN.md",
+        "docs/VISUAL_WORLD_DESIGN.md",
+        "docs/DESIGN.md",
+        "docs/ENGINEERING.md",
+        "docs/PRODUCT_SENSE.md",
+        "docs/CONTEXT_ENGINEERING.md",
+        "docs/AGENT_FACTORY.md"
+      ],
+      "writes": [
+        "src/",
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "code-change",
+        "brief"
+      ],
+      "handoff": "brief",
+      "prompt": "Implement scoped changes against the canonical docs, keep edits inside owned paths, and leave a concise resume brief.",
+      "manifestPath": "agents/implementer.json",
+      "public": true
+    },
+    {
+      "id": "memory-tuner",
+      "name": "Memory Tuner",
+      "role": "implementer",
+      "summary": "Improves doctrine capture, memory writeback, retrieval policy, and the post-match reflection loop.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/SYSTEM_INTENT.md",
+        "docs/AGENT_SYSTEM_DESIGN.md",
+        "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+        "src/lib/services/memory/CLAUDE.md"
+      ],
+      "writes": [
+        "src/lib/services/memory/",
+        "src/lib/services/",
+        "docs/product-specs/",
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "memory-change",
+        "brief"
+      ],
+      "handoff": "brief",
+      "prompt": "Improve what the agent remembers and retrieves so the next run is measurably more useful, not just more verbose.",
+      "manifestPath": "agents/memory-tuner.json",
+      "public": true
+    },
+    {
+      "id": "planner",
+      "name": "Planner",
+      "role": "planner",
+      "summary": "Plans and routes ambiguous work before implementation begins.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "CLAUDE.md",
+        "README.md",
+        "AGENTS.md",
+        "docs/README.md",
+        "docs/MASTER_GAME_SPEC.md",
+        "ARCHITECTURE.md",
+        "docs/SYSTEM_INTENT.md",
+        "docs/PLANS.md",
+        "docs/CONTEXT_ENGINEERING.md",
+        "docs/AGENT_FACTORY.md"
+      ],
+      "writes": [
+        "docs/exec-plans/active/",
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "execution-plan",
+        "checkpoint"
+      ],
+      "handoff": "checkpoint",
+      "prompt": "Break requested work into minimal execution steps, route the next canonical docs, and record plan-level handoff state.",
+      "manifestPath": "agents/planner.json",
+      "public": true
+    },
+    {
+      "id": "raising-ux-shipper",
+      "name": "Raising UX Shipper",
+      "role": "implementer",
+      "summary": "Builds the roster, agent detail, training, and reflection surfaces that make capability changes visible to the player.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "CLAUDE.md",
+        "docs/README.md",
+        "docs/SYSTEM_INTENT.md",
+        "docs/PRODUCT_SENSE.md",
+        "docs/product-specs/field.md",
+        "docs/product-specs/raising.md",
+        "docs/design-docs/pixel-agent-raising-direction.md",
+        "docs/design-docs/judgment-tamagotchi-loop.md",
+        "docs/design-docs/chartfield-fullgame-direction.md",
+        "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+        "docs/exec-plans/active/COGOCHI_judgment_tamagotchi_loop_20260312.md",
+        "docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md",
+        "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md"
+      ],
+      "writes": [
+        "src/routes/",
+        "src/components/",
+        "src/lib/stores/",
+        "static/",
+        "docs/product-specs/",
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "surface-change",
+        "brief"
+      ],
+      "handoff": "brief",
+      "prompt": "Ship the smallest real surface that lets a player travel with a squad, inspect and train one agent, visibly grow it, rerun a clash, and return with a next care action without drifting into chart-tool UX or pet-only care.",
+      "manifestPath": "agents/raising-ux-shipper.json",
+      "public": true
+    },
+    {
+      "id": "reviewer",
+      "name": "Reviewer",
+      "role": "reviewer",
+      "summary": "Reviews work for drift, risk, and boundary compliance.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "README.md",
+        "AGENTS.md",
+        "docs/README.md",
+        "docs/QUALITY_SCORE.md",
+        "docs/RELIABILITY.md",
+        "docs/SECURITY.md",
+        "docs/CONTEXT_EVALUATION.md",
+        "docs/AGENT_FACTORY.md"
+      ],
+      "writes": [
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "review-findings",
+        "handoff"
+      ],
+      "handoff": "handoff",
+      "prompt": "Review changes for correctness, drift, and boundary violations, then leave a handoff artifact with findings or release status.",
+      "manifestPath": "agents/reviewer.json",
+      "public": true
+    },
+    {
+      "id": "runtime-memory-architect",
+      "name": "Runtime Memory Architect",
+      "role": "implementer",
+      "summary": "Maintains the Memento-style memory/runtime split, runtime bundle scripts, and OpenClaw-facing adapter contracts.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "runtime/runtime-config.json",
+        "runtime/",
+        "src/lib/services/memory/",
+        "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+        "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md"
+      ],
+      "writes": [
+        "runtime/",
+        "src/lib/services/memory/",
+        "scripts/autoresearch/",
+        "docs/design-docs/",
+        "docs/exec-plans/active/",
+        "tools/"
+      ],
+      "outputs": [
+        "runtime-change",
+        "brief"
+      ],
+      "handoff": "brief",
+      "prompt": "Keep the Memento-style memory and runtime layers explicit, runnable, and aligned with Cogochi's deterministic judgment RPG loop.",
+      "manifestPath": "agents/runtime-memory-architect.json",
+      "public": true
+    },
+    {
+      "id": "ship-reviewer",
+      "name": "Ship Reviewer",
+      "role": "reviewer",
+      "summary": "Checks that candidate changes satisfy hard gates, score better than baseline, and do not drift away from the founder goal.",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "README.md",
+        "AGENTS.md",
+        "docs/README.md",
+        "docs/QUALITY_SCORE.md",
+        "docs/RELIABILITY.md",
+        "docs/SECURITY.md",
+        "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+        "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md"
+      ],
+      "writes": [
+        ".agent-context/",
+        "docs/AGENT_WATCH_LOG.md"
+      ],
+      "outputs": [
+        "accept-reject",
+        "handoff"
+      ],
+      "handoff": "handoff",
+      "prompt": "Reject changes that fail hard gates or improve the wrong thing, and accept only changes that move the founder goal forward.",
+      "manifestPath": "agents/ship-reviewer.json",
+      "public": true
+    }
+  ]
+}

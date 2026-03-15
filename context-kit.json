@@ -1,0 +1,347 @@
+{
+  "version": 1,
+  "project": {
+    "name": "Cogochi v1",
+    "slug": "cogochi-v1",
+    "summary": "Chart-native judgment RPG where the player raises four owned AI agents, proves mutations on fixed BTC history frames, and optionally enriches the loop through an OpenClaw-compatible runtime.",
+    "stack": "SvelteKit 2 + Svelte 5 + TypeScript + Canvas 2D",
+    "phase": "pokemon-grade alpha refactor",
+    "deadline": "TBD"
+  },
+  "git": {
+    "mainBranch": "main"
+  },
+  "discovery": {
+    "routesDir": "src/routes",
+    "storesDir": "src/lib/stores",
+    "apiDir": "src/routes/api"
+  },
+  "surfaces": [
+    {
+      "id": "core",
+      "label": "Trainer hub",
+      "summary": "Session entry, trainer framing, squad status, and next-step routing.",
+      "spec": "docs/product-specs/core.md",
+      "routes": [
+        "/"
+      ],
+      "stores": [
+        "rosterStore",
+        "labStore",
+        "battleStore"
+      ],
+      "apis": []
+    },
+    {
+      "id": "raising",
+      "label": "Raising surfaces",
+      "summary": "Roster, agent detail, and mutation bench for visible creature growth.",
+      "spec": "docs/product-specs/raising.md",
+      "routes": [
+        "/roster",
+        "/agent/[id]",
+        "/lab"
+      ],
+      "stores": [
+        "rosterStore",
+        "labStore"
+      ],
+      "apis": []
+    },
+    {
+      "id": "field",
+      "label": "Field route",
+      "summary": "World-first travel surface where the squad moves across BTC history terrain.",
+      "spec": "docs/product-specs/field.md",
+      "routes": [
+        "/field"
+      ],
+      "stores": [
+        "fieldStore",
+        "rosterStore",
+        "battleStore"
+      ],
+      "apis": []
+    },
+    {
+      "id": "proof",
+      "label": "Proof validation",
+      "summary": "Game-native backtest surface where one mutation is bound to fixed historical frame packs before verdict.",
+      "spec": "docs/product-specs/proof.md",
+      "routes": [
+        "/proof"
+      ],
+      "stores": [
+        "rosterStore",
+        "labStore",
+        "battleStore"
+      ],
+      "apis": []
+    },
+    {
+      "id": "passport",
+      "label": "Passport booklet",
+      "summary": "Public-ready proof booklet surface that turns ProofArtifact history into readable credibility cards per creature.",
+      "spec": "docs/product-specs/passport.md",
+      "routes": [
+        "/passport",
+        "/passport/[id]",
+        "/passport/public/[id]",
+        "/passport/share/[token]"
+      ],
+      "stores": [
+        "proofStore",
+        "rosterStore"
+      ],
+      "apis": [
+        "/api/passport/export",
+        "/api/passport/[id]",
+        "/api/passport/publish"
+      ]
+    },
+    {
+      "id": "battle",
+      "label": "Battle proof",
+      "summary": "Chart-native clash surface for one-objective proof encounters and verdicts.",
+      "spec": "docs/product-specs/battle.md",
+      "routes": [
+        "/battle"
+      ],
+      "stores": [
+        "battleStore",
+        "rosterStore"
+      ],
+      "apis": []
+    },
+    {
+      "id": "journal",
+      "label": "Return journal",
+      "summary": "Return-pressure surface showing the latest mutation, care state, and next action.",
+      "spec": "docs/product-specs/journal.md",
+      "routes": [
+        "/journal"
+      ],
+      "stores": [
+        "rosterStore",
+        "labStore"
+      ],
+      "apis": []
+    }
+  ],
+  "harness": {
+    "pages": [
+      "/",
+      "/field",
+      "/proof",
+      "/passport",
+      "/passport/doux",
+      "/passport/share/token-demo",
+      "/battle",
+      "/roster",
+      "/lab",
+      "/journal",
+      "/agent/doux"
+    ],
+    "apis": [],
+    "browserPages": [
+      "/",
+      "/field",
+      "/proof",
+      "/passport",
+      "/passport/doux",
+      "/passport/share/token-demo",
+      "/battle",
+      "/roster",
+      "/lab",
+      "/journal",
+      "/agent/doux"
+    ]
+  },
+  "coordination": {
+    "requireClaimOnFeatureBranches": true,
+    "requirePathsOnFeatureBranches": true,
+    "featureBranchPrefixes": [
+      "codex/"
+    ],
+    "defaultLeaseMinutes": 240,
+    "lockStaleMinutes": 15,
+    "failOnExpiredClaims": true,
+    "failOnPathOverlap": true,
+    "failOnUnscopedSurfaceOverlap": true,
+    "sharedPathPrefixes": [
+      "docs/AGENT_WATCH_LOG.md",
+      "docs/generated/",
+      ".agent-context/"
+    ]
+  },
+  "registry": {
+    "enabled": true,
+    "manifestPath": "docs/generated/context-registry.json",
+    "publicBaseUrl": "",
+    "publishTags": [
+      "cogochi-v1",
+      "context-kit",
+      "judgment-rpg"
+    ],
+    "searchKinds": [
+      "surface",
+      "doc",
+      "command",
+      "retrieval",
+      "agent",
+      "tool"
+    ]
+  },
+  "agents": {
+    "enabled": true,
+    "dir": "agents",
+    "catalogPath": "docs/generated/agent-catalog.json",
+    "defaultSurface": "core"
+  },
+  "tools": {
+    "enabled": true,
+    "dir": "tools",
+    "catalogPath": "docs/generated/tool-catalog.json",
+    "defaultSurface": "core"
+  },
+  "telemetry": {
+    "enabled": true,
+    "runsDir": ".agent-context/telemetry/runs",
+    "eventsDir": ".agent-context/telemetry/events",
+    "activeDir": ".agent-context/telemetry/active",
+    "lockPath": ".agent-context/telemetry/telemetry.lock",
+    "lockStaleMinutes": 5,
+    "reportPath": "docs/generated/agent-usage-report.json",
+    "defaults": {
+      "taskComplexity": "moderate",
+      "skillLevel": "experienced",
+      "purpose": "product-development",
+      "autonomy": "assisted"
+    }
+  },
+  "retrieval": {
+    "enabled": true,
+    "includePaths": [
+      "CLAUDE.md",
+      "README.md",
+      "AGENTS.md",
+      "ARCHITECTURE.md",
+      "context-kit.json",
+      "program.md",
+      "runtime/",
+      "docs/MASTER_GAME_SPEC.md",
+      "docs/AGENT_SYSTEM_DESIGN.md",
+      "docs/BATTLEFIELD_DESIGN.md",
+      "docs/VISUAL_WORLD_DESIGN.md",
+      "docs/SYSTEM_INTENT.md",
+      "docs/CONTEXT_ENGINEERING.md",
+      "docs/CONTEXT_EVALUATION.md",
+      "docs/CONTEXT_PLATFORM.md",
+      "docs/CONTEXTUAL_RETRIEVAL.md",
+      "docs/AGENT_FACTORY.md",
+      "docs/TOOL_DESIGN.md",
+      "docs/AGENT_OBSERVABILITY.md",
+      "docs/MULTI_AGENT_COORDINATION.md",
+      "docs/SANDBOX_POLICY.md",
+      "docs/DESIGN.md",
+      "docs/ENGINEERING.md",
+      "docs/PLANS.md",
+      "docs/PRODUCT_SENSE.md",
+      "docs/QUALITY_SCORE.md",
+      "docs/RELIABILITY.md",
+      "docs/SECURITY.md",
+      "docs/HARNESS.md",
+      "agents/",
+      "tools/",
+      "docs/design-docs/",
+      "docs/product-specs/",
+      "docs/exec-plans/active/",
+      "src/lib/services/memory/"
+    ],
+    "excludePaths": [
+      "docs/archive/",
+      "docs/generated/",
+      ".agent-context/"
+    ],
+    "chunkWords": 120,
+    "overlapWords": 30,
+    "defaultTopK": 5,
+    "contextualWeight": 0.65,
+    "rawWeight": 0.35,
+    "pathBoost": 0.8,
+    "headingBoost": 0.5,
+    "surfaceBoost": 0.75,
+    "indexPath": "docs/generated/contextual-retrieval-index.json"
+  },
+  "sandbox": {
+    "enabled": true,
+    "allowReadPaths": [
+      "README.md",
+      "AGENTS.md",
+      "ARCHITECTURE.md",
+      "context-kit.json",
+      "program.md",
+      "docs/",
+      "agents/",
+      "tools/",
+      "runtime/",
+      "src/",
+      "package.json"
+    ],
+    "allowWritePaths": [
+      ".agent-context/",
+      "docs/",
+      "agents/",
+      "tools/",
+      "runtime/",
+      "scripts/",
+      "src/",
+      "context-kit.json",
+      "program.md"
+    ],
+    "allowNetworkHosts": [
+      "127.0.0.1",
+      "localhost"
+    ],
+    "denyCommandPrefixes": [
+      "rm -rf",
+      "git reset --hard",
+      "git checkout --",
+      "curl | sh"
+    ],
+    "requireApprovalCommandPrefixes": [
+      "git push",
+      "npm publish",
+      "docker push"
+    ],
+    "credentialEnvAllowlist": []
+  },
+  "evaluation": {
+    "targets": {
+      "smallMapReductionVsCanonicalPct": 40,
+      "smallMapReductionVsAllDocsPct": 55,
+      "surfaceReductionVsAllDocsPct": 50,
+      "smallMapMaxApproxTokens": 3800,
+      "smallMapMaxFiles": 6,
+      "canonicalMaxApproxTokens": 12000,
+      "noiseRateMaxPct": 10
+    },
+    "benchmark": {
+      "runs": 3,
+      "warmupRuns": 1,
+      "mode": "smoke",
+      "maxDurationCvPct": 15
+    },
+    "ab": {
+      "minComparisons": 1,
+      "targetDocsBeforeFirstEdit": 6,
+      "targetResumeLatencyMinutes": 3
+    }
+  },
+  "commands": {
+    "check": "npm run check",
+    "build": "npm run build",
+    "runtime": "npm run runtime:all",
+    "gate": "npm run check && npm run build && npm run runtime:all && npm run docs:check && npm run ctx:check -- --strict"
+  }
+}
