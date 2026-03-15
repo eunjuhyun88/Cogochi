@@ -25,6 +25,7 @@
 | `docs/HARNESS.md` | `canonical-entry` | `canonical` | Canonical harness router. |
 | `docs/MASTER_GAME_SPEC.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/MULTI_AGENT_COORDINATION.md` | `canonical-entry` | `canonical` | Canonical multi-agent ownership and conflict-control doc. |
+| `docs/ORCHESTRATION.md` | `canonical-entry` | `canonical` | Canonical workboard and dependency-routing doc. |
 | `docs/PLANS.md` | `canonical-entry` | `canonical` | Canonical plans router. |
 | `docs/PRODUCT_SENSE.md` | `canonical-entry` | `canonical` | Canonical product heuristics router. |
 | `docs/QUALITY_SCORE.md` | `canonical-entry` | `canonical` | Canonical quality scorecard. |

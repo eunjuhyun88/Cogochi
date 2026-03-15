@@ -37,6 +37,7 @@ This generated manifest is the portable index for open-source discovery, local A
 | `docs/TOOL_DESIGN.md` | tool-design | canonical |
 | `docs/AGENT_OBSERVABILITY.md` | agent-observability | canonical |
 | `docs/MULTI_AGENT_COORDINATION.md` | coordination | canonical |
+| `docs/ORCHESTRATION.md` | orchestration | canonical |
 | `docs/SANDBOX_POLICY.md` | sandbox-policy | canonical |
 | `docs/DESIGN.md` | design-authority | canonical |
 | `docs/ENGINEERING.md` | engineering-authority | canonical |
@@ -74,6 +75,7 @@ This generated manifest is the portable index for open-source discovery, local A
 | `ctx:compact` | ctx | `bash scripts/dev/context-compact.sh` |
 | `ctx:pin` | ctx | `bash scripts/dev/context-pin.sh` |
 | `ctx:restore` | ctx | `bash scripts/dev/context-restore.sh` |
+| `ctx:resume` | ctx | `bash scripts/dev/context-restore.sh --mode resume` |
 | `ctx:save` | ctx | `bash scripts/dev/context-save.sh` |
 | `docs:check` | docs | `bash scripts/dev/check-docs-context.sh` |
 | `docs:refresh` | docs | `node scripts/dev/refresh-generated-context.mjs && node scripts/dev/refresh-context-retrieval.mjs && node scripts/dev/refresh-agent-catalog.mjs && node scripts/dev/refresh-tool-catalog.mjs && node scripts/dev/refresh-agent-usage-report.mjs && node scripts/dev/refresh-context-registry.mjs && node scripts/dev/refresh-context-ab-report.mjs && node scripts/dev/refresh-sandbox-policy-report.mjs && node scripts/dev/refresh-doc-governance.mjs && node scripts/dev/refresh-context-value-demo.mjs && node scripts/dev/refresh-context-metrics.mjs` |
@@ -85,6 +87,9 @@ This generated manifest is the portable index for open-source discovery, local A
 | `harness:benchmark` | harness | `node scripts/dev/run-context-benchmark.mjs` |
 | `harness:browser` | harness | `bash scripts/dev/run-browser-context-harness.sh` |
 | `harness:smoke` | harness | `bash scripts/dev/run-context-harness.sh` |
+| `orch:check` | orch | `node scripts/dev/check-orchestration-work.mjs` |
+| `orch:list` | orch | `node scripts/dev/list-orchestration-work.mjs` |
+| `orch:work` | orch | `node scripts/dev/orchestrate-work.mjs` |
 | `registry:describe` | registry | `node scripts/dev/describe-context-entry.mjs` |
 | `registry:query` | registry | `node scripts/dev/query-context-registry.mjs` |
 | `registry:refresh` | registry | `node scripts/dev/refresh-context-registry.mjs` |
@@ -136,8 +141,8 @@ This generated manifest is the portable index for open-source discovery, local A
 ## Retrieval
 
 - Retrieval enabled: `yes`
-- Indexed sources: `76`
-- Indexed chunks: `1369`
+- Indexed sources: `77`
+- Indexed chunks: `1379`
 
 ## Telemetry
 

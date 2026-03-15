@@ -21,6 +21,7 @@ This file is the root execution contract for human and AI contributors working i
 - Use `docs/AGENT_FACTORY.md` when creating or revising reusable agents.
 - Use `docs/TOOL_DESIGN.md` when creating or revising reusable tools.
 - Use `docs/AGENT_OBSERVABILITY.md` when the work needs runtime evidence.
+- Use `docs/ORCHESTRATION.md` when the task spans dependencies, queued handoffs, or multi-step parallel work.
 
 ## Code Boundaries
 

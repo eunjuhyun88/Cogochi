@@ -36,6 +36,7 @@
     "generatedMaps": true,
     "runtimeMemory": true,
     "coordination": true,
+    "orchestration": true,
     "benchmark": true,
     "registryQuery": true,
     "contextualRetrieval": true,
@@ -219,6 +220,11 @@
       "authority": "canonical"
     },
     {
+      "path": "docs/ORCHESTRATION.md",
+      "role": "orchestration",
+      "authority": "canonical"
+    },
+    {
       "path": "docs/SANDBOX_POLICY.md",
       "role": "sandbox-policy",
       "authority": "canonical"
@@ -381,6 +387,11 @@
       "category": "ctx"
     },
     {
+      "name": "ctx:resume",
+      "script": "bash scripts/dev/context-restore.sh --mode resume",
+      "category": "ctx"
+    },
+    {
       "name": "ctx:save",
       "script": "bash scripts/dev/context-save.sh",
       "category": "ctx"
@@ -434,6 +445,21 @@
       "name": "harness:smoke",
       "script": "bash scripts/dev/run-context-harness.sh",
       "category": "harness"
+    },
+    {
+      "name": "orch:check",
+      "script": "node scripts/dev/check-orchestration-work.mjs",
+      "category": "orch"
+    },
+    {
+      "name": "orch:list",
+      "script": "node scripts/dev/list-orchestration-work.mjs",
+      "category": "orch"
+    },
+    {
+      "name": "orch:work",
+      "script": "node scripts/dev/orchestrate-work.mjs",
+      "category": "orch"
     },
     {
       "name": "registry:describe",
@@ -1197,8 +1223,8 @@
   "retrieval": {
     "enabled": true,
     "indexPath": "docs/generated/contextual-retrieval-index.json",
-    "chunkCount": 1369,
-    "sourceCount": 76,
+    "chunkCount": 1379,
+    "sourceCount": 77,
     "sources": [
       {
         "path": "AGENTS.md",

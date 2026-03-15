@@ -10,8 +10,8 @@ This generated artifact summarizes the query-time retrieval index for canonical 
 
 ## Index Stats
 
-- Source docs indexed: `76`
-- Chunks indexed: `1369`
+- Source docs indexed: `77`
+- Chunks indexed: `1379`
 - Chunk size (words): `120`
 - Overlap size (words): `30`
 - Default top-k: `5`
