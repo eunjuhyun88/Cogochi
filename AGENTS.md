@@ -1,84 +1,38 @@
-# Cogochi Agent Map
+# Agent Rules
 
-This file is a map, not a manual.
+This file is the root execution contract for human and AI contributors working in this repository.
 
-Use it to find the right source of truth quickly, then read the narrower document you actually need.
+## Mandatory Start Sequence
 
-## Start Here
+1. Re-read `README.md`.
+2. Re-read `CLAUDE.md`.
+3. Route docs through `docs/README.md` instead of broad scanning.
+4. Create a semantic checkpoint for non-trivial work with `npm run ctx:checkpoint -- --work-id "<W-ID>" --surface "<surface>" --objective "<objective>"`.
+5. If the task changes product behavior, open `docs/MASTER_GAME_SPEC.md`, `docs/AGENT_SYSTEM_DESIGN.md`, `docs/BATTLEFIELD_DESIGN.md`, and `docs/VISUAL_WORLD_DESIGN.md` before editing.
 
-1. [docs/INDEX.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/INDEX.md)
-2. [docs/PROJECT_CONTEXT.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/PROJECT_CONTEXT.md)
-3. [docs/PRODUCT_BLUEPRINT.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/PRODUCT_BLUEPRINT.md)
-4. [docs/AGENT_SYSTEM_DESIGN.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/AGENT_SYSTEM_DESIGN.md)
+## Retrieval Discipline
 
-For AI runtime details:
+- Use `docs/CONTEXT_ENGINEERING.md` for retrieval order, compaction rules, and anti-patterns.
+- Use `docs/CONTEXTUAL_RETRIEVAL.md` when the right canonical subset is unclear.
+- Prefer the smallest relevant canonical subset over broad repo scanning.
 
-- [docs/AI_RUNTIME_TRAINING_SPEC.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/AI_RUNTIME_TRAINING_SPEC.md)
-- [docs/AI_IMPLEMENTATION_CONTRACTS.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/AI_IMPLEMENTATION_CONTRACTS.md)
+## Reusable Contracts
 
-For repo context engineering and eval reliability:
+- Use `docs/AGENT_FACTORY.md` when creating or revising reusable agents.
+- Use `docs/TOOL_DESIGN.md` when creating or revising reusable tools.
+- Use `docs/AGENT_OBSERVABILITY.md` when the work needs runtime evidence.
+- Use `docs/ORCHESTRATION.md` when the task spans dependencies, queued handoffs, or multi-step parallel work.
 
-- [docs/CONTEXT_ENGINEERING.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/CONTEXT_ENGINEERING.md)
-- [docs/RELIABILITY.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/RELIABILITY.md)
-- [docs/QUALITY_SCORE.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/QUALITY_SCORE.md)
-- [docs/PLANS.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/PLANS.md)
+## Code Boundaries
 
-## Product Truth
+- Routes orchestrate UI and store calls only.
+- Stores own state, not battle scoring.
+- Engine code owns deterministic score and battle resolution.
+- Memory services own writeback and retrieval preparation, not battle outcomes.
 
-Cogochi is an AI agent raising and evaluation simulator.
+## Product Guardrails
 
-The player does not primarily collect species. The player owns persistent agent instances built on top of a base model, configures prompts, data bindings, tools, and RAG memory, then validates those choices through evaluation battles.
-
-Core loop:
-
-`base model -> owned agent -> data and memory setup -> prompt and retraining -> squad -> eval match -> reflection -> progression`
-
-## Repo Truth
-
-- `docs/` is the system of record.
-- This `AGENTS.md` must stay short and point outward.
-- Complex work must leave behind plan artifacts under `docs/exec-plans/`.
-- Quality and reliability rules must be documented in-repo, not in chat history.
-
-## Key Paths
-
-- UI routes: `/Users/ej/Downloads/maxidoge-clones/Cogochi/src/routes`
-- AI domain: `/Users/ej/Downloads/maxidoge-clones/Cogochi/src/lib/aimon`
-- components: `/Users/ej/Downloads/maxidoge-clones/Cogochi/src/components/aimon`
-- docs index: `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/INDEX.md`
-- active plans: `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/exec-plans/active`
-- completed plans: `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/exec-plans/completed`
-
-## Current Screens
-
-- `/` -> Agent Ops Hub
-- `/roster` -> Owned Agent roster
-- `/agent/[id]` -> Agent console
-- `/team` -> Squad builder
-- `/battle` -> Eval battle
-- `/lab` -> Training and memory ops
-
-## Working Rules
-
-- Keep product truth inside repo documents.
-- Prefer progressive disclosure over giant instruction blobs.
-- Encode stable rules in docs or scripts, not in one-off chat guidance.
-- Treat eval reliability as a first-class engineering concern.
-- Preserve immutable snapshots for any future async PvP or benchmark replay.
-
-## Validation
-
-Run these before pushing:
-
-```bash
-npm run check
-npm run build
-```
-
-`npm run check` also validates the context-doc structure.
-
-## Git
-
-- Repo root: `/Users/ej/Downloads/maxidoge-clones/Cogochi`
-- Remote: `origin git@github.com:eunjuhyun88/Cogochi.git`
-- Log meaningful work in [docs/AGENT_WATCH_LOG.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/AGENT_WATCH_LOG.md)
+- Cogochi is a judgment RPG, not a trading simulator.
+- Price input is immutable; the player changes judgment, not candles.
+- Current market data must not contaminate RAG-backed evaluation.
+- Battle outcomes must be explainable, deterministic, and tied to judgment quality.

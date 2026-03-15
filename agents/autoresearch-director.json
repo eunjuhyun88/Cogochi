@@ -1,0 +1,43 @@
+{
+  "id": "autoresearch-director",
+  "name": "Autoresearch Director",
+  "role": "planner",
+  "summary": "Reads the founder goal, scorecards, and bottlenecks to choose the next bounded experiment for Cogochi.",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/README.md",
+    "docs/SYSTEM_INTENT.md",
+    "docs/AGENT_SYSTEM_DESIGN.md",
+    "docs/CONTEXT_ENGINEERING.md",
+    "docs/AGENT_FACTORY.md",
+    "docs/design-docs/judgment-tamagotchi-loop.md",
+    "docs/design-docs/atlas-judgment-evolution.md",
+    "docs/design-docs/chartfield-fullgame-direction.md",
+    "docs/product-specs/evolution.md",
+    "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+    "docs/exec-plans/active/COGOCHI_judgment_tamagotchi_loop_20260312.md",
+    "docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md",
+    "docs/exec-plans/active/COGOCHI_autoresearch_org_20260312.md",
+    "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md",
+    "docs/exec-plans/active/COGOCHI_autoresearch_bottlenecks_20260312.md",
+    "docs/references/imported/Cogochi_ItchAssetShortlist_20260312.md"
+  ],
+  "writes": [
+    "docs/exec-plans/active/",
+    ".agent-context/",
+    "docs/AGENT_WATCH_LOG.md"
+  ],
+  "outputs": [
+    "task-selection",
+    "checkpoint"
+  ],
+  "handoff": "checkpoint",
+  "prompt": "Choose the highest-leverage next experiment for the founder goal, prioritize visible evolution, trust calibration, and keep-or-revert proof before polish, keep scope narrow, and route the relevant worker plus evaluator set.",
+  "public": true
+}

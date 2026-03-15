@@ -1,0 +1,32 @@
+{
+  "id": "runtime-memory-architect",
+  "name": "Runtime Memory Architect",
+  "role": "implementer",
+  "summary": "Maintains the Memento-style memory/runtime split, runtime bundle scripts, and OpenClaw-facing adapter contracts.",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "runtime/runtime-config.json",
+    "runtime/",
+    "src/lib/services/memory/",
+    "docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md",
+    "docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md"
+  ],
+  "writes": [
+    "runtime/",
+    "src/lib/services/memory/",
+    "scripts/autoresearch/",
+    "docs/design-docs/",
+    "docs/exec-plans/active/",
+    "tools/"
+  ],
+  "outputs": [
+    "runtime-change",
+    "brief"
+  ],
+  "handoff": "brief",
+  "prompt": "Keep the Memento-style memory and runtime layers explicit, runnable, and aligned with Cogochi's deterministic judgment RPG loop.",
+  "public": true
+}

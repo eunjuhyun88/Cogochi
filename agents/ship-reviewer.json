@@ -1,0 +1,31 @@
+{
+  "id": "ship-reviewer",
+  "name": "Ship Reviewer",
+  "role": "reviewer",
+  "summary": "Checks that candidate changes satisfy hard gates, score better than baseline, and do not drift away from the founder goal.",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "README.md",
+    "AGENTS.md",
+    "docs/README.md",
+    "docs/QUALITY_SCORE.md",
+    "docs/RELIABILITY.md",
+    "docs/SECURITY.md",
+    "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+    "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md"
+  ],
+  "writes": [
+    ".agent-context/",
+    "docs/AGENT_WATCH_LOG.md"
+  ],
+  "outputs": [
+    "accept-reject",
+    "handoff"
+  ],
+  "handoff": "handoff",
+  "prompt": "Reject changes that fail hard gates or improve the wrong thing, and accept only changes that move the founder goal forward.",
+  "public": true
+}

@@ -1,497 +1,405 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
   import { onMount } from 'svelte';
-  import type { OwnedAgent } from '$lib/aimon/types';
-  import PokemonFrame from '../../components/shared/PokemonFrame.svelte';
-  import { aimonDexById } from '$lib/aimon/data/aimonDex';
-  import { createEvalScenario } from '$lib/aimon/data/evalScenarios';
-  import { getEvolutionPreview } from '$lib/aimon/engine/evolutionSystem';
-  import { setScreen } from '$lib/aimon/stores/gameStore';
-  import { labStore } from '$lib/aimon/stores/labStore';
-  import { matchStore } from '$lib/aimon/stores/matchStore';
-  import { playerStore } from '$lib/aimon/stores/playerStore';
-  import { rosterStore } from '$lib/aimon/stores/rosterStore';
-  import { squadStore } from '$lib/aimon/stores/squadStore';
+  import DoctrineTerminalPanel from '$components/shared/DoctrineTerminalPanel.svelte';
+  import PageShell from '$components/shared/PageShell.svelte';
+  import ComparePanel from '$components/shared/ComparePanel.svelte';
+  import { confidenceLabels, evalScenarios, indicatorPresetLabels, memoryBiasLabels, memoryTierLabels, scriptPresetLabels } from '$lib/data/seed';
+  import { compareLoadouts } from '$lib/engine/eval-engine';
+  import { buildMemoryTierSummary } from '$lib/services/memory/writeback';
+  import { labStore } from '$lib/stores/labStore';
+  import { rosterStore } from '$lib/stores/rosterStore';
+  import type { MutationDecision } from '$lib/types';
+  import type { PageData } from './$types';
 
-  let player = $derived($playerStore);
-  let roster = $derived($rosterStore);
-  let squad = $derived($squadStore);
-  let lab = $derived($labStore);
-  let matches = $derived($matchStore);
-  let selectedScenario = $derived(matches.activeScenario ?? createEvalScenario(matches.selectedScenarioId));
+  let { data }: { data: PageData } = $props();
 
-  let totalXp = $derived(roster.agents.reduce((sum, agent) => sum + agent.xp, 0));
-  let selectedTeam = $derived(
-    squad.activeSquad.memberAgentIds
-      .map((id) => roster.agents.find((agent) => agent.id === id))
-      .filter((agent): agent is OwnedAgent => Boolean(agent))
+  const agents = $derived($rosterStore.agents);
+  const activeAgentId = $derived($labStore.activeAgentId || agents[0]?.id || '');
+  const activeAgent = $derived(agents.find((agent) => agent.id === activeAgentId) ?? null);
+  const activeDoctrineSessionId = $derived.by(() => (activeAgent ? $labStore.activeDoctrineSessionIds[activeAgent.id] ?? null : null));
+  const activeDoctrineSession = $derived.by(() => {
+    $labStore;
+    return activeAgent && activeDoctrineSessionId ? labStore.getDoctrineSession(activeAgent.id, activeDoctrineSessionId) : null;
+  });
+  const draft = $derived(activeAgent ? labStore.getDraft(activeAgent.id) : null);
+  const memorySummary = $derived(activeAgent ? buildMemoryTierSummary(activeAgent.memoryBank) : null);
+  const comparison = $derived(
+    activeAgent && draft ? compareLoadouts(activeAgent, activeAgent.loadout, draft, $labStore.activeScenarioId) : null,
   );
-  let queuedRuns = $derived(lab.trainingRuns.slice(0, 6));
-  let promptVariants = $derived(lab.promptVariants.slice(0, 8));
-  let recentDatasetBundles = $derived(lab.datasetBundles.slice(0, 5));
-  let recentArtifacts = $derived(lab.modelArtifacts.slice(0, 4));
-  let doctrineCount = $derived(
-    lab.memoryBanks.reduce((sum, bank) => sum + bank.records.filter((record) => record.kind === 'USER_NOTE').length, 0)
-  );
-  let memoryCardCount = $derived(lab.memoryBanks.reduce((sum, bank) => sum + bank.records.length, 0));
-  let recentLessons = $derived(matches.recentResults.slice(0, 4));
-  let recentBenchmarkRuns = $derived(matches.recentBenchmarkRuns.slice(0, 4));
-  let recentLineage = $derived(lab.artifactLineage.slice(0, 4));
-  let memoryOverview = $derived(
-    selectedTeam.map((agent) => ({
-      agent,
-      entry: aimonDexById[agent.speciesId] ?? null,
-      memoryBank: lab.memoryBanks.find((bank) => bank.agentId === agent.id || bank.id === agent.memoryBankId) ?? null,
-      evolution: getEvolutionPreview(agent.speciesId, agent.xp)
-    }))
-  );
+  const proofHref = $derived.by(() => {
+    if (!activeAgent || !activeDoctrineSession) {
+      return '/proof';
+    }
 
-  onMount(() => {
-    setScreen('lab');
+    const params = new URLSearchParams({
+      agent: activeAgent.id,
+      session: activeDoctrineSession.id,
+    });
+    if (activeDoctrineSession.recommendedProofPackId) {
+      params.set('pack', activeDoctrineSession.recommendedProofPackId);
+    }
+    return `/proof?${params.toString()}`;
+  });
+  const verdictOptions: Array<{ id: MutationDecision; label: string; helper: string }> = [
+    { id: 'ACCEPTED', label: 'Keep mutation', helper: 'Promote the body change and lock it into the next field run.' },
+    { id: 'QUARANTINED', label: 'Quarantine', helper: 'Keep the mutation in review without promoting it to the live body.' },
+    { id: 'REVERTED', label: 'Revert mutation', helper: 'Reject the mutation and preserve the current body.' },
+  ];
+
+  $effect(() => {
+    if (activeAgent) {
+      labStore.ensureDraft(activeAgent.id);
+    }
   });
 
-  function formatDate(timestamp?: number): string {
-    if (!timestamp) return 'No record';
-    return new Date(timestamp).toLocaleString('ko-KR', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
+  onMount(() => {
+    if (!browser) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const agentId = params.get('agent');
+    const sessionId = params.get('session');
+    if (agentId && agents.some((agent) => agent.id === agentId)) {
+      labStore.setActiveAgent(agentId);
+      labStore.ensureDraft(agentId);
+      rosterStore.selectAgent(agentId);
+      if (sessionId) {
+        labStore.setActiveDoctrineSession(agentId, sessionId);
+      }
+    }
+  });
 </script>
 
-<svelte:head>
-  <title>AI MON Growth Lab</title>
-</svelte:head>
+<PageShell>
+  {#if activeAgent}
+    <section class="doctrine-wrap">
+      <DoctrineTerminalPanel agentId={activeAgent.id} agentName={activeAgent.name} quickPrompts={data.quickPrompts} />
+    </section>
+  {/if}
 
-<div class="page">
-  <header class="header">
-    <div>
-      <p class="eyebrow">GROWTH LAB</p>
-      <h1>Agent Training Ops</h1>
-      <p class="lede">
-        이 화면은 XP만 보는 곳이 아니라 prompt variant, training queue, doctrine memory, recent eval lessons를 같이 운영하는 랩 콘솔입니다.
-      </p>
-    </div>
-    <div class="header-actions">
-      <a href="/roster">Roster</a>
-      <a href="/team">Team</a>
-      <a href="/battle">Run Eval</a>
-    </div>
-  </header>
-
-  <section class="summary-grid">
-    <PokemonFrame variant="dark" padding="14px">
-      <div class="summary-card">
-        <span>Total XP</span>
-        <strong>{totalXp}</strong>
-        <small>{player.battleCount} battles · {player.wins} wins</small>
-      </div>
-    </PokemonFrame>
-
-    <PokemonFrame variant="dark" padding="14px">
-      <div class="summary-card">
-        <span>Queued Runs</span>
-        <strong>{lab.trainingRuns.length}</strong>
-        <small>{lab.datasetBundles.length} dataset bundles · {lab.modelArtifacts.length} artifacts</small>
-      </div>
-    </PokemonFrame>
-
-    <PokemonFrame variant="dark" padding="14px">
-      <div class="summary-card">
-        <span>Memory Cards</span>
-        <strong>{memoryCardCount}</strong>
-        <small>{doctrineCount} user doctrine notes</small>
-      </div>
-    </PokemonFrame>
-
-    <PokemonFrame variant="accent" padding="14px">
-      <div class="summary-card">
-        <span>Eval Preset</span>
-        <strong>{selectedScenario.label}</strong>
-        <small>{selectedScenario.symbol} · {selectedScenario.timeframe} · {selectedTeam.length}/4 active squad agents tracked</small>
-      </div>
-    </PokemonFrame>
-  </section>
-
-  <section class="grid two-up">
-    <PokemonFrame variant="dark" padding="16px">
-      <section class="panel">
-        <div class="section-head">
-          <h2>Training Queue</h2>
-          <span>{queuedRuns.length} recent</span>
+  <section class="grid-2">
+    <article class="panel lab-panel">
+      <div class="stack">
+        <div>
+          <p class="section-kicker">Lab</p>
+          <h1 class="section-title">Propose one mutation and run the proof pack.</h1>
         </div>
-        <div class="list">
-          {#if queuedRuns.length > 0}
-            {#each queuedRuns as run (run.id)}
-              {@const agent = roster.agents.find((item) => item.id === run.agentId)}
-              <article class="list-card">
-                <div class="list-head">
-                  <strong>{run.type}</strong>
-                  <span>{run.state}</span>
-                </div>
-                <p>{run.hypothesis}</p>
-                <small>{agent?.name ?? 'Unknown agent'} · {run.benchmarkPackId} · {run.changes.join(' / ') || 'No delta recorded'}</small>
-              </article>
+
+        <label class="field">
+          <span>Agent</span>
+          <select
+            value={$labStore.activeAgentId}
+            onchange={(event) => {
+              const value = (event.currentTarget as HTMLSelectElement).value;
+              labStore.setActiveAgent(value);
+              labStore.ensureDraft(value);
+            }}
+          >
+            {#each agents as agent}
+              <option value={agent.id}>{agent.name}</option>
             {/each}
-          {:else}
-            <p class="empty-copy">No training runs queued yet. Save a prompt snapshot or queue a tuning run from an agent console.</p>
-          {/if}
-        </div>
-      </section>
-    </PokemonFrame>
+          </select>
+        </label>
 
-    <PokemonFrame variant="dark" padding="16px">
-      <section class="panel">
-        <div class="section-head">
-          <h2>Prompt Variant Vault</h2>
-          <span>{promptVariants.length} saved</span>
-        </div>
-        <div class="list">
-          {#if promptVariants.length > 0}
-            {#each promptVariants as variant (variant.id)}
-              {@const agent = roster.agents.find((item) => item.id === variant.agentId)}
-              <article class="list-card">
-                <div class="list-head">
-                  <strong>{variant.label}</strong>
-                  <span>{formatDate(variant.createdAt)}</span>
-                </div>
-                <p>{agent?.name ?? 'Unknown agent'} · {variant.systemPrompt.slice(0, 120)}{variant.systemPrompt.length > 120 ? '…' : ''}</p>
-                <small>{variant.rolePrompt.slice(0, 96)}{variant.rolePrompt.length > 96 ? '…' : ''}</small>
-              </article>
+        <label class="field">
+          <span>Scenario</span>
+          <select value={$labStore.activeScenarioId} onchange={(event) => labStore.setActiveScenario((event.currentTarget as HTMLSelectElement).value)}>
+            {#each evalScenarios as scenario}
+              <option value={scenario.id}>{scenario.label}</option>
             {/each}
-          {:else}
-            <p class="empty-copy">No prompt variants saved yet.</p>
-          {/if}
-        </div>
-      </section>
-    </PokemonFrame>
-  </section>
+          </select>
+        </label>
 
-  <section class="panel-section">
-    <div class="section-head">
-      <div>
-        <p class="eyebrow">ACTIVE SQUAD MEMORY</p>
-        <h2>Growth And Retrieval Health</h2>
-      </div>
-    </div>
+        {#if activeAgent && draft}
+          <label class="field">
+            <span>Indicator profile</span>
+            <select
+              value={draft.indicatorPresetId}
+              onchange={(event) => labStore.patchDraft(activeAgent.id, { indicatorPresetId: (event.currentTarget as HTMLSelectElement).value as typeof draft.indicatorPresetId })}
+            >
+              {#each Object.entries(indicatorPresetLabels) as [id, label]}
+                <option value={id}>{label}</option>
+              {/each}
+            </select>
+          </label>
 
-    <div class="cards">
-      {#each memoryOverview as item (item.agent.id)}
-        {#if item.entry}
-          <PokemonFrame variant={item.evolution.canEvolve ? 'accent' : 'dark'} padding="14px">
-            <article class="lab-card">
-              <div>
-                <span class="dex-no">{item.entry.dexNo} · {item.agent.role}</span>
-                <h2 style:color={item.entry.color}>{item.agent.name}</h2>
-                <p>{item.agent.loadout.readout}</p>
-              </div>
-              <div class="stats-grid">
-                <span>XP</span><strong>{item.agent.xp}</strong>
-                <span>Evolution</span><strong>{item.evolution.canEvolve ? 'READY' : item.evolution.evolvesTo ?? 'FINAL'}</strong>
-                <span>Memory bank</span><strong>{item.memoryBank?.records.length ?? 0}/{item.memoryBank?.capacity ?? 0}</strong>
-                <span>Compaction</span><strong>L{item.memoryBank?.compactionLevel ?? 0}</strong>
-                <span>Last match</span><strong>{formatDate(item.agent.record.lastMatchAt)}</strong>
-                <span>Top lesson</span><strong>{item.memoryBank?.records[0]?.title ?? 'No lessons yet'}</strong>
-              </div>
-              <div class="card-actions">
-                <a href={`/agent/${item.agent.id}`}>Open Agent Console</a>
-              </div>
-            </article>
-          </PokemonFrame>
+          <label class="field">
+            <span>Script rule</span>
+            <select
+              value={draft.scriptPresetId}
+              onchange={(event) => labStore.patchDraft(activeAgent.id, { scriptPresetId: (event.currentTarget as HTMLSelectElement).value as typeof draft.scriptPresetId })}
+            >
+              {#each Object.entries(scriptPresetLabels) as [id, label]}
+                <option value={id}>{label}</option>
+              {/each}
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Memory bias</span>
+            <select
+              value={draft.memoryBias}
+              onchange={(event) => labStore.patchDraft(activeAgent.id, { memoryBias: (event.currentTarget as HTMLSelectElement).value as typeof draft.memoryBias })}
+            >
+              {#each Object.entries(memoryBiasLabels) as [id, label]}
+                <option value={id}>{label}</option>
+              {/each}
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Confidence style</span>
+            <select
+              value={draft.confidenceStyle}
+              onchange={(event) => labStore.patchDraft(activeAgent.id, { confidenceStyle: (event.currentTarget as HTMLSelectElement).value as typeof draft.confidenceStyle })}
+            >
+              {#each Object.entries(confidenceLabels) as [id, label]}
+                <option value={id}>{label}</option>
+              {/each}
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Risk tolerance ({draft.riskTolerance})</span>
+            <input
+              type="range"
+              min="10"
+              max="90"
+              value={draft.riskTolerance}
+              oninput={(event) => labStore.patchDraft(activeAgent.id, { riskTolerance: Number((event.currentTarget as HTMLInputElement).value) })}
+            />
+          </label>
+
+          <label class="field">
+            <span>Doctrine note</span>
+            <textarea
+              rows="5"
+              value={draft.doctrineNote}
+              oninput={(event) => labStore.patchDraft(activeAgent.id, { doctrineNote: (event.currentTarget as HTMLTextAreaElement).value })}
+            ></textarea>
+          </label>
+
+          <div class="chip-row">
+            {#if comparison}
+              {#each verdictOptions as option}
+                <button
+                  class:selected-verdict={comparison.decision === option.id}
+                  class={`action-button ${option.id === 'QUARANTINED' ? 'secondary' : option.id === 'REVERTED' ? 'ghost' : ''}`}
+                  onclick={() => labStore.commitDraft(activeAgent.id, option.id)}
+                >
+                  {option.label}
+                </button>
+              {/each}
+            {/if}
+            <button class="action-button secondary" onclick={() => labStore.resetDraft(activeAgent.id)}>Reset draft</button>
+            <a class="link-button" href={proofHref}>Open proof packs</a>
+            <a class="link-button secondary" href="/battle">Preview battle</a>
+            <a class="link-button ghost" href={`/agent/${activeAgent.id}`}>Inspect agent</a>
+          </div>
         {/if}
-      {/each}
-    </div>
+      </div>
+    </article>
+
+    <article class="panel lab-panel lab-panel--quiet">
+      <div class="stack">
+        <div>
+          <p class="section-kicker">Mutation bench</p>
+          <h2 class="section-title">The same scenario should prove whether this mutation survives.</h2>
+        </div>
+        <p>
+          This lab is intentionally narrow. You are not tweaking candles or faking PnL. You are changing doctrine,
+          indicators, scripts, and memory emphasis to see whether the exact same historical situation produces a
+          stronger judgment profile, a cleaner captain call, and a mutation worth keeping.
+        </p>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <small>Current scenario</small>
+            <strong>{evalScenarios.find((scenario) => scenario.id === $labStore.activeScenarioId)?.label}</strong>
+          </div>
+          <div class="metric-card">
+            <small>Projected verdict</small>
+            <strong>{comparison?.decision ?? 'No draft yet'}</strong>
+            {#if comparison}
+              <p>Recommended by the proof pack, but you can override it.</p>
+            {/if}
+          </div>
+          <div class="metric-card">
+            <small>Latest proof</small>
+            <strong>{activeAgent?.lastComparison?.decisionReason ?? 'No proof run yet'}</strong>
+          </div>
+        </div>
+        {#if activeDoctrineSession}
+          <div class="metric-card">
+            <small>Current doctrine handoff</small>
+            <strong>{activeDoctrineSession.title}</strong>
+            <p>{activeDoctrineSession.normalizedIntent}</p>
+            <div class="chip-row">
+              <span class="chip">{activeDoctrineSession.status}</span>
+              {#if activeDoctrineSession.recommendedProofPackId}
+                <span class="chip chip--quiet">{activeDoctrineSession.recommendedProofPackId}</span>
+              {/if}
+            </div>
+          </div>
+        {/if}
+        {#if memorySummary}
+          <div class="metric-card">
+            <small>Memento memory tiers</small>
+            <div class="chip-row">
+              {#each Object.entries(memorySummary) as [tier, total]}
+                <span class="chip">{memoryTierLabels[tier as keyof typeof memoryTierLabels]} {total}</span>
+              {/each}
+            </div>
+            <p>The mutation bench should change not just stats, but what lands in recent, proven, and legacy memory.</p>
+          </div>
+        {/if}
+        {#if activeAgent && comparison}
+          <div class="metric-card">
+            <small>Weak link under review</small>
+            <strong>{comparison.proposed.weakLink}</strong>
+            <p>{comparison.proposed.objection}</p>
+          </div>
+          <div class="metric-card">
+            <small>Reference proof frame</small>
+            <strong>{comparison.proposed.proofFrameTitle}</strong>
+            <p>{comparison.proposed.proofFrameDateLabel}</p>
+          </div>
+          <div class="metric-card">
+            <small>Visible effect if accepted</small>
+            <strong>{comparison.visibleEffect}</strong>
+            <p>{comparison.decisionReason}</p>
+          </div>
+          <div class="metric-card">
+            <small>Projected memory landing</small>
+            <strong>{comparison.decision === 'ACCEPTED' ? 'Proven memory (M90)' : comparison.decision === 'QUARANTINED' ? 'Recent review (M30)' : 'Recent failure (M30)'}</strong>
+            <p>Accepted mutations should become durable playbooks. Rejected ones should stay visible as recent warnings, not disappear.</p>
+          </div>
+          <div class="verdict-grid">
+            {#each verdictOptions as option}
+              <button
+                class:verdict-card--selected={comparison.decision === option.id}
+                class={`verdict-card verdict-card--${option.id.toLowerCase()}`}
+                onclick={() => labStore.commitDraft(activeAgent.id, option.id)}
+                type="button"
+              >
+                <strong>{option.label}</strong>
+                <span>{option.helper}</span>
+              </button>
+            {/each}
+          </div>
+          <div class="chip-row">
+            {#each comparison.proposed.trustedInstincts.slice(0, 4) as instinct}
+              <span class={`chip chip--${instinct.state.toLowerCase()}`}>{instinct.label} {instinct.weight}</span>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    </article>
   </section>
 
-  <section class="grid two-up">
-    <PokemonFrame variant="dark" padding="16px">
-      <section class="panel">
-        <div class="section-head">
-          <h2>Recent Eval Lessons</h2>
-          <span>{recentLessons.length} matches</span>
-        </div>
-        <div class="list">
-          {#if recentLessons.length > 0}
-            {#each recentLessons as match (match.id)}
-              <article class="list-card">
-                <div class="list-head">
-                  <strong>{match.outcome}</strong>
-                  <span>{formatDate(match.createdAt)}</span>
-                </div>
-                <p>{match.reflections?.[0]?.lesson ?? match.lessons[0] ?? 'No lesson recorded.'}</p>
-                <small>
-                  {createEvalScenario(match.scenarioId, match.createdAt).label} · dataset {match.datasetBundleId ?? 'pending'} · {match.agentResults.map((result) => `${roster.agents.find((agent) => agent.id === result.agentId)?.name ?? 'Agent'}:${result.action}`).join(' / ')}
-                </small>
-              </article>
-            {/each}
-          {:else}
-            <p class="empty-copy">No evaluation lessons yet.</p>
-          {/if}
-        </div>
-      </section>
-    </PokemonFrame>
-
-    <PokemonFrame variant="dark" padding="16px">
-      <section class="panel">
-        <div class="section-head">
-          <h2>Lab Inventory</h2>
-          <span>Bindings and models</span>
-        </div>
-        <div class="stats-grid">
-          <span>Base Models</span><strong>{lab.baseModels.length}</strong>
-          <span>Data Sources</span><strong>{lab.dataSources.length}</strong>
-          <span>Tools</span><strong>{lab.tools.length}</strong>
-          <span>Memory Banks</span><strong>{lab.memoryBanks.length}</strong>
-          <span>Dataset Bundles</span><strong>{lab.datasetBundles.length}</strong>
-          <span>Artifacts</span><strong>{lab.modelArtifacts.length}</strong>
-          <span>Prompt Variants</span><strong>{lab.promptVariants.length}</strong>
-          <span>Training Runs</span><strong>{lab.trainingRuns.length}</strong>
-        </div>
-        <div class="list compact-list">
-          {#if recentDatasetBundles.length > 0}
-            {#each recentDatasetBundles as bundle (bundle.id)}
-              <article class="list-card compact">
-                <div class="list-head">
-                  <strong>{bundle.benchmarkPackId}</strong>
-                  <span>{formatDate(bundle.createdAt)}</span>
-                </div>
-                <p>{bundle.sftExamples.length} SFT · {bundle.preferenceExamples.length} preference · {bundle.agentIds.length} agents</p>
-                <small>{bundle.sourceMatchId}</small>
-              </article>
-            {/each}
-          {:else}
-            <p class="empty-copy">No dataset bundles captured yet.</p>
-          {/if}
-        </div>
-        <div class="list compact-list">
-          {#if recentArtifacts.length > 0}
-            {#each recentArtifacts as artifact (artifact.id)}
-              <article class="list-card compact">
-                <div class="list-head">
-                  <strong>{artifact.kind}</strong>
-                  <span>{artifact.status}</span>
-                </div>
-                <p>{artifact.label}</p>
-                <small>{artifact.id}</small>
-              </article>
-            {/each}
-          {/if}
-        </div>
-        <div class="chip-row">
-          {#each lab.dataSources as source (source.id)}
-            <span>{source.name}</span>
-          {/each}
-        </div>
-      </section>
-    </PokemonFrame>
-  </section>
-
-  <section class="grid two-up">
-    <PokemonFrame variant="dark" padding="16px">
-      <section class="panel">
-        <div class="section-head">
-          <h2>Benchmark Runs</h2>
-          <span>{recentBenchmarkRuns.length} recent</span>
-        </div>
-        <div class="list">
-          {#if recentBenchmarkRuns.length > 0}
-            {#each recentBenchmarkRuns as run (run.runId)}
-              <article class="list-card">
-                <div class="list-head">
-                  <strong>{run.profile}</strong>
-                  <span>{run.authoritative ? 'AUTHORITATIVE' : 'DEBUG ONLY'}</span>
-                </div>
-                <p>{run.benchmarkPackId} · fallback {run.fallbackCount} · invalid JSON {run.invalidJsonCount}</p>
-                <small>avg {run.averageLatencyMs}ms · p95 {run.p95LatencyMs}ms · manifest {run.runId}</small>
-              </article>
-            {/each}
-          {:else}
-            <p class="empty-copy">No benchmark run manifests captured yet.</p>
-          {/if}
-        </div>
-      </section>
-    </PokemonFrame>
-
-    <PokemonFrame variant="dark" padding="16px">
-      <section class="panel">
-        <div class="section-head">
-          <h2>Artifact Lineage</h2>
-          <span>{recentLineage.length} recent</span>
-        </div>
-        <div class="list">
-          {#if recentLineage.length > 0}
-            {#each recentLineage as entry (entry.id)}
-              <article class="list-card">
-                <div class="list-head">
-                  <strong>{entry.event}</strong>
-                  <span>{formatDate(entry.createdAt)}</span>
-                </div>
-                <p>{entry.note}</p>
-                <small>{entry.artifactId} · {entry.benchmarkPackId}</small>
-              </article>
-            {/each}
-          {:else}
-            <p class="empty-copy">No artifact lineage recorded yet.</p>
-          {/if}
-        </div>
-      </section>
-    </PokemonFrame>
-  </section>
-</div>
+  {#if comparison}
+    <section class="compare-wrap">
+      <ComparePanel {comparison} title="Draft compare before commit" />
+    </section>
+  {/if}
+</PageShell>
 
 <style>
-  .page {
+  .doctrine-wrap {
+    margin-bottom: 24px;
+  }
+
+  .lab-panel {
+    padding: 22px;
+  }
+
+  .lab-panel--quiet {
+    background: rgba(243, 246, 234, 0.88);
+  }
+
+  .field {
     display: grid;
-    gap: 18px;
-    padding: 18px;
+    gap: 8px;
   }
 
-  .header,
-  .section-head,
-  .list-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 14px;
-    align-items: end;
+  .field span {
+    font-size: 0.92rem;
+    color: var(--text-soft);
   }
 
-  .eyebrow,
-  .list-head span,
-  .summary-card span,
-  .stats-grid span,
-  .dex-no {
-    margin: 0;
-    color: var(--text-2);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.08em;
+  .field select,
+  .field textarea,
+  .field input {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border-strong);
+    background: rgba(255, 255, 255, 0.78);
   }
 
-  h1,
-  h2 {
-    margin: 0;
-    font-family: 'Orbitron', sans-serif;
+  .compare-wrap {
+    margin-top: 18px;
   }
 
-  h1 {
-    margin-top: 6px;
-    font-size: clamp(34px, 5vw, 56px);
-    line-height: 0.96;
+  .chip--trusted {
+    border-color: rgba(47, 108, 88, 0.28);
   }
 
-  .lede,
-  .lab-card p,
-  .list-card p {
-    margin: 0;
-    color: var(--text-1);
-    line-height: 1.45;
+  .chip--weak {
+    border-color: rgba(170, 93, 72, 0.28);
   }
 
-  .header-actions,
-  .card-actions,
-  .chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+  .selected-verdict {
+    box-shadow: inset 0 0 0 1px rgba(47, 108, 88, 0.45);
   }
 
-  .header-actions a,
-  .card-actions a,
-  .chip-row span {
-    display: inline-flex;
-    align-items: center;
-    min-height: 36px;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    color: var(--text-0);
-    text-decoration: none;
-  }
-
-  .summary-grid,
-  .two-up {
+  .verdict-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  .summary-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .summary-card,
-  .panel,
-  .lab-card,
-  .list {
-    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
   }
 
-  .summary-card strong {
-    font-size: 30px;
-  }
-
-  .summary-card small,
-  .list-card small,
-  .empty-copy {
-    color: var(--text-2);
-    line-height: 1.4;
-  }
-
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 14px;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px 14px;
-  }
-
-  .list-card {
+  .verdict-card {
     display: grid;
     gap: 8px;
     padding: 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.72);
+    text-align: left;
+    cursor: pointer;
   }
 
-  .compact-list {
-    margin-top: 8px;
+  .verdict-card strong,
+  .verdict-card span {
+    margin: 0;
   }
 
-  .list-card.compact {
-    gap: 6px;
-    padding: 12px;
+  .verdict-card span {
+    color: var(--text-soft);
+    line-height: 1.45;
   }
 
-  .panel-section {
-    display: grid;
-    gap: 14px;
+  .verdict-card--selected {
+    box-shadow: 0 14px 28px rgba(56, 66, 58, 0.1);
+    transform: translateY(-1px);
   }
 
-  @media (max-width: 1080px) {
-    .summary-grid,
-    .two-up {
+  .verdict-card--accepted {
+    border-color: rgba(47, 108, 88, 0.24);
+  }
+
+  .verdict-card--quarantined {
+    border-color: rgba(191, 141, 66, 0.28);
+  }
+
+  .verdict-card--reverted {
+    border-color: rgba(170, 93, 72, 0.24);
+  }
+
+  @media (max-width: 920px) {
+    .verdict-grid {
       grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .page {
-      padding: 14px;
-    }
-
-    .header,
-    .section-head,
-    .list-head {
-      flex-direction: column;
-      align-items: stretch;
     }
   }
 </style>

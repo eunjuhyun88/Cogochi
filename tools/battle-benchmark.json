@@ -1,0 +1,42 @@
+{
+  "id": "battle-benchmark",
+  "name": "Battle Benchmark",
+  "summary": "Produces the current battle-loop readiness or benchmark report for deterministic evaluation work.",
+  "scope": "local-command",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "docs/AGENT_SYSTEM_DESIGN.md",
+    "docs/BATTLEFIELD_DESIGN.md",
+    "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md"
+  ],
+  "writes": [
+    ".agent-context/autoresearch/"
+  ],
+  "inputs": [
+    {
+      "name": "tag",
+      "type": "string",
+      "required": false,
+      "description": "Optional run tag."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "report",
+      "type": "json",
+      "description": "Battle benchmark or readiness summary for the current branch."
+    }
+  ],
+  "invocation": {
+    "kind": "npm-script",
+    "script": "autoresearch:battle"
+  },
+  "safety": {
+    "sideEffects": "writes-generated",
+    "approvalRequired": false
+  },
+  "public": true
+}

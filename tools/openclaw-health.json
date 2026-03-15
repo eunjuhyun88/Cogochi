@@ -1,0 +1,40 @@
+{
+  "id": "openclaw-health",
+  "name": "OpenClaw Health",
+  "summary": "Checks whether a local OpenClaw-compatible runtime is reachable and whether the configured model appears available.",
+  "scope": "local-command",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md"
+  ],
+  "writes": [
+    ".agent-context/autoresearch/"
+  ],
+  "inputs": [
+    {
+      "name": "model",
+      "type": "string",
+      "required": false,
+      "description": "Optional preferred OpenClaw model identifier."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "report",
+      "type": "json",
+      "description": "Runtime reachability, endpoint probe results, and model visibility."
+    }
+  ],
+  "invocation": {
+    "kind": "npm-script",
+    "script": "autoresearch:openclaw"
+  },
+  "safety": {
+    "sideEffects": "writes-generated",
+    "approvalRequired": false
+  },
+  "public": true
+}

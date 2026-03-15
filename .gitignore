@@ -1,5 +1,11 @@
-node_modules
-.svelte-kit
-build
+.agent-context/
+context-kit.local.json
+.codex/
+.claude/worktrees/
 .DS_Store
-
+node_modules/
+.svelte-kit/
+output/
+dist/
+coverage/
+*.log

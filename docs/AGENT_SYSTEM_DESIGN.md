@@ -41,6 +41,26 @@ Short version:
 
 `agent -> train -> evaluate -> reflect -> improve`
 
+### 3.1 Proof Versus Battle
+
+Cogochi needs two evaluation layers:
+
+- `battle`
+  - one readable clash on one historical frame
+- `proof`
+  - one deterministic historical validation bundle around several clashes
+
+The player-facing word can stay `proof`.
+The system-facing concept is a game-native backtest.
+
+Battle answers:
+
+- what happened in this clash
+
+Proof answers:
+
+- whether this mutation or setup deserves trust beyond one clash
+
 ## 4. Non-Goals
 
 The MVP does not attempt to do the following:

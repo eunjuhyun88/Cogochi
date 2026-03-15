@@ -1,0 +1,41 @@
+{
+  "id": "scorecard-report",
+  "name": "Scorecard Report",
+  "summary": "Combines the latest OpenClaw, battle, field, and raising reports into the branch-level scorecard.",
+  "scope": "local-command",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md",
+    ".agent-context/autoresearch/"
+  ],
+  "writes": [
+    ".agent-context/autoresearch/"
+  ],
+  "inputs": [
+    {
+      "name": "tag",
+      "type": "string",
+      "required": false,
+      "description": "Optional score tag."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "report",
+      "type": "json",
+      "description": "Weighted branch score and hard gate status."
+    }
+  ],
+  "invocation": {
+    "kind": "npm-script",
+    "script": "autoresearch:score"
+  },
+  "safety": {
+    "sideEffects": "writes-generated",
+    "approvalRequired": false
+  },
+  "public": true
+}
