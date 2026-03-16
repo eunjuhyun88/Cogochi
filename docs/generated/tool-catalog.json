@@ -1,0 +1,505 @@
+{
+  "version": 1,
+  "toolCount": 11,
+  "tools": [
+    {
+      "id": "battle-benchmark",
+      "name": "Battle Benchmark",
+      "summary": "Produces the current battle-loop readiness or benchmark report for deterministic evaluation work.",
+      "scope": "local-command",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "docs/AGENT_SYSTEM_DESIGN.md",
+        "docs/BATTLEFIELD_DESIGN.md",
+        "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md"
+      ],
+      "writes": [
+        ".agent-context/autoresearch/"
+      ],
+      "inputs": [
+        {
+          "name": "tag",
+          "type": "string",
+          "required": false,
+          "description": "Optional run tag."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "json",
+          "description": "Battle benchmark or readiness summary for the current branch."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "autoresearch:battle"
+      },
+      "safety": {
+        "sideEffects": "writes-generated",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/battle-benchmark.json",
+      "public": true
+    },
+    {
+      "id": "change-acceptance",
+      "name": "Change Acceptance",
+      "summary": "Compares the latest score against baseline and decides whether the current branch state should be accepted or rejected.",
+      "scope": "local-command",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md",
+        ".agent-context/autoresearch/"
+      ],
+      "writes": [
+        ".agent-context/autoresearch/"
+      ],
+      "inputs": [
+        {
+          "name": "set_baseline",
+          "type": "boolean",
+          "required": false,
+          "description": "When true, the latest score becomes the new baseline."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "decision",
+          "type": "json",
+          "description": "Accept/reject decision with baseline comparison."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "autoresearch:accept"
+      },
+      "safety": {
+        "sideEffects": "writes-generated",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/change-acceptance.json",
+      "public": true
+    },
+    {
+      "id": "context-retrieve",
+      "name": "Context Retrieve",
+      "summary": "Query canonical docs through the contextual retrieval index when static routing is not enough.",
+      "scope": "context-api",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "docs/generated/contextual-retrieval-index.json",
+        "docs/CONTEXTUAL_RETRIEVAL.md"
+      ],
+      "writes": [
+        "docs/generated/"
+      ],
+      "inputs": [
+        {
+          "name": "query",
+          "type": "string",
+          "required": true,
+          "description": "Natural-language retrieval query."
+        },
+        {
+          "name": "surface",
+          "type": "string",
+          "required": false,
+          "description": "Optional surface bias for ranking."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "results",
+          "type": "json",
+          "description": "Ranked retrieval results with scores and chunk excerpts."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "retrieve:query"
+      },
+      "safety": {
+        "sideEffects": "read-only",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/context-retrieve.json",
+      "public": true
+    },
+    {
+      "id": "coord-claim",
+      "name": "Coordination Claim",
+      "summary": "Claim a scoped surface and path boundary before feature work begins.",
+      "scope": "coordination",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "docs/MULTI_AGENT_COORDINATION.md",
+        ".agent-context/coordination/"
+      ],
+      "writes": [
+        ".agent-context/coordination/"
+      ],
+      "inputs": [
+        {
+          "name": "workId",
+          "type": "string",
+          "required": true,
+          "description": "Stable work identifier."
+        },
+        {
+          "name": "path",
+          "type": "string",
+          "required": true,
+          "description": "Owned repo path prefix."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "claim",
+          "type": "json",
+          "description": "Stored claim manifest with lease metadata."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "coord:claim"
+      },
+      "safety": {
+        "sideEffects": "writes-generated",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/coord-claim.json",
+      "public": true
+    },
+    {
+      "id": "field-loop-eval",
+      "name": "Field Loop Eval",
+      "summary": "Scores how complete and legible the current top-down field loop is for the player.",
+      "scope": "local-command",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "docs/product-specs/field.md",
+        "docs/design-docs/chartfield-fullgame-direction.md",
+        "docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md",
+        "docs/generated/route-map.md",
+        "src/"
+      ],
+      "writes": [
+        ".agent-context/autoresearch/"
+      ],
+      "inputs": [
+        {
+          "name": "surface",
+          "type": "string",
+          "required": false,
+          "description": "Optional surface identifier to bias evaluation."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "json",
+          "description": "Field loop readiness report for the current branch."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "autoresearch:field"
+      },
+      "safety": {
+        "sideEffects": "writes-generated",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/field-loop-eval.json",
+      "public": true
+    },
+    {
+      "id": "openclaw-health",
+      "name": "OpenClaw Health",
+      "summary": "Checks whether a local OpenClaw-compatible runtime is reachable and whether the configured model appears available.",
+      "scope": "local-command",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md"
+      ],
+      "writes": [
+        ".agent-context/autoresearch/"
+      ],
+      "inputs": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": false,
+          "description": "Optional preferred OpenClaw model identifier."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "json",
+          "description": "Runtime reachability, endpoint probe results, and model visibility."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "autoresearch:openclaw"
+      },
+      "safety": {
+        "sideEffects": "writes-generated",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/openclaw-health.json",
+      "public": true
+    },
+    {
+      "id": "proof-readiness",
+      "name": "Proof Readiness",
+      "summary": "Checks whether proof works as Cogochi's concrete game-native backtest layer across docs, routes, and deterministic pack contracts.",
+      "scope": "local-command",
+      "surfaces": [
+        "proof"
+      ],
+      "reads": [
+        "program.md",
+        "context-kit.json",
+        "docs/product-specs/proof.md",
+        "docs/design-docs/COGOCHI_proof_validation_20260315.md",
+        "docs/exec-plans/active/COGOCHI_proof_validation_execution_20260315.md",
+        "src/routes/proof/",
+        "src/lib/engine/proof-system.ts",
+        "src/routes/battle/+page.svelte",
+        "src/routes/journal/+page.svelte",
+        "src/routes/field/+page.svelte"
+      ],
+      "writes": [
+        ".agent-context/autoresearch/"
+      ],
+      "inputs": [
+        {
+          "name": "surface",
+          "type": "string",
+          "required": false,
+          "description": "Optional surface identifier to bias proof evaluation."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "json",
+          "description": "Proof-readiness report covering canonical contract, implementation, and loop integration."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "autoresearch:proof"
+      },
+      "safety": {
+        "sideEffects": "writes-generated",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/proof-readiness.json",
+      "public": true
+    },
+    {
+      "id": "raising-ux-eval",
+      "name": "Raising UX Eval",
+      "summary": "Scores how complete and legible the current agent-raising loop is for the player.",
+      "scope": "local-command",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "docs/product-specs/field.md",
+        "docs/product-specs/raising.md",
+        "docs/product-specs/evolution.md",
+        "docs/design-docs/pixel-agent-raising-direction.md",
+        "docs/design-docs/judgment-tamagotchi-loop.md",
+        "docs/design-docs/atlas-judgment-evolution.md",
+        "docs/exec-plans/active/COGOCHI_judgment_tamagotchi_loop_20260312.md",
+        "docs/design-docs/chartfield-fullgame-direction.md",
+        "docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md",
+        "src/"
+      ],
+      "writes": [
+        ".agent-context/autoresearch/"
+      ],
+      "inputs": [
+        {
+          "name": "surface",
+          "type": "string",
+          "required": false,
+          "description": "Optional surface identifier to bias evaluation."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "json",
+          "description": "Raising loop readiness report for the current branch."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "autoresearch:raising"
+      },
+      "safety": {
+        "sideEffects": "writes-generated",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/raising-ux-eval.json",
+      "public": true
+    },
+    {
+      "id": "registry-search",
+      "name": "Registry Search",
+      "summary": "Search surfaces, docs, agents, tools, and commands from the local context registry.",
+      "scope": "context-api",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "docs/generated/context-registry.json",
+        "docs/CONTEXT_PLATFORM.md"
+      ],
+      "writes": [
+        "docs/generated/"
+      ],
+      "inputs": [
+        {
+          "name": "query",
+          "type": "string",
+          "required": true,
+          "description": "Lookup term."
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "required": false,
+          "description": "Optional kind filter such as agent, tool, doc, or surface."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "results",
+          "type": "json",
+          "description": "Matching manifest entries."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "registry:query"
+      },
+      "safety": {
+        "sideEffects": "read-only",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/registry-search.json",
+      "public": true
+    },
+    {
+      "id": "runtime-readiness",
+      "name": "Runtime Readiness",
+      "summary": "Checks whether the Memento-style runtime layer, memory boundary, and generated artifacts are present and runnable.",
+      "scope": "local-command",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "context-kit.json",
+        "runtime/",
+        "src/lib/services/memory/",
+        "src/routes/agent/[id]/+page.svelte",
+        "src/routes/lab/+page.svelte"
+      ],
+      "writes": [
+        ".agent-context/autoresearch/",
+        "runtime/generated/"
+      ],
+      "inputs": [
+        {
+          "name": "surface",
+          "type": "string",
+          "required": false,
+          "description": "Optional surface identifier to bias runtime readiness evaluation."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "json",
+          "description": "Runtime readiness report covering layer contract, memory boundary, automation hooks, and generated artifacts."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "autoresearch:runtime"
+      },
+      "safety": {
+        "sideEffects": "writes-generated",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/runtime-readiness.json",
+      "public": true
+    },
+    {
+      "id": "scorecard-report",
+      "name": "Scorecard Report",
+      "summary": "Combines the latest OpenClaw, battle, field, and raising reports into the branch-level scorecard.",
+      "scope": "local-command",
+      "surfaces": [
+        "core"
+      ],
+      "reads": [
+        "program.md",
+        "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md",
+        ".agent-context/autoresearch/"
+      ],
+      "writes": [
+        ".agent-context/autoresearch/"
+      ],
+      "inputs": [
+        {
+          "name": "tag",
+          "type": "string",
+          "required": false,
+          "description": "Optional score tag."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "type": "json",
+          "description": "Weighted branch score and hard gate status."
+        }
+      ],
+      "invocation": {
+        "kind": "npm-script",
+        "script": "autoresearch:score"
+      },
+      "safety": {
+        "sideEffects": "writes-generated",
+        "approvalRequired": false
+      },
+      "manifestPath": "tools/scorecard-report.json",
+      "public": true
+    }
+  ]
+}

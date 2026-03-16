@@ -1,0 +1,48 @@
+{
+  "id": "proof-readiness",
+  "name": "Proof Readiness",
+  "summary": "Checks whether proof works as Cogochi's concrete game-native backtest layer across docs, routes, and deterministic pack contracts.",
+  "scope": "local-command",
+  "surfaces": [
+    "proof"
+  ],
+  "reads": [
+    "program.md",
+    "context-kit.json",
+    "docs/product-specs/proof.md",
+    "docs/design-docs/COGOCHI_proof_validation_20260315.md",
+    "docs/exec-plans/active/COGOCHI_proof_validation_execution_20260315.md",
+    "src/routes/proof/",
+    "src/lib/engine/proof-system.ts",
+    "src/routes/battle/+page.svelte",
+    "src/routes/journal/+page.svelte",
+    "src/routes/field/+page.svelte"
+  ],
+  "writes": [
+    ".agent-context/autoresearch/"
+  ],
+  "inputs": [
+    {
+      "name": "surface",
+      "type": "string",
+      "required": false,
+      "description": "Optional surface identifier to bias proof evaluation."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "report",
+      "type": "json",
+      "description": "Proof-readiness report covering canonical contract, implementation, and loop integration."
+    }
+  ],
+  "invocation": {
+    "kind": "npm-script",
+    "script": "autoresearch:proof"
+  },
+  "safety": {
+    "sideEffects": "writes-generated",
+    "approvalRequired": false
+  },
+  "public": true
+}

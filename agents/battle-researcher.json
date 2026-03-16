@@ -1,0 +1,35 @@
+{
+  "id": "battle-researcher",
+  "name": "Battle Researcher",
+  "role": "implementer",
+  "summary": "Improves deterministic battle evaluation, explanation quality, and benchmark readiness for chart scenarios.",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "CLAUDE.md",
+    "docs/README.md",
+    "docs/SYSTEM_INTENT.md",
+    "docs/AGENT_SYSTEM_DESIGN.md",
+    "docs/BATTLEFIELD_DESIGN.md",
+    "docs/VISUAL_WORLD_DESIGN.md",
+    "docs/exec-plans/active/COGOCHI_founder_goal_20260312.md",
+    "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md",
+    "src/lib/engine/CLAUDE.md"
+  ],
+  "writes": [
+    "src/lib/engine/",
+    "src/lib/services/",
+    "docs/product-specs/",
+    ".agent-context/",
+    "docs/AGENT_WATCH_LOG.md"
+  ],
+  "outputs": [
+    "benchmark-change",
+    "brief"
+  ],
+  "handoff": "brief",
+  "prompt": "Improve battle evaluation without violating determinism, and keep any change explainable in terms of chart judgment quality.",
+  "public": true
+}

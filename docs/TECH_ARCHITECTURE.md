@@ -1,6 +1,6 @@
 # Cogochi Technical Architecture
 
-Last updated: 2026-03-06
+Last updated: 2026-03-15
 
 ## 1. Architecture Goal
 
@@ -18,16 +18,83 @@ Cogochi should support a local-first AI agent training loop where:
 - TypeScript 5
 - Vite
 - localStorage for MVP persistence
+- SvelteKit server loads and endpoints for backend/runtime boundaries
+- repo-local runtime jobs under `runtime/` and `scripts/`
 
 ## 3. Layer Model
 
 ```text
-Routes
-  -> Stores
-  -> Services
-  -> Engine / Resolver
-  -> Model and Embedding Providers
+Frontend routes/components
+  -> Frontend stores
+  -> Server routes / backend adapters
+  -> Services / runtime
+  -> Engine / resolver
+  -> Persistence and providers
 ```
+
+The repo may stay single-app, but the design split is mandatory:
+
+- frontend surface
+- shared deterministic domain
+- backend runtime
+
+### 3.1 Frontend
+
+Frontend files are:
+
+- `src/routes/**/*.svelte`
+- `src/components/**`
+- `src/lib/stores/**`
+
+Frontend owns:
+
+- rendering
+- player input
+- route orchestration
+- temporary UI state
+
+Frontend must not own:
+
+- provider access
+- file access
+- memory writeback policy
+- evaluation orchestration
+- persistence schema rules
+
+### 3.2 Shared deterministic domain
+
+Shared deterministic files are:
+
+- `src/lib/engine/**`
+- `src/lib/types.ts`
+- pure contract/view-model builders
+
+This layer owns:
+
+- deterministic battle resolution
+- score math
+- scenario/frame translation
+- verdict input/output contracts
+
+### 3.3 Backend runtime
+
+Backend files are:
+
+- `src/routes/**/+page.server.ts`
+- `src/routes/**/+server.ts`
+- `src/lib/server/**`
+- `src/lib/services/**`
+- `runtime/**`
+- `scripts/**`
+
+Backend owns:
+
+- runtime artifact generation and reads
+- memory retrieval and writeback
+- provider adapters
+- evaluation orchestration
+- persistence adapters
+- nightly distill and autoresearch jobs
 
 ### Routes
 
@@ -38,12 +105,13 @@ Routes
 ### Stores
 
 - own durable client state
-- handle persistence
-- coordinate services and routes
+- coordinate routes and backend contracts
+- never own scoring logic or provider logic
 
 ### Services
 
-- own RAG, context assembly, scoring, and reflection logic
+- own RAG, context assembly, scoring orchestration, reflection logic, and runtime artifact access
+- any service that touches providers, files, or writeback is backend-owned
 
 ### Engine
 
@@ -60,16 +128,24 @@ src/
     team/+page.svelte
     battle/+page.svelte
     lab/+page.svelte
+    field/+page.svelte
+    journal/+page.svelte
+    proof/+page.svelte          # target explicit validation lane
+    battle/+page.server.ts
+    field/+page.server.ts
   components/
     aimon/
     shared/
   lib/
+    server/
     aimon/
       data/
       services/
       stores/
       engine/
       types.ts
+runtime/
+scripts/
 ```
 
 The internal `aimon` namespace is still a historical artifact and can remain until the systems stabilize.
@@ -139,10 +215,23 @@ The internal `aimon` namespace is still a historical artifact and can remain unt
 
 - converts raw traces into memory cards and training suggestions
 
+### `runtimeArtifactService`
+
+- reads distill outputs and memory indexes
+- bridges runtime artifacts into field, battle, journal, and proof surfaces
+
+### `proofPackService`
+
+- defines fixed historical validation bundles
+- maps frames to scenarios
+- supplies metric weights and public-ready proof metadata
+
 ## 7. Core Data Flow
 
 ```text
-Scenario State
+Frontend route/store
+  -> server load or action
+  -> proofPackService.select()
   -> Retrieval Query Builder
   -> memoryService.retrieve()
   -> contextAssembler.build()
@@ -150,6 +239,7 @@ Scenario State
   -> evalEngine.resolve()
   -> evalService.score()
   -> reflectionService.summarize()
+  -> runtimeArtifactService.publish()
   -> rosterStore.applyRewards()
   -> labStore.enqueueTraining()
 ```
@@ -191,6 +281,7 @@ This boundary must not blur or evaluation quality collapses.
 3. add services for retrieval, reflection, and evaluation
 4. wire `/agent/[id]` and `/lab`
 5. convert battle into an evaluation console
+6. formalize `/proof` as a first-class validation surface
 
 ## 11. Validation
 
@@ -202,6 +293,7 @@ Required after changes:
 Additional engineering checks:
 
 - routes do not own business logic
-- stores do not duplicate scoring logic
+- stores do not duplicate scoring logic or backend provider access
 - retrieval never leaks future information
 - a match result changes roster state through one well-defined path
+- every feature can be described as frontend surface + shared domain + backend runtime

@@ -1,0 +1,44 @@
+{
+  "id": "field-loop-eval",
+  "name": "Field Loop Eval",
+  "summary": "Scores how complete and legible the current top-down field loop is for the player.",
+  "scope": "local-command",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "docs/product-specs/field.md",
+    "docs/design-docs/chartfield-fullgame-direction.md",
+    "docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md",
+    "docs/generated/route-map.md",
+    "src/"
+  ],
+  "writes": [
+    ".agent-context/autoresearch/"
+  ],
+  "inputs": [
+    {
+      "name": "surface",
+      "type": "string",
+      "required": false,
+      "description": "Optional surface identifier to bias evaluation."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "report",
+      "type": "json",
+      "description": "Field loop readiness report for the current branch."
+    }
+  ],
+  "invocation": {
+    "kind": "npm-script",
+    "script": "autoresearch:field"
+  },
+  "safety": {
+    "sideEffects": "writes-generated",
+    "approvalRequired": false
+  },
+  "public": true
+}

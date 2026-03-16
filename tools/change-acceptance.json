@@ -1,0 +1,41 @@
+{
+  "id": "change-acceptance",
+  "name": "Change Acceptance",
+  "summary": "Compares the latest score against baseline and decides whether the current branch state should be accepted or rejected.",
+  "scope": "local-command",
+  "surfaces": [
+    "core"
+  ],
+  "reads": [
+    "program.md",
+    "docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md",
+    ".agent-context/autoresearch/"
+  ],
+  "writes": [
+    ".agent-context/autoresearch/"
+  ],
+  "inputs": [
+    {
+      "name": "set_baseline",
+      "type": "boolean",
+      "required": false,
+      "description": "When true, the latest score becomes the new baseline."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "decision",
+      "type": "json",
+      "description": "Accept/reject decision with baseline comparison."
+    }
+  ],
+  "invocation": {
+    "kind": "npm-script",
+    "script": "autoresearch:accept"
+  },
+  "safety": {
+    "sideEffects": "writes-generated",
+    "approvalRequired": false
+  },
+  "public": true
+}

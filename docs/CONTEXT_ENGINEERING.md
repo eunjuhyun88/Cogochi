@@ -1,210 +1,217 @@
-# Cogochi Context Engineering
+# Context Engineering
+
+This file defines how context should be shaped, retrieved, compacted, and measured in this repository.
+
+## Context Layers
+
+1. Small map
+   - `README.md`
+   - `AGENTS.md`
+   - `docs/README.md`
+   - `ARCHITECTURE.md`
+   - `docs/SYSTEM_INTENT.md`
+   - `docs/CONTEXT_ENGINEERING.md`
+2. Canonical surface docs
+   - `docs/product-specs/*.md`
+   - `docs/design-docs/*.md`
+   - `docs/{DESIGN,ENGINEERING,PLANS,PRODUCT_SENSE,QUALITY_SCORE,RELIABILITY,SECURITY,HARNESS}.md`
+3. Generated navigation
+  - `docs/generated/{route-map,store-authority-map,api-group-map}.md`
+  - `docs/generated/context-efficiency-report.md`
+  - `docs/generated/context-registry.{md,json}`
+4. Agent blueprints
+  - `docs/AGENT_FACTORY.md`
+  - `agents/*.json`
+  - `docs/generated/agent-catalog.{md,json}`
+5. Query-time retrieval
+  - `docs/CONTEXTUAL_RETRIEVAL.md`
+  - `docs/generated/contextual-retrieval.md`
+  - `docs/generated/contextual-retrieval-index.json`
+6. Platform boundary
+  - `docs/CONTEXT_PLATFORM.md`
+  - `docs/generated/context-ab-report.md`
+  - `docs/generated/sandbox-policy-report.md`
+7. Coordination boundary
+  - `docs/MULTI_AGENT_COORDINATION.md`
+  - `.agent-context/coordination/claims/*`
+8. Active plans
+  - `docs/exec-plans/active/*.md`
+9. Historical context
+  - `docs/archive/*`
+10. Runtime working memory
+  - `.agent-context/*`
+
+## Retrieval Order
+
+Agents should not load context in arbitrary order.
+
+### Standard order
+
+1. `README.md`
+2. `AGENTS.md`
+3. `docs/README.md`
+4. `ARCHITECTURE.md`
+5. `docs/SYSTEM_INTENT.md`
+6. `docs/CONTEXT_ENGINEERING.md`
+7. the smallest surface-specific canonical docs
+8. generated maps if route/store/API navigation is needed
+9. active plans only if the canonical docs are insufficient
+
+### Rule
+
+The small map must be enough to decide what to read next.
+
+If an agent must open large numbers of files before it can choose a path, the context system is failing.
 
-Last updated: 2026-03-07
+## Anti-Patterns
 
-This document defines how Cogochi should be structured so coding agents can work reliably over time.
+### 1. Monolithic instruction dump
 
-It is derived from two external ideas:
+Bad:
 
-- OpenAI engineering writeup on building with agent-first repositories and using a short `AGENTS.md` as a map instead of a giant manual:
-  [Harness engineering: Using Codex in an agent-first world](https://openai.com/index/harness-engineering-using-codex-in-an-agent-first-world/)
-- Anthropic engineering guidance on reducing infrastructure noise in agentic evaluations:
-  [Infrastructure noise](https://www.anthropic.com/engineering/infrastructure-noise)
+- one giant `AGENTS.md`
+- one giant prompt blob
+- one giant design document with no routing
 
-## 1. Why this matters
+Why it fails:
 
-Cogochi is no longer a tiny prototype.
+- crowds out task-specific context
+- becomes stale quickly
+- turns all guidance into undifferentiated noise
 
-It now contains:
+### 2. Full-doc scanning
 
-- product docs
-- AI runtime docs
-- stores and routes
-- eval logic
-- runtime adapters
+Bad:
 
-Without explicit context engineering, future agent runs will drift, repeat work, or optimize the wrong constraint.
+- reading every file in `docs/` before starting
+- opening `docs/archive/` by default
+- scanning the full watch log before canonical docs
 
-## 2. Direct takeaways from OpenAI's agent-first repo approach
+Why it fails:
 
-The important ideas for us are:
+- increases context pollution
+- increases retrieval latency
+- reduces focus on the active task
 
-### 2.1 `AGENTS.md` should be a map, not an encyclopedia
+### 3. Runtime memory as authority
 
-Reason:
+Bad:
 
-- giant instruction files waste context
-- stale rules become indistinguishable from true rules
-- local pattern matching replaces actual navigation
+- relying on `.agent-context/briefs/*` as source of truth
+- putting stable architectural rules only in checkpoints or handoffs
 
-Cogochi rule:
+Why it fails:
 
-- [AGENTS.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/AGENTS.md) stays short
-- deeper truth lives under [docs/INDEX.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/INDEX.md)
+- branch-local memory is transient
+- authority drifts away from versioned docs
 
-### 2.2 `docs/` must be the system of record
+### 4. Unmeasured “more context is better”
 
-Reason:
+Bad:
 
-- if knowledge is only in chat, it does not exist for later runs
-- progressive disclosure works better than one giant context blob
+- adding docs without bundle budgets
+- adding retrieval steps without measuring reduction or recovery speed
 
-Cogochi rule:
+Why it fails:
 
-- product, runtime, reliability, and plan context must live in repo docs
+- context windows still degrade under excess load
+- bigger context is not free
 
-### 2.3 Plans are first-class artifacts
+## Mechanical Enforcement
 
-Reason:
+This repository should enforce context discipline mechanically.
 
-- complicated work needs durable execution plans
-- agents need active, completed, and debt-tracking history
+### Current controls
 
-Cogochi rule:
+- `scripts/dev/check-docs-context.sh`
+  - required files
+  - required headings
+  - line budgets for the small map
+  - placeholder and path hygiene checks
+- `scripts/dev/check-context-quality.sh`
+  - brief/handoff quality checks
+- `scripts/dev/refresh-generated-context.mjs`
+  - route/store/API discovery maps
+- `scripts/dev/refresh-doc-governance.mjs`
+  - authority catalog, legacy audit, contract report
+- `scripts/dev/refresh-context-metrics.mjs`
+  - bundle-size and savings report
+- `scripts/dev/refresh-context-registry.mjs`
+  - portable registry manifest and open-source query surface
+- `scripts/dev/refresh-context-retrieval.mjs`
+  - query-time chunk index and retrieval summary
+- `scripts/dev/refresh-agent-catalog.mjs`
+  - reusable agent blueprint catalog
+- `scripts/dev/refresh-context-ab-report.mjs`
+  - routed-vs-baseline task comparison summary
+- `scripts/dev/refresh-sandbox-policy-report.mjs`
+  - explicit sandbox boundary report
+- `.githooks/pre-push`
+  - enforces context and optional project gates before push
 
-- active plans go under `docs/exec-plans/active`
-- completed plans move to `docs/exec-plans/completed`
-- long-lived debt goes to `docs/exec-plans/tech-debt-tracker.md`
+Thresholds should start bootstrap-safe and tighten as the repo grows. The defaults live in `context-kit.json`.
 
-### 2.4 Mechanical enforcement beats good intentions
+## Compaction Policy
 
-Reason:
+Use compaction when:
 
-- doc drift is inevitable without checks
-- stable constraints should be encoded in code or scripts
+- the task spans multiple hours
+- the agent has accumulated large tool output
+- the session is being handed off
+- the next phase depends more on decisions than on raw logs
 
-Cogochi rule:
+Compaction is not a substitute for canonical docs.
 
-- `npm run check` must also validate the context-doc structure
+## Measurement and Noise Control
 
-### 2.5 Agent readability is a design target
+Context engineering should be measured in two layers.
 
-Reason:
+### A. Structural savings
 
-- readable structure helps both humans and coding agents
-- predictable layers reduce random variation
+Measured automatically:
 
-Cogochi rule:
+- small-map bundle size
+- canonical bundle size
+- all-docs bundle size
+- surface bundle size
+- estimated reduction percentages
 
-- keep domain truth in `src/lib/aimon`
-- keep runtime contracts in docs and typed interfaces
-- keep eval reliability rules in one place
+See:
 
-## 3. Direct takeaways from Anthropic's infrastructure-noise guidance
+- `docs/generated/context-efficiency-report.md`
+- `docs/CONTEXT_EVALUATION.md`
 
-The important ideas for us are:
+### B. Task-level performance
 
-### 3.1 Benchmark results mix model quality and environment noise
+Measured with controlled task runs:
 
-Reason:
+- same model
+- same prompt scaffolding
+- same branch and code state
+- same machine or container resource configuration
+- same tool availability
+- repeated runs per mode
+- fixed retry policy
+- fixed warmup policy
 
-- runtime latency
-- shared machine load
-- cache differences
-- provider instability
+This follows the same basic principle highlighted by Anthropic’s infrastructure-noise work: do not mistake environment variance for model or context-system improvement.
 
-all change results even when the agent logic does not.
+### Noise-control rules
 
-Cogochi rule:
+- Do not compare a routed run and a baseline run from different machine envelopes.
+- Do not silently rerun only the worse mode.
+- Record warmup runs separately from measured runs.
+- Treat browser startup, local preview instability, and missing tool binaries as infra noise until classified.
 
-- benchmark and eval results must record runtime profile metadata
+## Success Criteria
 
-### 3.2 Use named performance profiles
+The context system is healthy when:
 
-Reason:
-
-- not every run should be judged against the same stability expectation
-
-Cogochi rule:
-
-- define `local-fast`, `local-reference`, and `ci-benchmark` profiles in [RELIABILITY.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/RELIABILITY.md)
-
-### 3.3 Enforce headroom and fail-fast thresholds
-
-Reason:
-
-- unstable machines produce meaningless benchmark comparisons
-
-Cogochi rule:
-
-- benchmark runs must be rejected when runtime health drops below profile thresholds
-
-### 3.4 Isolate noisy eval environments
-
-Reason:
-
-- reliable comparison requires stable environment metadata
-
-Cogochi rule:
-
-- async PvP and benchmark packs must rely on frozen scenario and agent snapshots
-
-## 4. Cogochi repository rules
-
-### 4.1 Short map at the top
-
-Required files:
-
-- [AGENTS.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/AGENTS.md)
-- [docs/INDEX.md](/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/INDEX.md)
-
-### 4.2 Durable doc categories
-
-Required docs:
-
-- product truth
-- AI runtime truth
-- implementation contracts
-- plans
-- quality score
-- reliability
-
-### 4.3 Context should narrow, not flood
-
-Default read path:
-
-1. `AGENTS.md`
-2. `docs/INDEX.md`
-3. the one or two relevant docs for the task
-
-### 4.4 Stable rules should be machine-checkable
-
-Required:
-
-- presence of core docs
-- short `AGENTS.md`
-- doc cross-links
-- plan directories
-
-This is enforced by `scripts/check-context-docs.mjs`.
-
-## 5. Concrete repo improvements adopted now
-
-The following changes are now part of the standard Cogochi setup:
-
-- short `AGENTS.md`
-- docs index
-- context engineering guide
-- reliability guide
-- quality score file
-- execution plan directories
-- context-doc lint added to `npm run check`
-- AIMON architecture lint added to `npm run check`
-- code-aware doc freshness checks for implementation contracts
-- doc freshness lint against actual code exports
-- benchmark run manifests stored per eval
-- artifact lineage recorded in repo-local state
-
-## 6. Future improvements
-
-These are not required immediately, but they are the next context-engineering layer:
-
-1. automated doc-gardening tasks
-2. scenario pack versioning checks
-3. artifact lineage diff viewers
-4. benchmark manifest export to durable storage
-5. architecture rule autofix hints
-
-## 7. Rule of thumb
-
-If a future agent should know something without rereading a chat transcript, it belongs in this repo.
+- the small map is enough to route most tasks
+- surface bundles are materially smaller than canonical/all-doc bundles
+- retrieval can disambiguate the next canonical doc set without broad scans
+- reusable agents can be discovered from repo-local manifests without hidden setup knowledge
+- agents can resume work from brief/handoff artifacts quickly
+- docs checks fail before drift spreads
+- harness evidence can be produced without reading the full repo
+- repeated benchmark runs stay under the configured noise threshold

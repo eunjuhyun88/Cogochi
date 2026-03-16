@@ -1,228 +1,41 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { getEvolutionPreview } from '$lib/aimon/engine/evolutionSystem';
-  import { setScreen } from '$lib/aimon/stores/gameStore';
-  import { rosterStore, selectRosterAgent } from '$lib/aimon/stores/rosterStore';
-  import { squadStore } from '$lib/aimon/stores/squadStore';
-  import AgentDetailPanel from '../../components/aimon/AgentDetailPanel.svelte';
-  import RosterGrid from '../../components/aimon/RosterGrid.svelte';
-  import PokemonFrame from '../../components/shared/PokemonFrame.svelte';
-
-  let roster = $derived($rosterStore);
-  let squad = $derived($squadStore);
-  let rosterAgents = $derived(roster.agents);
-
-  $effect(() => {
-    if (!rosterAgents.length) {
-      selectRosterAgent(null);
-      return;
-    }
-
-    if (!roster.selectedAgentId || !rosterAgents.some((agent) => agent.id === roster.selectedAgentId)) {
-      selectRosterAgent(squad.activeSquad.memberAgentIds[0] ?? rosterAgents[0].id);
-    }
-  });
-
-  let selectedAgent = $derived(rosterAgents.find((agent) => agent.id === roster.selectedAgentId) ?? null);
-  let selectedEvolution = $derived(
-    selectedAgent ? getEvolutionPreview(selectedAgent.speciesId, selectedAgent.xp) : null
-  );
-
-  onMount(() => {
-    setScreen('roster');
-  });
+  import AgentCard from '$components/shared/AgentCard.svelte';
+  import PageShell from '$components/shared/PageShell.svelte';
+  import { rosterStore } from '$lib/stores/rosterStore';
 </script>
 
-<svelte:head>
-  <title>AI MON Roster</title>
-</svelte:head>
-
-<div class="page">
-  <header class="header">
+<PageShell>
+  <section class="panel roster-head">
     <div>
-      <p class="eyebrow">ROSTER</p>
-      <h1>Owned Agents</h1>
-      <p class="lede">
-        이 화면이 AIMON의 중심입니다. 개체를 고르고, readout을 보고, 다음 retraining과 squad 역할을 결정합니다.
-      </p>
+      <p class="section-kicker">Roster</p>
+      <h1 class="section-title">Choose who to raise next.</h1>
     </div>
-    <div class="header-actions">
-      <a href={selectedAgent ? `/agent/${selectedAgent.id}` : '/roster'}>Agent Console</a>
-      <a href="/team">Squad Builder</a>
-      <a href="/battle">Battle</a>
-      <a href="/lab">Lab</a>
-    </div>
-  </header>
-
-  <section class="summary-grid">
-    <PokemonFrame variant="dark" padding="14px">
-      <div class="summary">
-        <span>Owned agents</span><strong>{rosterAgents.length}</strong>
-        <span>In active squad</span><strong>{squad.activeSquad.memberAgentIds.length}</strong>
-        <span>Evolution ready</span><strong>{rosterAgents.filter((agent) => getEvolutionPreview(agent.speciesId, agent.xp).canEvolve).length}</strong>
-      </div>
-    </PokemonFrame>
-
-    <PokemonFrame variant="dark" padding="14px">
-      <div class="summary">
-        <span>Selected agent</span><strong>{selectedAgent?.name ?? 'None'}</strong>
-        <span>Retraining</span><strong>{selectedAgent?.loadout.retrainingPath ?? '—'}</strong>
-        <span>Focus skill</span><strong>{selectedAgent?.loadout.focusSkill ?? '—'}</strong>
-      </div>
-    </PokemonFrame>
-
-    <PokemonFrame variant={selectedEvolution?.canEvolve ? 'accent' : 'dark'} padding="14px">
-      <div class="summary">
-        <span>Evolution watch</span><strong>{selectedEvolution?.canEvolve ? 'Ready now' : 'In progress'}</strong>
-        <span>Required XP</span><strong>{selectedEvolution?.requiredXp ?? 'Final Form'}</strong>
-        <span>Next form</span><strong>{selectedEvolution?.evolvesTo ?? 'Final Form'}</strong>
-      </div>
-    </PokemonFrame>
+    <p>
+      Imported dino starters and original Coglets now live in the same OpenClaw-based roster. Pick one to inspect
+      its doctrine, trusted instincts, weak link, visible growth, and mutation history, then run the next proof pass.
+    </p>
   </section>
 
-  <section class="content-grid">
-    <div class="left-column">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">COLLECTION GRID</p>
-          <h2>Owned Agents Under Your Control</h2>
-        </div>
-      </div>
-
-      <RosterGrid
-        agents={rosterAgents}
-        selectedId={roster.selectedAgentId ?? ''}
-        squadIds={squad.activeSquad.memberAgentIds}
-        onSelect={selectRosterAgent}
-      />
-    </div>
-
-    <div class="right-column">
-      <AgentDetailPanel
-        agent={selectedAgent}
-        inSquad={selectedAgent ? squad.activeSquad.memberAgentIds.includes(selectedAgent.id) : false}
-      />
-    </div>
+  <section class="grid-auto roster-grid">
+    {#each $rosterStore.agents as agent}
+      <AgentCard agent={agent} href={`/agent/${agent.id}`} />
+    {/each}
   </section>
-</div>
+</PageShell>
 
 <style>
-  .page {
+  .roster-head {
+    padding: 22px;
     display: grid;
-    gap: 18px;
-    padding: 18px;
+    gap: 12px;
   }
 
-  .header,
-  .section-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    align-items: end;
-  }
-
-  .eyebrow {
+  .roster-head h1,
+  .roster-head p {
     margin: 0;
-    color: var(--cyan);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.12em;
   }
 
-  h1,
-  h2 {
-    margin: 6px 0 0;
-    font-family: 'Orbitron', sans-serif;
-  }
-
-  h1 {
-    font-size: clamp(40px, 7vw, 72px);
-    line-height: 0.9;
-  }
-
-  h2 {
-    font-size: 28px;
-  }
-
-  .lede {
-    margin: 8px 0 0;
-    max-width: 64ch;
-    color: var(--text-1);
-    font-size: 15px;
-    line-height: 1.45;
-  }
-
-  .header-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .header-actions a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 42px;
-    padding: 0 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    color: var(--text-0);
-    text-decoration: none;
-  }
-
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .summary {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px 14px;
-  }
-
-  .summary span {
-    color: var(--text-2);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-  }
-
-  .summary strong {
-    font-size: 14px;
-  }
-
-  .content-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
-    gap: 16px;
-    align-items: start;
-  }
-
-  .left-column,
-  .right-column {
-    display: grid;
-    gap: 14px;
-  }
-
-  @media (max-width: 1080px) {
-    .summary-grid,
-    .content-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .page {
-      padding: 14px;
-    }
-
-    .header,
-    .section-head {
-      flex-direction: column;
-      align-items: stretch;
-    }
+  .roster-grid {
+    margin-top: 18px;
   }
 </style>

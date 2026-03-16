@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "smallMap": {
+    "files": 9,
+    "lines": 900,
+    "approxTokens": 4261
+  },
+  "allDocs": {
+    "files": 108,
+    "lines": 22263,
+    "approxTokens": 100070
+  },
+  "smallMapReductionVsAllDocsPct": 95.7,
+  "registry": {
+    "surfaceCount": 7,
+    "commandCount": 46
+  },
+  "agents": {
+    "count": 11
+  },
+  "tools": {
+    "count": 11
+  },
+  "retrieval": {
+    "chunkCount": 1356,
+    "sourceCount": 81
+  },
+  "telemetry": {
+    "runCount": 0,
+    "finishedRunCount": 0,
+    "totalEstimatedTimeSavedMinutes": null,
+    "latestRun": null
+  },
+  "ab": {
+    "comparisons": 0,
+    "routedWins": 0
+  },
+  "feltChecks": [
+    {
+      "label": "Small start bundle",
+      "pass": true,
+      "evidence": "4261 tokens vs 100070 tokens across all docs (95.7% smaller)"
+    },
+    {
+      "label": "Discovery works without chat memory",
+      "pass": true,
+      "evidence": "7 surfaces, 11 agents, 11 tools"
+    },
+    {
+      "label": "Ambiguity has a retrieval escape hatch",
+      "pass": true,
+      "evidence": "1356 retrieval chunks across 81 sources"
+    },
+    {
+      "label": "Time-saved evidence exists",
+      "pass": false,
+      "evidence": "0 finished runs, n/a minutes estimated saved"
+    },
+    {
+      "label": "Routed mode beat baseline at least once",
+      "pass": false,
+      "evidence": "0/0 routed wins"
+    }
+  ]
+}

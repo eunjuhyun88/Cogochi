@@ -1,6 +1,9 @@
 declare global {
-  namespace App {}
+  interface Window {
+    render_game_to_text?: () => string;
+    advanceTime?: (ms: number) => void;
+    __cogochi_text_state?: () => unknown;
+  }
 }
 
 export {};
-
