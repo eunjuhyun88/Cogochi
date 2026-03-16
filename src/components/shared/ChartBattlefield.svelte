@@ -49,6 +49,15 @@
     return `left:${(xFor(index) / svgWidth) * 100}%;top:${(yFor(price) / svgHeight) * 100}%;`;
   }
 
+  function curvedLinkPath(fromIndex: number, fromPrice: number, toIndex: number, toPrice: number, curveOffset: number): string {
+    const startX = xFor(fromIndex);
+    const startY = yFor(fromPrice);
+    const endX = xFor(toIndex);
+    const endY = yFor(toPrice);
+    const deltaX = endX - startX;
+    return `M ${startX} ${startY} C ${startX + deltaX * 0.28} ${startY + curveOffset} ${startX + deltaX * 0.72} ${endY + curveOffset * 0.54} ${endX} ${endY}`;
+  }
+
   function blockRows(zone: BattleViewModel['zones'][number]): number {
     const ratio = Math.max(0.16, zone.strength / 100);
     if (zone.kind === 'LIQUIDATION') return Math.max(1, Math.round(ratio * 3));
@@ -97,48 +106,161 @@
   ]);
   const selectedCommandCard = $derived(view.commandCards.find((card) => card.selected) ?? view.commandCards[0]);
   const objectiveZone = $derived(view.zones.find((zone) => zone.kind === 'OBJECTIVE') ?? view.zones.at(-1) ?? null);
+  const selectedAgent = $derived(view.selectedAgent);
+  const objectiveAnchor = $derived.by(() => {
+    const anchorIndex = objectiveZone
+      ? Math.max(view.activeSlice.start + 1, Math.min(view.candles.length - 2, view.activeSlice.end - 1))
+      : Math.round((view.activeSlice.start + view.activeSlice.end) / 2);
+    const anchorPrice = objectiveZone?.price ?? view.candles[anchorIndex]?.close ?? view.priceRange.min;
+    return {
+      xIndex: Math.max(0, Math.min(view.candles.length - 1, anchorIndex)),
+      price: anchorPrice,
+    };
+  });
+  const rivalTitle = $derived.by(() => {
+    if (objectiveZone?.kind === 'OBJECTIVE') {
+      return 'Gate Keeper';
+    }
+    if (view.report.action === 'LONG') {
+      return 'Ceiling Warden';
+    }
+    return 'Floor Hunter';
+  });
+  const rivalSubtitle = $derived.by(() => {
+    if (view.report.action === 'LONG') {
+      return `Pressuring ${view.report.weakLink.toLowerCase()} from above`;
+    }
+    return `Guarding ${view.report.weakLink.toLowerCase()} from below`;
+  });
+  const turnBanner = $derived(view.encounter.turnLabel);
+  const rivalUnits = $derived.by(() => {
+    const fromAbove = view.report.action === 'LONG';
+    const baseIndex = fromAbove ? view.activeSlice.end - 1 : view.activeSlice.start + 1;
+    const prices = fromAbove
+      ? [view.priceRange.max - 3.2, view.priceRange.max - 5.6, view.priceRange.max - 7.8]
+      : [view.priceRange.min + 3.2, view.priceRange.min + 5.6, view.priceRange.min + 7.8];
+    const forms = ['warden', 'lancer', 'seer'] as const;
+    return forms.map((form, index) => ({
+      id: `rival-${form}`,
+      form,
+      xIndex: Math.max(0, Math.min(view.candles.length - 1, baseIndex - index)),
+      price: prices[index],
+      label: form === 'warden' ? 'Warden' : form === 'lancer' ? 'Lancer' : 'Seer',
+    }));
+  });
+  const clashFocus = $derived.by(() => {
+    const focusIndex = objectiveZone
+      ? view.activeSlice.end - 1
+      : Math.round((view.activeSlice.start + view.activeSlice.end) / 2);
+    const focusPrice = objectiveZone?.price ?? view.candles[focusIndex]?.close ?? view.priceRange.min;
+    return {
+      xIndex: Math.max(0, Math.min(view.candles.length - 1, focusIndex)),
+      price: focusPrice,
+    };
+  });
+  const clashSparks = $derived.by(() => {
+    const direction = view.report.action === 'LONG' ? -1 : 1;
+    return [
+      { id: 'spark-north', xIndex: clashFocus.xIndex, price: clashFocus.price + direction * 2.1, rotate: -18, shiftX: -34, shiftY: -12 },
+      { id: 'spark-east', xIndex: clashFocus.xIndex + 1, price: clashFocus.price + direction * 0.7, rotate: 22, shiftX: 34, shiftY: 8 },
+      { id: 'spark-west', xIndex: clashFocus.xIndex - 1, price: clashFocus.price - direction * 0.8, rotate: -34, shiftX: -40, shiftY: 18 },
+    ].map((spark) => ({
+      ...spark,
+      xIndex: Math.max(0, Math.min(view.candles.length - 1, spark.xIndex)),
+    }));
+  });
+  const allyLinks = $derived.by(() => {
+    const curveOffset = view.report.action === 'LONG' ? -52 : 52;
+    return view.companions.map((companion, index) => ({
+      id: `ally-link-${companion.agent.id}`,
+      d: curvedLinkPath(companion.xIndex, companion.price, clashFocus.xIndex, clashFocus.price, curveOffset + index * 10),
+      width: companion.stance === 'finish' ? 5 : companion.stance === 'brace' ? 4 : 3.4,
+      x: xFor(companion.xIndex),
+      y: yFor(companion.price),
+      boost: companion.stance === 'brace' || companion.stance === 'finish',
+    }));
+  });
+  const rivalLinks = $derived.by(() => {
+    const curveOffset = view.report.action === 'LONG' ? 48 : -48;
+    return rivalUnits.map((rival, index) => ({
+      id: `rival-link-${rival.id}`,
+      d: curvedLinkPath(rival.xIndex, rival.price, clashFocus.xIndex, clashFocus.price, curveOffset - index * 10),
+      width: index === 0 ? 4.4 : 3.2,
+      x: xFor(rival.xIndex),
+      y: yFor(rival.price),
+      lead: index === 0,
+    }));
+  });
+  const resolveLabel = $derived.by(() => {
+    if (view.session.outcome === 'WIN') {
+      return objectiveZone ? 'Gate Broken' : 'Push Held';
+    }
+    if (view.session.outcome === 'LOSS') {
+      return objectiveZone ? 'Push Rejected' : 'Line Broken';
+    }
+    const selected = selectedCommandCard?.label.toLowerCase() ?? '';
+    if (selected.includes('memory')) return 'Recall Spike';
+    if (selected.includes('risk')) return 'Brace Window';
+    if (selected.includes('retarget')) return 'Angle Shift';
+    return view.report.action === 'LONG' ? 'Upward Commit' : 'Downward Commit';
+  });
+  const resolveTone = $derived.by(() => {
+    if (view.session.outcome === 'WIN') return 'good';
+    if (view.session.outcome === 'LOSS') return 'danger';
+    return selectedCommandCard?.tone ?? 'info';
+  });
 </script>
 
 <article class="battlefield">
-  <header class="battlefield__top">
-    <div>
-      <p class="battlefield__kicker">
-        {view.scenario.symbol} / {view.scenario.timeframe}
-        {#if view.stageFrame.mode === 'historical'}
-          <span> · {view.stageFrame.dateLabel}</span>
-        {/if}
-      </p>
-      <h2>{view.stageFrame.title}</h2>
-      <p>{view.stageFrame.mode === 'historical' ? view.stageFrame.note : view.scenario.objective}</p>
-    </div>
-    <div class="battlefield__state">
-      <span class:danger={view.verdictTone === 'danger'} class:good={view.verdictTone === 'good'} class:warn={view.verdictTone === 'warn'} class="battlefield__verdict">
-        {view.verdictLabel}
-      </span>
-      <span class="battlefield__pressure">{view.pressureLabel}</span>
-    </div>
-  </header>
-
   <div class="battlefield__stage">
+    <div class="battlefield__duel-strip">
+      <div class="battlefield__fighter-card battlefield__fighter-card--player">
+        <div class="battlefield__fighter-avatar battlefield__fighter-avatar--player">
+          <PixelSprite agent={selectedAgent} size={58} />
+        </div>
+        <div class="battlefield__fighter-copy">
+          <small>Trainer Squad</small>
+          <strong>{selectedAgent.name}</strong>
+          <span>{selectedAgent.role} anchor</span>
+        </div>
+      </div>
+
+      <div class="battlefield__turn-banner">
+        <small>{view.encounter.phaseLabel}</small>
+        <strong>{turnBanner}</strong>
+      </div>
+
+      <div class="battlefield__fighter-card battlefield__fighter-card--rival">
+        <div class="battlefield__fighter-avatar battlefield__fighter-avatar--rival">
+          <div class="battlefield__rival-emblem"></div>
+        </div>
+        <div class="battlefield__fighter-copy">
+          <small>Rival Pressure</small>
+          <strong>{rivalTitle}</strong>
+          <span>{rivalSubtitle}</span>
+        </div>
+      </div>
+    </div>
+
     <svg aria-label="Chart battlefield" class="battlefield__svg" viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
       <defs>
         <linearGradient id="battlefield-sky" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="#cde7f6" />
-          <stop offset="44%" stop-color="#ecf4ee" />
-          <stop offset="100%" stop-color="#c9d7b2" />
+          <stop offset="0%" stop-color="#21313b" />
+          <stop offset="44%" stop-color="#25353b" />
+          <stop offset="100%" stop-color="#1d2d29" />
         </linearGradient>
         <linearGradient id="battlefield-active" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="rgba(248, 221, 150, 0.36)" />
-          <stop offset="100%" stop-color="rgba(248, 221, 150, 0.08)" />
+          <stop offset="0%" stop-color="rgba(248, 221, 150, 0.18)" />
+          <stop offset="100%" stop-color="rgba(248, 221, 150, 0.04)" />
         </linearGradient>
         <linearGradient id="battlefield-terrain" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="rgba(157, 202, 144, 0.94)" />
-          <stop offset="48%" stop-color="rgba(104, 160, 96, 0.94)" />
-          <stop offset="100%" stop-color="rgba(86, 124, 74, 0.98)" />
+          <stop offset="0%" stop-color="rgba(108, 148, 118, 0.92)" />
+          <stop offset="48%" stop-color="rgba(76, 118, 93, 0.94)" />
+          <stop offset="100%" stop-color="rgba(58, 88, 68, 0.98)" />
         </linearGradient>
         <linearGradient id="battlefield-ground" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="#5b7f4f" />
-          <stop offset="100%" stop-color="#45613a" />
+          <stop offset="0%" stop-color="#304639" />
+          <stop offset="100%" stop-color="#233429" />
         </linearGradient>
         <linearGradient id="battlefield-volume" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stop-color="rgba(71, 138, 118, 0.62)" />
@@ -153,7 +275,7 @@
       </defs>
 
       <rect fill="url(#battlefield-sky)" height={svgHeight} rx="28" width={svgWidth} />
-      <circle cx="800" cy="94" fill="rgba(255, 236, 182, 0.9)" r="48" />
+      <circle cx="800" cy="94" fill="rgba(233, 201, 123, 0.42)" r="48" />
 
       {#each skyClouds as cloud}
         <g opacity="0.78">
@@ -215,7 +337,7 @@
           y1={yFor(zone.price)}
           y2={yFor(zone.price)}
         />
-        <text fill="rgba(84, 76, 49, 0.9)" font-size="12" letter-spacing="0.08em" x={padding.left + 10} y={yFor(zone.price) - 8}>
+        <text fill="rgba(232, 223, 196, 0.84)" font-size="12" letter-spacing="0.08em" x={padding.left + 10} y={yFor(zone.price) - 8}>
           {zone.label}
         </text>
       {/each}
@@ -259,6 +381,88 @@
             />
           {/each}
         {/each}
+      {/each}
+
+      {#if objectiveZone}
+        <g opacity="0.96">
+          <line
+            stroke={view.report.action === 'LONG' ? 'rgba(84, 158, 108, 0.44)' : 'rgba(188, 96, 82, 0.42)'}
+            stroke-dasharray="6 7"
+            stroke-width="2"
+            x1={xFor(objectiveAnchor.xIndex)}
+            x2={xFor(objectiveAnchor.xIndex)}
+            y1={yFor(objectiveZone.price) - 90}
+            y2={yFor(objectiveZone.price) + 62}
+          />
+          <rect
+            fill={view.report.action === 'LONG' ? 'rgba(109, 161, 93, 0.9)' : 'rgba(169, 98, 76, 0.88)'}
+            height="68"
+            rx="8"
+            width="16"
+            x={xFor(objectiveAnchor.xIndex) - 42}
+            y={yFor(objectiveZone.price) - 22}
+          />
+          <rect
+            fill={view.report.action === 'LONG' ? 'rgba(109, 161, 93, 0.9)' : 'rgba(169, 98, 76, 0.88)'}
+            height="68"
+            rx="8"
+            width="16"
+            x={xFor(objectiveAnchor.xIndex) + 26}
+            y={yFor(objectiveZone.price) - 22}
+          />
+          <path
+            d={`M ${xFor(objectiveAnchor.xIndex) - 34} ${yFor(objectiveZone.price) - 10} Q ${xFor(objectiveAnchor.xIndex)} ${yFor(objectiveZone.price) - 62} ${xFor(objectiveAnchor.xIndex) + 34} ${yFor(objectiveZone.price) - 10}`}
+            fill="none"
+            stroke={view.report.action === 'LONG' ? 'rgba(231, 213, 148, 0.96)' : 'rgba(243, 189, 176, 0.94)'}
+            stroke-linecap="round"
+            stroke-width="8"
+          />
+          <rect
+            fill={view.report.action === 'LONG' ? 'rgba(247, 228, 170, 0.96)' : 'rgba(248, 212, 204, 0.94)'}
+            height="16"
+            rx="6"
+            width="58"
+            x={xFor(objectiveAnchor.xIndex) - 29}
+            y={yFor(objectiveZone.price) - 2}
+          />
+          <circle
+            cx={xFor(objectiveAnchor.xIndex)}
+            cy={yFor(objectiveZone.price) - 24}
+            fill={view.report.action === 'LONG' ? 'rgba(248, 221, 138, 0.94)' : 'rgba(240, 158, 143, 0.92)'}
+            r="10"
+          />
+          <text
+            fill="rgba(102, 80, 48, 0.92)"
+            font-size="11"
+            font-weight="700"
+            letter-spacing="0.08em"
+            text-anchor="middle"
+            x={xFor(objectiveAnchor.xIndex)}
+            y={yFor(objectiveZone.price) + 40}
+          >
+            GATE
+          </text>
+        </g>
+      {/if}
+
+      {#each allyLinks as link}
+        <path
+          class:boost={link.boost}
+          class="battlefield__engagement-line battlefield__engagement-line--ally"
+          d={link.d}
+          stroke-width={link.width}
+        />
+        <circle class="battlefield__engagement-node battlefield__engagement-node--ally" cx={link.x} cy={link.y} r="5" />
+      {/each}
+
+      {#each rivalLinks as link}
+        <path
+          class:lead={link.lead}
+          class="battlefield__engagement-line battlefield__engagement-line--rival"
+          d={link.d}
+          stroke-width={link.width}
+        />
+        <circle class="battlefield__engagement-node battlefield__engagement-node--rival" cx={link.x} cy={link.y} r="5" />
       {/each}
 
       <polyline fill="none" points={trendLine} stroke="rgba(52, 104, 88, 0.48)" stroke-dasharray="8 7" stroke-width="2.2" />
@@ -364,6 +568,48 @@
     </svg>
 
     <div class="battlefield__overlay">
+      <div
+        class:long={view.report.action === 'LONG'}
+        class:short={view.report.action !== 'LONG'}
+        class="battlefield__impact-sigil"
+        style={companionStyle(clashFocus.xIndex, clashFocus.price)}
+      >
+        <div class="battlefield__impact-core"></div>
+        <div class="battlefield__impact-ring"></div>
+        <div class="battlefield__impact-ring battlefield__impact-ring--outer"></div>
+        <div class="battlefield__impact-label">{selectedCommandCard?.label ?? 'Clash'}</div>
+      </div>
+
+      {#if objectiveZone}
+        <div
+          class={`battlefield__resolve-pill battlefield__resolve-pill--${resolveTone}`}
+          style={companionStyle(objectiveAnchor.xIndex, objectiveAnchor.price - 3)}
+        >
+          <small>Resolve</small>
+          <strong>{resolveLabel}</strong>
+        </div>
+      {/if}
+
+      {#each clashSparks as spark}
+        <div
+          class:long={view.report.action === 'LONG'}
+          class:short={view.report.action !== 'LONG'}
+          class="battlefield__spark"
+          style={`${companionStyle(spark.xIndex, spark.price)}--spark-rotate:${spark.rotate}deg;--spark-shift-x:${spark.shiftX}px;--spark-shift-y:${spark.shiftY}px;`}
+        ></div>
+      {/each}
+
+      {#each rivalUnits as rival}
+        <div class={`battlefield__rival-unit battlefield__rival-unit--${rival.form}`} style={companionStyle(rival.xIndex, rival.price)}>
+          <div class="battlefield__rival-shadow"></div>
+          <div class="battlefield__rival-body">
+            <div class="battlefield__rival-core"></div>
+            <div class="battlefield__rival-accent"></div>
+          </div>
+          <div class="battlefield__rival-tag">{rival.label}</div>
+        </div>
+      {/each}
+
       {#each view.companions as companion}
         <div class={`battlefield__companion battlefield__companion--${companion.stance}`} style={companionStyle(companion.xIndex, companion.price)}>
           <div class="battlefield__companion-shadow"></div>
@@ -380,6 +626,12 @@
           <span>{callout.detail}</span>
         </div>
       {/each}
+
+      <div class="battlefield__command-plaque">
+        <small>Selected Command</small>
+        <strong>{selectedCommandCard?.label ?? 'Command locked'}</strong>
+        <span>{selectedCommandCard?.summary ?? view.pressureLabel}</span>
+      </div>
     </div>
   </div>
 
@@ -423,79 +675,151 @@
 
 <style>
   .battlefield {
+    position: relative;
+    overflow: hidden;
     display: grid;
-    gap: 18px;
-    padding: 22px;
+    gap: 10px;
+    padding: 18px;
     border-radius: 28px;
     background:
-      radial-gradient(circle at top right, rgba(255, 229, 161, 0.24), transparent 26%),
-      linear-gradient(180deg, rgba(255, 250, 240, 0.98), rgba(243, 236, 220, 0.96));
-    border: 1px solid rgba(147, 140, 111, 0.18);
+      radial-gradient(circle at top right, rgba(255, 211, 109, 0.1), transparent 24%),
+      radial-gradient(circle at bottom left, rgba(103, 169, 138, 0.1), transparent 22%),
+      linear-gradient(180deg, rgba(17, 24, 29, 0.98), rgba(12, 18, 22, 0.98));
+    border: 1px solid rgba(111, 127, 119, 0.24);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.48),
-      0 24px 60px rgba(117, 104, 69, 0.14);
-    color: #283422;
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 26px 60px rgba(7, 12, 14, 0.32);
+    color: #edf1e8;
   }
 
-  .battlefield__top {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    justify-content: space-between;
-    flex-wrap: wrap;
+  .battlefield::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(rgba(168, 156, 110, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(168, 156, 110, 0.04) 1px, transparent 1px),
+      radial-gradient(circle at center, transparent 48%, rgba(46, 55, 42, 0.08) 100%);
+    background-size: 28px 28px, 28px 28px, auto;
+    opacity: 0.72;
   }
 
-  .battlefield__top h2,
-  .battlefield__top p {
-    margin: 0;
-  }
-
-  .battlefield__kicker {
-    margin: 0 0 8px;
-    font-size: 0.76rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: rgba(100, 104, 75, 0.78);
-  }
-
-  .battlefield__state {
-    display: grid;
-    gap: 8px;
-    justify-items: end;
-  }
-
-  .battlefield__verdict,
-  .battlefield__pressure {
-    display: inline-flex;
-    padding: 10px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(151, 143, 111, 0.18);
-    background: rgba(255, 248, 234, 0.82);
-    font-size: 0.92rem;
-    box-shadow: 0 8px 18px rgba(127, 112, 71, 0.1);
-  }
-
-  .battlefield__verdict.good {
-    color: #357b59;
-  }
-
-  .battlefield__verdict.warn {
-    color: #9a6a24;
-  }
-
-  .battlefield__verdict.danger {
-    color: #a84f48;
-  }
-
-  .battlefield__pressure {
-    color: rgba(72, 79, 57, 0.88);
-    max-width: 320px;
+  .battlefield > * {
+    position: relative;
+    z-index: 1;
   }
 
   .battlefield__stage {
     position: relative;
-    aspect-ratio: 16 / 9;
-    min-height: 320px;
+    aspect-ratio: 16 / 8.4;
+    min-height: 300px;
+  }
+
+  .battlefield__duel-strip {
+    position: absolute;
+    inset: 12px 14px auto;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    pointer-events: none;
+  }
+
+  .battlefield__fighter-card,
+  .battlefield__turn-banner,
+  .battlefield__command-plaque {
+    border: 1px solid rgba(127, 131, 109, 0.24);
+    box-shadow: 0 12px 22px rgba(83, 72, 43, 0.18);
+    backdrop-filter: blur(10px);
+  }
+
+  .battlefield__fighter-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 18px;
+    background: rgba(15, 24, 28, 0.78);
+  }
+
+  .battlefield__fighter-card--rival {
+    justify-self: end;
+    background: rgba(30, 18, 20, 0.74);
+  }
+
+  .battlefield__fighter-avatar {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    flex: 0 0 auto;
+  }
+
+  .battlefield__fighter-avatar--player {
+    background: linear-gradient(180deg, rgba(36, 72, 63, 0.96), rgba(24, 49, 43, 0.92));
+  }
+
+  .battlefield__fighter-avatar--rival {
+    background: linear-gradient(180deg, rgba(84, 44, 40, 0.96), rgba(53, 28, 27, 0.92));
+  }
+
+  .battlefield__rival-emblem {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px 12px 16px 16px;
+    background:
+      linear-gradient(180deg, rgba(221, 112, 94, 0.94), rgba(146, 71, 59, 0.98));
+    clip-path: polygon(50% 0%, 78% 18%, 100% 56%, 70% 100%, 30% 100%, 0% 56%, 22% 18%);
+    box-shadow:
+      0 0 0 6px rgba(225, 134, 118, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  }
+
+  .battlefield__fighter-copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .battlefield__fighter-copy small {
+    color: rgba(194, 206, 199, 0.66);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .battlefield__fighter-copy strong {
+    font-size: 1rem;
+    color: #f4edd8;
+  }
+
+  .battlefield__fighter-copy span {
+    color: rgba(206, 217, 211, 0.72);
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .battlefield__turn-banner {
+    justify-self: center;
+    display: grid;
+    gap: 2px;
+    padding: 8px 14px;
+    border-radius: 18px;
+    background: rgba(36, 52, 48, 0.84);
+    text-align: center;
+  }
+
+  .battlefield__turn-banner small {
+    color: rgba(213, 222, 209, 0.7);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .battlefield__turn-banner strong {
+    color: #f1cf88;
+    font-size: 1rem;
   }
 
   .battlefield__svg {
@@ -503,10 +827,10 @@
     height: 100%;
     display: block;
     border-radius: 24px;
-    border: 1px solid rgba(142, 139, 101, 0.18);
+    border: 1px solid rgba(111, 127, 119, 0.18);
     box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.22),
-      0 14px 26px rgba(115, 103, 69, 0.12);
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 14px 26px rgba(8, 13, 15, 0.24);
   }
 
   .battlefield__zone {
@@ -525,13 +849,162 @@
     fill: rgba(224, 190, 102, 0.11);
   }
 
+  .battlefield__engagement-line,
+  .battlefield__engagement-node {
+    fill: none;
+    pointer-events: none;
+  }
+
+  .battlefield__engagement-line {
+    stroke-linecap: round;
+    stroke-dasharray: 10 8;
+    animation: battlefield-lane-flow 1400ms linear infinite;
+  }
+
+  .battlefield__engagement-line--ally {
+    stroke: rgba(86, 177, 118, 0.84);
+    filter: drop-shadow(0 0 8px rgba(137, 219, 166, 0.22));
+  }
+
+  .battlefield__engagement-line--ally.boost {
+    stroke: rgba(244, 214, 126, 0.9);
+  }
+
+  .battlefield__engagement-line--rival {
+    stroke: rgba(213, 110, 94, 0.82);
+    filter: drop-shadow(0 0 8px rgba(224, 151, 138, 0.18));
+    animation-direction: reverse;
+  }
+
+  .battlefield__engagement-line--rival.lead {
+    stroke: rgba(232, 144, 126, 0.92);
+  }
+
+  .battlefield__engagement-node {
+    animation: battlefield-node-pulse 1200ms ease-in-out infinite;
+  }
+
+  .battlefield__engagement-node--ally {
+    fill: rgba(244, 225, 169, 0.94);
+    stroke: rgba(86, 177, 118, 0.86);
+    stroke-width: 2;
+  }
+
+  .battlefield__engagement-node--rival {
+    fill: rgba(248, 221, 215, 0.94);
+    stroke: rgba(213, 110, 94, 0.84);
+    stroke-width: 2;
+  }
+
   .battlefield__overlay {
     position: absolute;
     inset: 0;
     pointer-events: none;
   }
 
+  .battlefield__impact-sigil,
+  .battlefield__spark {
+    position: absolute;
+    transform: translate(-50%, -50%);
+  }
+
+  .battlefield__impact-sigil {
+    width: 92px;
+    height: 92px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+  }
+
+  .battlefield__impact-core,
+  .battlefield__impact-ring {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+  }
+
+  .battlefield__impact-core {
+    width: 18px;
+    height: 18px;
+    box-shadow: 0 0 22px rgba(255, 235, 190, 0.36);
+    animation: battlefield-impact-core 880ms ease-in-out infinite;
+  }
+
+  .battlefield__impact-sigil.long .battlefield__impact-core {
+    background: linear-gradient(180deg, rgba(95, 191, 130, 0.98), rgba(51, 130, 87, 0.98));
+  }
+
+  .battlefield__impact-sigil.short .battlefield__impact-core {
+    background: linear-gradient(180deg, rgba(223, 116, 98, 0.98), rgba(154, 73, 63, 0.98));
+  }
+
+  .battlefield__impact-ring {
+    width: 54px;
+    height: 54px;
+    border: 2px solid rgba(255, 243, 212, 0.92);
+    opacity: 0.76;
+    animation: battlefield-impact-ring 1600ms ease-out infinite;
+  }
+
+  .battlefield__impact-ring--outer {
+    width: 82px;
+    height: 82px;
+    border-style: dashed;
+    border-width: 3px;
+    opacity: 0.48;
+    animation-duration: 2100ms;
+  }
+
+  .battlefield__impact-sigil.long .battlefield__impact-ring {
+    border-color: rgba(141, 222, 170, 0.84);
+  }
+
+  .battlefield__impact-sigil.short .battlefield__impact-ring {
+    border-color: rgba(236, 152, 137, 0.84);
+  }
+
+  .battlefield__impact-label {
+    position: absolute;
+    inset: auto auto -16px 50%;
+    transform: translateX(-50%);
+    min-width: max-content;
+    max-width: 138px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(255, 248, 234, 0.94);
+    border: 1px solid rgba(151, 143, 111, 0.18);
+    box-shadow: 0 10px 18px rgba(117, 104, 69, 0.12);
+    color: rgba(86, 80, 58, 0.94);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .battlefield__spark {
+    width: 32px;
+    height: 8px;
+    border-radius: 999px;
+    opacity: 0.88;
+    z-index: 2;
+    transform: translate(calc(-50% + var(--spark-shift-x, 0px)), calc(-50% + var(--spark-shift-y, 0px)))
+      rotate(var(--spark-rotate, 0deg));
+    box-shadow: 0 0 16px rgba(255, 239, 204, 0.3);
+    animation: battlefield-spark-flicker 1150ms ease-in-out infinite;
+  }
+
+  .battlefield__spark.long {
+    background: linear-gradient(90deg, rgba(255, 239, 204, 0), rgba(118, 207, 149, 0.96), rgba(255, 239, 204, 0));
+  }
+
+  .battlefield__spark.short {
+    background: linear-gradient(90deg, rgba(255, 236, 231, 0), rgba(228, 125, 109, 0.96), rgba(255, 236, 231, 0));
+  }
+
   .battlefield__companion,
+  .battlefield__rival-unit,
   .battlefield__callout {
     position: absolute;
     transform: translate(-50%, -50%);
@@ -545,6 +1018,148 @@
     display: grid;
     gap: 4px;
     justify-items: center;
+  }
+
+  .battlefield__rival-unit {
+    display: grid;
+    gap: 4px;
+    justify-items: center;
+    z-index: 1;
+  }
+
+  .battlefield__resolve-pill {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    gap: 2px;
+    min-width: 124px;
+    padding: 8px 10px;
+    border-radius: 16px;
+    border: 1px solid rgba(114, 127, 119, 0.22);
+    background: rgba(18, 28, 32, 0.9);
+    box-shadow: 0 14px 26px rgba(8, 13, 15, 0.2);
+    transform: translate(-50%, -50%);
+    text-align: center;
+    animation: battlefield-resolve-bob 1500ms ease-in-out infinite;
+  }
+
+  .battlefield__resolve-pill small {
+    color: rgba(196, 206, 198, 0.68);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .battlefield__resolve-pill strong {
+    color: #f4edd8;
+    font-size: 0.86rem;
+  }
+
+  .battlefield__resolve-pill--good {
+    background: rgba(21, 43, 34, 0.94);
+    border-color: rgba(109, 171, 105, 0.22);
+  }
+
+  .battlefield__resolve-pill--danger {
+    background: rgba(50, 24, 24, 0.92);
+    border-color: rgba(190, 104, 89, 0.22);
+  }
+
+  .battlefield__resolve-pill--secondary {
+    background: rgba(18, 34, 44, 0.92);
+    border-color: rgba(108, 146, 178, 0.2);
+  }
+
+  .battlefield__resolve-pill--info {
+    background: rgba(49, 40, 22, 0.92);
+    border-color: rgba(196, 156, 74, 0.2);
+  }
+
+  .battlefield__rival-shadow {
+    width: 38px;
+    height: 10px;
+    margin-bottom: -14px;
+    border-radius: 999px;
+    background: rgba(103, 53, 47, 0.22);
+    filter: blur(1px);
+  }
+
+  .battlefield__rival-body {
+    width: 42px;
+    height: 42px;
+    position: relative;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(68, 37, 33, 0.96), rgba(44, 23, 22, 0.92));
+    border: 1px solid rgba(173, 112, 100, 0.14);
+    box-shadow: 0 8px 18px rgba(17, 10, 10, 0.22);
+    animation: battlefield-rival-hover 1750ms ease-in-out infinite;
+  }
+
+  .battlefield__rival-core,
+  .battlefield__rival-accent {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .battlefield__rival-core {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(180deg, rgba(214, 102, 83, 0.96), rgba(139, 62, 54, 0.98));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+
+  .battlefield__rival-accent {
+    width: 30px;
+    height: 30px;
+    opacity: 0.18;
+    background: rgba(214, 102, 83, 0.92);
+  }
+
+  .battlefield__rival-unit--warden .battlefield__rival-core {
+    border-radius: 8px 8px 12px 12px;
+    clip-path: polygon(50% 0%, 86% 18%, 100% 58%, 72% 100%, 28% 100%, 0% 58%, 14% 18%);
+  }
+
+  .battlefield__rival-unit--warden .battlefield__rival-accent {
+    border-radius: 12px;
+    clip-path: polygon(50% 0%, 86% 18%, 100% 58%, 72% 100%, 28% 100%, 0% 58%, 14% 18%);
+  }
+
+  .battlefield__rival-unit--lancer .battlefield__rival-core {
+    width: 18px;
+    height: 24px;
+    border-radius: 6px;
+    clip-path: polygon(50% 0%, 100% 42%, 64% 100%, 36% 100%, 0% 42%);
+  }
+
+  .battlefield__rival-unit--lancer .battlefield__rival-accent {
+    clip-path: polygon(50% 0%, 100% 42%, 64% 100%, 36% 100%, 0% 42%);
+  }
+
+  .battlefield__rival-unit--seer .battlefield__rival-core {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+  }
+
+  .battlefield__rival-unit--seer .battlefield__rival-accent {
+    width: 34px;
+    height: 16px;
+    border-radius: 999px;
+  }
+
+  .battlefield__rival-tag {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(43, 22, 22, 0.88);
+    border: 1px solid rgba(176, 122, 109, 0.14);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    color: rgba(236, 208, 202, 0.92);
+    text-transform: uppercase;
   }
 
   .battlefield__companion--brace {
@@ -567,19 +1182,20 @@
   .battlefield__companion-body {
     padding: 6px;
     border-radius: 18px;
-    background: rgba(255, 250, 241, 0.7);
-    border: 1px solid rgba(153, 140, 103, 0.12);
-    box-shadow: 0 8px 18px rgba(114, 101, 65, 0.12);
+    background: rgba(19, 32, 34, 0.74);
+    border: 1px solid rgba(128, 145, 138, 0.12);
+    box-shadow: 0 8px 18px rgba(7, 12, 14, 0.2);
+    animation: battlefield-ally-bob 1900ms ease-in-out infinite;
   }
 
   .battlefield__role-tag {
     padding: 4px 9px;
     border-radius: 999px;
-    background: rgba(255, 248, 234, 0.94);
-    border: 1px solid rgba(160, 146, 103, 0.16);
+    background: rgba(18, 30, 33, 0.88);
+    border: 1px solid rgba(128, 145, 138, 0.14);
     font-size: 0.66rem;
     letter-spacing: 0.08em;
-    color: rgba(86, 80, 58, 0.94);
+    color: rgba(216, 226, 220, 0.88);
   }
 
   .battlefield__callout {
@@ -588,9 +1204,9 @@
     gap: 4px;
     padding: 10px 12px;
     border-radius: 16px;
-    background: rgba(255, 249, 238, 0.94);
-    border: 1px solid rgba(153, 140, 103, 0.16);
-    box-shadow: 0 18px 32px rgba(105, 93, 60, 0.12);
+    background: rgba(17, 28, 32, 0.84);
+    border: 1px solid rgba(128, 145, 138, 0.18);
+    box-shadow: 0 18px 32px rgba(7, 12, 14, 0.22);
   }
 
   .battlefield__callout strong {
@@ -602,7 +1218,7 @@
   .battlefield__callout span {
     font-size: 0.76rem;
     line-height: 1.4;
-    color: rgba(78, 82, 63, 0.84);
+    color: rgba(210, 219, 214, 0.76);
   }
 
   .battlefield__callout--good strong {
@@ -619,6 +1235,35 @@
 
   .battlefield__callout--danger strong {
     color: #a84f48;
+  }
+
+  .battlefield__command-plaque {
+    position: absolute;
+    left: 18px;
+    bottom: 14px;
+    max-width: 248px;
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: rgba(33, 49, 45, 0.84);
+  }
+
+  .battlefield__command-plaque small {
+    color: rgba(205, 216, 200, 0.68);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .battlefield__command-plaque strong {
+    color: #f7f0db;
+    font-size: 0.98rem;
+  }
+
+  .battlefield__command-plaque span {
+    color: rgba(218, 225, 213, 0.72);
+    font-size: 0.76rem;
+    line-height: 1.4;
   }
 
   .battlefield__footer {
@@ -740,9 +1385,102 @@
       linear-gradient(180deg, rgba(252, 246, 228, 0.86), rgba(244, 232, 197, 0.82));
   }
 
+  @keyframes battlefield-lane-flow {
+    from {
+      stroke-dashoffset: 0;
+    }
+    to {
+      stroke-dashoffset: -36;
+    }
+  }
+
+  @keyframes battlefield-node-pulse {
+    0%,
+    100% {
+      opacity: 0.72;
+      transform: scale(0.96);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+
+  @keyframes battlefield-impact-core {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(0.94);
+      box-shadow: 0 0 18px rgba(255, 235, 190, 0.3);
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.12);
+      box-shadow: 0 0 28px rgba(255, 235, 190, 0.52);
+    }
+  }
+
+  @keyframes battlefield-impact-ring {
+    0% {
+      transform: translate(-50%, -50%) scale(0.84);
+      opacity: 0.78;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.16);
+      opacity: 0.14;
+    }
+  }
+
+  @keyframes battlefield-spark-flicker {
+    0%,
+    100% {
+      opacity: 0.38;
+    }
+    40% {
+      opacity: 0.98;
+    }
+    70% {
+      opacity: 0.62;
+    }
+  }
+
+  @keyframes battlefield-resolve-bob {
+    0%,
+    100% {
+      transform: translate(-50%, -50%);
+    }
+    50% {
+      transform: translate(-50%, calc(-50% - 5px));
+    }
+  }
+
+  @keyframes battlefield-rival-hover {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes battlefield-ally-bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
   @media (max-width: 900px) {
-    .battlefield__state {
-      justify-items: start;
+    .battlefield__duel-strip {
+      grid-template-columns: 1fr;
+      inset: 12px 12px auto;
+    }
+
+    .battlefield__fighter-card--rival,
+    .battlefield__turn-banner {
+      justify-self: stretch;
     }
 
     .battlefield__phases,
@@ -753,6 +1491,18 @@
 
     .battlefield__callout {
       max-width: 140px;
+    }
+
+    .battlefield__command-plaque {
+      left: 12px;
+      right: 12px;
+      max-width: none;
+      bottom: 12px;
+    }
+
+    .battlefield__resolve-pill {
+      min-width: 108px;
+      padding: 7px 9px;
     }
   }
 </style>

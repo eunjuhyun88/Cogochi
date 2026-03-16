@@ -12,6 +12,8 @@ export type ScriptPresetId = 'BREAKOUT_CONFIRM' | 'SUPPORT_DEFEND' | 'TRAP_FADE'
 export type EvalAction = 'LONG' | 'SHORT' | 'HOLD';
 export type GrowthStage = 'FRESH' | 'TUNED' | 'SPECIALIZED' | 'SIGNATURE';
 export type CareState = 'CLEAR' | 'MEMORY_DRIFT' | 'DOCTRINE_BLUR' | 'CONFIDENCE_SHAKE' | 'SQUAD_FRICTION';
+export type HubStyle = 'field' | 'archive' | 'proof';
+export type HubCareAction = 'gift' | 'rest' | 'note';
 export type MutationGene = 'DOCTRINE' | 'INDICATOR' | 'SCRIPT' | 'MEMORY' | 'RISK' | 'COORDINATION';
 export type MutationDecision = 'ACCEPTED' | 'REVERTED' | 'QUARANTINED';
 export type InstinctState = 'TRUSTED' | 'WATCH' | 'WEAK';
@@ -225,7 +227,10 @@ export interface OwnedAgent {
   trustWeight: number;
   growthStage: GrowthStage;
   keepsakes: string[];
+  homeStyle: HubStyle;
   careState: CareState;
+  lastCareMode: HubCareAction;
+  recentCareSummary: string;
   nextCareAction: string;
   recentLesson: string;
   recentTrainingFocus: string;

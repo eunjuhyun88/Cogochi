@@ -241,6 +241,73 @@ TODO
 
 2026-03-15
 
+- Replaced the old `/` dashboard-style hero with a real trainer hub layout built around one featured agent.
+- The new home route now has:
+  - left state rail for bond, trust, memory quality, risk discipline, specialization, current form, and recent lesson
+  - center stage with the featured character, three visible companions, keepsakes, and a deploy CTA
+  - right action rail with tabbed `Customize`, `Care`, `Growth`, `Memory`, and `Doctrine` panels
+  - bottom quick dock for gift / outfit / memory / train / team / deploy
+  - lower sections for recommended proof routes and party swapping
+- Kept the implementation scoped to `src/routes/+page.svelte` so it would not collide with the current shared-component field claim.
+- Added lightweight home-hub interaction prototypes without changing persistence:
+  - stage appearance preview modes
+  - care verb preview modes
+  - click a companion or squad card to feature that agent on the home stage
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - `npm run preview -- --host 127.0.0.1 --port 4173` (landed on `http://127.0.0.1:4176/`)
+  - Playwright client screenshot + text state in `output/web-game/hub-home/`
+  - full-page screenshot in `output/web-game/hub-home/full-page.png`
+  - interaction check screenshot in `output/web-game/hub-home/interaction-check.png`
+  - manual interaction assertion: clicking `Care` then `Mort` updated the featured heading to `Mort` with no console errors
+
+TODO
+
+- Persist home-hub customization and care preview choices if this should become real progression state instead of UI-only preview.
+- Move the home-hub featured stage into a dedicated shared component once the current field/shared claim is no longer active.
+- Expand `render_game_to_text` coverage for the hub if we want richer automated UI assertions than selected agent + scenario.
+
+2026-03-15
+
+- Added `src/lib/stores/hubStore.ts` so the home hub now owns its own persisted UI state instead of keeping panel/preview mode in route-local state.
+- `hubStore` currently persists:
+  - active hub panel
+  - center-stage style preview mode
+  - active care mode
+- Updated `src/routes/+page.svelte` to use `hubStore` for all tab and quick-dock actions.
+- Added a route-level `window.__cogochi_text_state` payload on `/` so the home surface now reports:
+  - featured agent
+  - active panel
+  - style preview
+  - care mode
+  - care state
+  - next care action
+  - active scenario
+  - recent lesson
+  - weak link
+  - keepsakes
+  - companion names
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client capture in `output/web-game/hub-home-persistence/`
+  - manual persistence check via Playwright:
+    - switched to `Care`
+    - selected `Gift`
+    - featured `Mort`
+    - reloaded
+    - confirmed `cogochi.hub.v1` and `cogochi.roster.v2` were both restored
+    - confirmed `window.render_game_to_text()` returned `mode: "hub"` with the restored state
+  - reload screenshot saved to `output/web-game/hub-home-persistence/reload-check.png`
+
+TODO
+
+- Decide whether style preview and care mode are only session-level UI memory or should eventually map to real progression/care mechanics.
+- If home interactions become gameplay-relevant, promote `hubStore` contracts into a formal surface spec or store authority doc.
+
+2026-03-15
+
 - Wired runtime-generated memory outputs into the playable return loop instead of leaving them as offline artifacts.
 - Added server-side runtime artifact loading:
   - `src/lib/server/runtimeArtifacts.js`
@@ -1011,3 +1078,694 @@ TODO
 TODO
 
 - Push the field spawn/camera composition one more step so the in-world party silhouette reads as strongly as the HUD on first load.
+
+2026-03-15
+
+- Added a focused follow-up pass for first-load field composition.
+- Updated `src/components/shared/FieldScene.svelte` camera bias so the leader sits lower in the viewport on first load and the camp/start route reads in-world instead of being hidden under HUD.
+- Reduced movement look-ahead intensity to keep explore-mode camera gentler and closer to the visual-world contract.
+- Verified:
+  - `npm run check`
+  - Playwright screenshot in `output/web-game/field-camera-composition-1/`
+
+TODO
+
+- Re-run a longer headed browser pass later if we want to tune movement-time camera composition further; first-load composition is the main fix that landed here.
+
+2026-03-15
+
+- Checked coordination state before continuing:
+  - `npm run coord:list` returned no active claims
+  - recent watch-log work on this branch was centered on `/` hub implementation/persistence and git bootstrap, so the next safe slice stayed off the home route
+- Claimed `battle-encounter-feel` and kept edits inside `ChartBattlefield` + `/battle`.
+- Added a stronger encounter read to `src/components/shared/ChartBattlefield.svelte`:
+  - trainer-vs-rival duel strip over the stage
+  - centered turn banner
+  - rival emblem / role card so the battle has an opposing presence before reading side rails
+  - in-stage selected-command plaque so the current order feels part of the encounter, not only part of the lower menu
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright screenshot in `output/web-game/battle-encounter-feel/`
+
+TODO
+
+- If battle gets another pass, convert the abstract rival emblem into one or two reusable enemy archetype silhouettes so each scenario feels less generic.
+
+2026-03-15
+
+- Checked coordination again before continuing:
+  - active claim now sits on `hub-home-actions`
+  - owned paths include `src/lib/stores`, `src/lib/data`, `src/lib/types.ts`, and `src/routes/+page.svelte`
+  - stayed out of those boundaries and limited the next change to `src/components/shared/ChartBattlefield.svelte`
+- Added reusable rival silhouettes directly inside the battle stage:
+  - `Warden`
+  - `Lancer`
+  - `Seer`
+- Result:
+  - the stage now shows a visible opposing lineup instead of only abstract rival pressure copy and one emblem
+  - the fight reads more like a battle scene even before reading the right rail
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright screenshot in `output/web-game/battle-enemy-silhouettes/`
+
+TODO
+
+- If the home claim clears later, consider moving rival-archetype definitions into a shared battle presentation contract instead of keeping them local to `ChartBattlefield`.
+
+2026-03-15
+
+- Connected home-hub `Style` and `Care` actions to durable roster state instead of leaving them as UI-only preview:
+  - extended `OwnedAgent` with persistent `homeStyle`, `lastCareMode`, and `recentCareSummary`
+  - seeded all starter agents with home-shell defaults and care-summary text
+  - added roster reconciliation defaults so older `localStorage` payloads still hydrate safely
+- Added real home action mutations in `src/lib/stores/rosterStore.ts`:
+  - `setAgentHomeStyle(agentId, homeStyle)`
+  - `applyCareAction(agentId, careMode)`
+  - targeted care now clears matching `careState`s (`note` repairs memory/doctrine drift, `rest` repairs tension/friction, `gift` repairs confidence shake)
+  - `note` now writes a real home-note memory card into the agent memory bank
+  - untargeted / already-clear care actions have minimal or no stat gain so the hub cannot be spammed into free power
+- Updated `/` so the home hub now:
+  - syncs the right-rail selected style/care verb from the featured agent's durable state
+  - saves style choices immediately to the active agent
+  - applies care explicitly via `Apply Gift/Rest/Lesson note`
+  - shows `Home care` on the left rail and `Recent care result` on the right rail
+  - exports richer `render_game_to_text` state (`homeStyle`, `lastCareMode`, `recentCareSummary`)
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client capture in `output/web-game/hub-home-actions/client-care/`
+  - custom Playwright verification in `output/web-game/hub-home-actions/`
+    - forced featured agent to `Coglet Risk`
+    - applied targeted `Lesson note`
+    - confirmed `MEMORY_DRIFT -> CLEAR`
+    - saved `Archive look`
+    - reloaded and confirmed both care/style persistence
+    - confirmed no console errors
+
+TODO
+
+- Decide whether quick-dock `Gift` should stay a panel shortcut or become a true one-click care action now that writeback exists.
+- If home style should affect sprite overlays rather than only stage framing, move `homeStyle` into `PixelSprite`/accessory rendering next.
+
+2026-03-16
+
+- Landed the next trainer-hub visual step: saved home style now changes the actual creature body presentation, not only the hub background.
+- Updated `src/components/shared/PixelSprite.svelte`:
+  - added optional hub-only `homeStyle` adornments
+  - `field` now adds a travel harness + pack read
+  - `archive` now adds note-tab / tag read
+  - `proof` now adds sash + medal read
+  - kept this scoped behind a `presentation="hub"` prop so battle/field sprites do not inherit extra home-shell chrome by accident
+- Updated `/` so only trainer-hub sprite instances use the new hub presentation:
+  - featured center sprite
+  - hovering companions
+  - lower squad cards
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client smoke capture in `output/web-game/hub-style-overlays/client-smoke-final2/`
+  - manual Playwright visual/state pass in:
+    - `output/web-game/hub-style-overlays/final/proof-full.png`
+    - `output/web-game/hub-style-overlays/final/field-full.png`
+    - `output/web-game/hub-style-overlays/final/states.json`
+  - confirmed `stylePreview: proof -> field` with no console errors
+
+TODO
+
+- If the player should feel outfit changes in more than the hub, thread `homeStyle` into `/agent/[id]` and `/journal` next with a softer presentation mode.
+- If style should become more than silhouette accessories, add true per-style sprite accessory slots or layered pixel assets instead of CSS-only adornments.
+
+2026-03-16
+
+- Extended saved home-style presence beyond `/` so it survives on lower-intensity surfaces instead of disappearing outside the hub.
+- Updated `src/components/shared/PixelSprite.svelte` with a softer `presentation="detail"` mode that reuses the same `field/archive/proof` adornment language without overpowering detail surfaces.
+- Updated `src/components/shared/AgentSpriteCard.svelte`, `src/routes/agent/[id]/+page.svelte`, and `src/routes/journal/+page.svelte` so:
+  - agent detail cards show the saved home-style chip
+  - agent detail now includes a `Saved presence` read tied to `recentCareSummary`
+  - journal portrait and summary rail carry the saved style presence too
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client smoke in `output/web-game/style-presence-secondary/agent-smoke/`
+  - visual/state review in:
+    - `output/web-game/style-presence-secondary/agent-doux.png`
+    - `output/web-game/style-presence-secondary/journal.png`
+    - `output/web-game/style-presence-secondary/states.json`
+
+TODO
+
+- If saved style should feel more physical, replace CSS adornments with true accessory layers or sprite parts.
+- If more surfaces inherit saved presence later, keep the softer `detail` presentation as the default outside the hub.
+
+2026-03-16
+
+- Turned the home quick dock into a real care shortcut instead of only a panel-navigation strip.
+- Updated `src/lib/stores/rosterStore.ts` so `applyCareAction()` now returns result metadata (`targetedAction`, `resolved`) alongside previous/next agent snapshots.
+- Updated `src/routes/+page.svelte` so:
+  - dock `Gift` now applies immediate care writeback
+  - dock `Memory` now applies immediate `Lesson note` writeback
+  - the route records a small care receipt with `steady/resolved/partial` tone
+  - `render_game_to_text` now exports the current care receipt for automation
+  - the dock shows a persistent action receipt panel instead of silent state mutation
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client smoke in `output/web-game/home-style-actions/smoke/`
+  - custom Playwright verification in:
+    - `output/web-game/home-style-actions/home-after-gift.png`
+    - `output/web-game/home-style-actions/home-after-memory.png`
+    - `output/web-game/home-style-actions/agent-doux.png`
+    - `output/web-game/home-style-actions/journal.png`
+    - `output/web-game/home-style-actions/states.json`
+
+TODO
+
+- If `Rest` should also become one-click, decide whether it belongs in the dock or stays in the care rail to avoid accidental taps.
+- If quick actions should target off-stage agents, expose a squad-level care shortcut instead of forcing the featured-agent swap first.
+
+2026-03-16
+
+- Reworked `/` again with a game-feel-first pass because the previous home hub still read too much like a product dashboard.
+- Used the game-feel frame explicitly:
+  - primary aesthetics pushed toward `Fantasy` + `Competence`
+  - less explainer copy, more `room / sortie / command deck / quest board` language
+  - stronger visual hierarchy around the lead companion and departure route
+- Overhauled `src/routes/+page.svelte`:
+  - replaced the plain hero with a `Tonight's Briefing` + `Active sortie` split
+  - upgraded the center stage into a darker world room with terrain, signal pulses, route/focus/form callouts, and a stronger featured-agent pedestal
+  - reframed the left rail as `Trainer Console` and the right rail as `Command Deck`
+  - converted the lower dock into a `command strip` with subtitle labels so actions read more like game verbs than app buttons
+  - retitled lower sections into `Quest Board` and `Travel Bench`
+  - tightened panel copy so it reads like a game hub, not a settings surface
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client smoke in `output/web-game/hub-gamefeel-overhaul/smoke/`
+  - visual/state review in:
+    - `output/web-game/hub-gamefeel-overhaul/hub-home.png`
+    - `output/web-game/hub-gamefeel-overhaul/hub-home-care.png`
+    - `output/web-game/hub-gamefeel-overhaul/state-summary.json`
+
+TODO
+
+- The global `PageShell` nav still reads more like a utility header than an in-world game bar; if the whole app should match this home tone, that shell is the next surface to redesign.
+- `/field`, `/battle`, and `/journal` now need a matching tone pass so the app does not regress back to product-UI language when leaving the hub.
+
+2026-03-16
+
+- Continued the battle visual pass to make the clash read more like an active encounter instead of a static chart card.
+- Updated `src/components/shared/ChartBattlefield.svelte`:
+  - added ally engagement lanes that curve from companions into the clash focus
+  - added rival counter-lanes into the same focus so the contested zone reads as a real exchange
+  - added a floating `Resolve` pill near the objective gate tied to command/outcome state
+  - added motion cues for impact rings, sparks, ally bob, and rival hover
+- Kept the scope battle-only so the current home/agent/journal work on the branch stayed untouched.
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright capture in:
+    - `output/web-game/battle-hit-resolve-pass/shot-0.png`
+
+TODO
+
+- If the engagement lanes should read more strongly on first viewport, lower the center callout stack around the clash so more of the lines survive above the fold.
+- If battle starts feeling too panel-heavy again, move the command deck closer to a true bottom battle menu instead of a separate section below the stage.
+
+2026-03-16
+
+- Rebuilt the ongoing `/battle` command flow so it reads like a JRPG bottom battle menu instead of a detached admin panel.
+- Updated `src/routes/battle/+page.svelte`:
+  - moved the active command deck into a stage-attached bottom menu shell
+  - split the bottom menu into a dialogue pane plus a compact 2x2 command pad
+  - kept verdict/writeback follow-up as separate panels that appear only after the clash resolves
+  - compressed the stage and bottom menu spacing so the command pad is visible in the first viewport
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright capture in:
+    - `output/web-game/battle-bottom-menu-pass-3/shot-0.png`
+
+TODO
+
+- If you want the Pokemon feel pushed harder, the next pass should collapse `Reset`, `Journal`, and `Return to field` into a smaller utility strip and reserve the bottom menu for four battle verbs only.
+- The battle page still inherits one unrelated home-route warning (`src/routes/+page.svelte` unused selector) during checks; it is outside this pass.
+
+2026-03-16
+
+- Continued the `/battle` command-menu pass to make the attached bottom menu read faster in the first viewport.
+- Updated `src/routes/battle/+page.svelte`:
+  - remapped the four command cards into shorter battle verbs (`Push`, `Read`, `Guard`, `Shift`) with shorter flavor copy
+  - compressed the route header controls into a tighter inline row
+  - reduced stage height and hid duplicated in-stage battlefield chrome so the bottom command area starts higher on screen
+  - separated confirm actions from utility actions so the main battle verb remains visually dominant
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright captures in:
+    - `output/web-game/battle-verb-menu-pass-4/shot-0.png`
+    - `output/web-game/battle-verb-menu-pass-5/shot-0.png`
+
+TODO
+
+- If the command pad still needs to be fully visible on shorter laptop heights, the next safe pass is reducing `PageShell` hero/nav height or collapsing the right rail into tabs instead of shrinking the battlefield further.
+
+2026-03-16
+
+- Added a battle-only compact shell pass so `/battle` gives more first-viewport space back to the command deck.
+- Updated `src/components/shared/PageShell.svelte`:
+  - added a `compact` mode that reduces shell padding, brand chrome, status-pill size, and nav-pill height
+  - migrated the shared shell from deprecated `<slot>` rendering to `{@render children?.()}` so checks are back to zero warnings
+- Updated `src/routes/battle/+page.svelte`:
+  - enabled `compact` shell mode for battle only
+  - tightened the stage header, hid the extra gate-note line, reduced selector card padding, and shortened utility labels
+  - lowered the stage footprint slightly so the bottom command area starts higher in the viewport
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright capture in:
+    - `output/web-game/battle-compact-shell-pass/shot-0.png`
+
+TODO
+
+- If you want the full 2x2 command pad visible without any scroll on shorter screens, the next clean move is collapsing the right rail into one switchable card stack instead of shrinking the battlefield further.
+
+2026-03-16
+
+- Collapsed the `/battle` right rail into a single tabbed dossier so the clash page reads lighter above the fold.
+- Updated `src/routes/battle/+page.svelte`:
+  - replaced the stacked right-rail cards with one switchable panel using `Captain`, `Comms`, `Stakes`, and `Memory` tabs
+  - widened the right dossier column and narrowed the main battle column slightly so the battlefield height drops without turning into noise
+  - clamped the battle summary to two lines and lowered the battlefield stage footprint again so the bottom command deck starts higher in the viewport
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright default capture in:
+    - `output/web-game/battle-rail-tabs-pass/final/shot-0.png`
+- Note:
+  - selector-driven Playwright tab clicking located the tab buttons but timed out before completing the click, so the visual pass is verified on the default `Captain` tab and the tab interaction still deserves one follow-up browser check.
+
+TODO
+
+- If you want the full bottom menu completely above the fold on 720px-tall displays, the next step is turning the selected-command dialog into a thinner strip or moving the `Confirm` row into the command grid band.
+
+2026-03-16
+
+- Reframed `/battle` again so it reads like a command theater instead of a product console.
+- Updated `src/routes/battle/+page.svelte`:
+  - changed the stage copy from control-panel language into `Command Theater`, `Squad Captain`, `Comms Feed`, `Proof Stakes`, and `Field Memory Rail`
+  - shifted the battle header, selector cards, bottom menu, and right rail into a darker in-world palette that matches the trainer-hub tone
+  - translated runtime-heavy focus cues into player-facing room/proof language so the battle briefing no longer breaks immersion with product terminology
+  - kept deterministic control flow unchanged; arrow/enter command stepping still advances turn state and selected command normally
+- Updated `src/components/shared/ChartBattlefield.svelte`:
+  - deepened the battlefield card, turn banner, and command plaque styling so the stage feels embedded in the same command-room world
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright action loop on dev server:
+    - `output/web-game/battle-gamefeel-pass/dev-client/shot-0.png`
+    - `output/web-game/battle-gamefeel-pass/dev-client/state-0.json`
+  - Full-page captures on dev server:
+    - `output/web-game/battle-gamefeel-pass/dev-full/battle.png`
+    - `output/web-game/battle-gamefeel-pass/dev-full/field.png`
+- Note:
+  - `vite preview` servers kept breaking after rebuilds because stale hashed asset requests hit replaced build output. Final visual verification for this pass used `vite dev` instead, after `npm run build` had already succeeded.
+
+TODO
+
+- If the battle page still feels too dense on shorter laptop heights, collapse the right rail into one switchable dossier stack instead of shrinking the stage again.
+- If the rest of the app should fully match this tone, the next highest-value surfaces are `/field` beacon/runtime copy and the global `PageShell` shell warning cleanup.
+
+2026-03-16
+
+- Reframed `/field` so it reads like a trail route instead of a runtime dashboard.
+- Updated `src/routes/field/+page.svelte`:
+  - translated return messages, cue copy, and runtime focus checks into field-side trail/beacon language
+  - stopped exposing raw `runtime.distill.goal` text in the field UI and `render_game_to_text`; the route now emits a player-facing trail rule instead
+  - renamed the top cards and controls to `Trail Board`, `Scout Beacon`, `Walk`, `Sprint`, and `Cross`, and tuned the card styling toward journal-note / field-note surfaces
+  - cleaned up awkward route summary phrasing (`Holding at Camp`) and kept movement / gate transitions unchanged
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server capture in:
+    - `output/web-game/field-gamefeel-pass/field.png`
+    - `output/web-game/field-gamefeel-pass/state.json`
+    - `output/web-game/field-gamefeel-pass/console.json`
+- Note:
+  - the field surface now reads closer to the battle/home tone, but the biggest remaining non-game chrome is still the shared top `PageShell` header above the route stage.
+
+TODO
+
+- Reframe the shared `PageShell` header/nav so `/field`, `/battle`, and the hub stop opening with product-shell language before the in-world surface begins.
+
+2026-03-16
+
+- Reworked the shared shell so the app opens on a darker world-atlas header instead of a pale product dashboard.
+- Updated `src/components/shared/PageShell.svelte`:
+  - renamed the shared zones and route notes into more world-first language (`Trainer Commons`, `Trail Route`, `Command Theater`, `Rule Forge`, `Return Ledger`)
+  - replaced the generic status pills with per-surface world states such as `Beacon locked`, `Clash live`, and `Room lights on`
+  - restyled the nav chrome into a darker atlas board with crest markers and more tactile active-state pills so `/`, `/field`, and `/battle` all pick up the same game shell immediately
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server captures in:
+    - `output/web-game/shell-gamefeel-pass/home.png`
+    - `output/web-game/shell-gamefeel-pass/field.png`
+    - `output/web-game/shell-gamefeel-pass/battle.png`
+    - `output/web-game/shell-gamefeel-pass/home.json`
+    - `output/web-game/shell-gamefeel-pass/field.json`
+    - `output/web-game/shell-gamefeel-pass/battle.json`
+- Note:
+  - the shell no longer reads like a neutral SaaS header, but the nav still occupies meaningful vertical space on shorter displays; if more space is needed, the next clean move is a route-aware condensed atlas mode for `/field` and `/battle`.
+
+TODO
+
+- If first-viewport density is still too high, add a second `PageShell` density tier for travel/clash surfaces instead of shrinking the actual game stages again.
+
+2026-03-16
+
+- Added a second `PageShell` density tier so travel and clash routes keep the world-atlas tone without spending as much vertical space.
+- Updated `src/components/shared/PageShell.svelte`:
+  - added a `condensed` mode alongside the existing `compact` mode
+  - condensed mode collapses the atlas header into a tighter one-line board on desktop by hiding subtitles, shrinking route pills, and moving the route list into the same band as the surface title/status
+- Updated route usage:
+  - `src/routes/field/+page.svelte` now uses `<PageShell condensed>`
+  - `src/routes/battle/+page.svelte` now uses `<PageShell compact condensed>`
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server captures in:
+    - `output/web-game/condensed-atlas-pass/field.png`
+    - `output/web-game/condensed-atlas-pass/battle.png`
+    - `output/web-game/condensed-atlas-pass/field.json`
+    - `output/web-game/condensed-atlas-pass/battle.json`
+- Note:
+  - the condensed atlas recovers meaningful first-viewport space on `/field` and `/battle` without dropping back to dashboard chrome; if more space is still needed, the next step should be surface-specific hero compression inside those routes, not another global shell shrink.
+
+TODO
+
+- If battle still needs a little more first-viewport room on shorter displays, trim the route-local battle hero/header before touching `PageShell` again.
+
+2026-03-16
+
+- Tightened the `/battle` route-local hero and selector band after the condensed atlas pass.
+- Updated `src/routes/battle/+page.svelte`:
+  - reduced the chip stack to the gate + frame identity only
+  - shortened the selector labels to `Lead` and `Slice`
+  - compressed hero spacing, title size, summary line height, selector card padding, and selector widths
+  - lowered the battlefield stage minimum height slightly so the command grid starts higher without changing the command deck structure itself
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server capture in:
+    - `output/web-game/battle-hero-condense-pass/battle.png`
+    - `output/web-game/battle-hero-condense-pass/battle.json`
+- Note:
+  - the main remaining first-viewport cost on `/battle` is now the left dialog panel inside the bottom menu shell; if more space is needed, the next safe move is merging that dialog into a thinner strip instead of shrinking the battlefield further.
+
+TODO
+
+- If battle still needs to climb higher on shorter displays, compress the bottom-menu dialog block before touching the stage size again.
+
+2026-03-16
+
+- Wrote a stable battle-screen design document instead of continuing incremental visual tweaks without a fixed target.
+- Added:
+  - `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md`
+- Updated:
+  - `docs/design-docs/index.md`
+- The new battle-screen doc locks the intended `/battle` silhouette as:
+  - thin clash strip
+  - dominant chart stage
+  - pinned bottom command dock
+  - optional dossier overlay
+  - verdict sheet replacing command mode after resolution
+- It also fixes the information hierarchy:
+  - always visible: thesis, danger, active slice, squad, four primary commands
+  - on demand only: detailed rationale, logs, metrics, runtime advisory notes
+  - hidden from default clash posture: permanent right rail, dropdown-heavy selectors, repeated summary chrome
+- Verified:
+  - `npm run docs:refresh`
+  - `npm run docs:check`
+- Note:
+  - this doc is the new layout contract; the next real `/battle` implementation pass should remove the default route-hero posture and treat the dossier as an overlay, not a permanent column.
+
+TODO
+
+- Use `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md` as the source of truth for the next `/battle` rebuild instead of continuing spacing-only passes.
+
+2026-03-16
+
+- Tightened the `/battle` bottom action area into a single slim toolbar so the command deck reads more like a Pokemon-style battle menu instead of stacked app controls.
+- Updated `src/routes/battle/+page.svelte` only:
+  - merged separate confirm and utility rows into one `battle-bottom-menu__toolbar`
+  - shortened the action labels (`Reset clash` -> `Reset`) and turned the controls hint into inline hotkey pills
+  - compressed the battle dialog, footnote, stage min-height, and command-card sizing so more of the command menu appears in the first viewport
+- Coordination note:
+  - checked `npm run coord:list` first and saw an active `shell-gamefeel-pass` claim on `src/components/shared/PageShell.svelte`, so this pass stayed inside the battle route and avoided the shared shell file
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server captures in:
+    - `output/web-game/battle-toolbar-pass/shot-0.png`
+    - `output/web-game/battle-toolbar-pass/state-0.json`
+    - `output/web-game/battle-toolbar-pass-final/shot-0.png`
+    - `output/web-game/battle-toolbar-pass-final/state-0.json`
+- Note:
+  - the action area is now structurally slimmer, but the biggest remaining first-viewport cost on `/battle` is still the left dialog block above the command cards; the next clean move is to merge that copy into a thinner strip or fold it into the stage band.
+
+TODO
+
+- If `/battle` still feels too tall, collapse the left dialog into a single encounter strip before shrinking the chart stage again.
+
+2026-03-16
+
+- Reclaimed the stale `battle-hero-condense-pass` lease, re-checkpointed it, and kept the next pass constrained to `src/routes/battle/+page.svelte`.
+- Compressed the `/battle` hero band into a thinner encounter strip:
+  - moved the gate chips into a compact eyebrow row with the `Encounter` kicker
+  - converted the `Lead` / `Slice` selectors from stacked mini-cards into horizontal pill-like controls
+  - reduced the header title scale and hid the extra summary line so the stage starts sooner in the viewport
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server capture in:
+    - `output/web-game/battle-hero-condense-pass/shot-0.png`
+    - `output/web-game/battle-hero-condense-pass/state-0.json`
+- Note:
+  - this pass produced a visible improvement: the battle header now reads like an encounter strip and exposes more of the command grid above the fold without touching the shared shell.
+
+TODO
+
+- If `/battle` still needs more first-viewport room, compress the bottom-left command dialog width before shrinking the stage itself.
+
+2026-03-16
+
+- The previous complaint was correct: the recent battle passes had mostly been route-local micro-compression, so the screen still read like the same dashboard skeleton.
+- Ran a structural redesign pass instead of another micro-adjustment:
+  - added a `minimal` density mode to `src/components/shared/PageShell.svelte`
+  - switched `/battle` to `<PageShell compact condensed minimal>` so the top atlas bar collapses into a much shorter one-line shell
+  - restructured the desktop battle layout in `src/routes/battle/+page.svelte` so the stage becomes the dominant full-width surface and the dossier turns into a floating HUD card instead of a persistent right-side column
+  - increased battle-stage width/height and compressed the dossier chrome so the viewport reads more like a game screen and less like a two-column app panel
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server capture in:
+    - `output/web-game/battle-structural-redesign-pass/shot-0.png`
+    - `output/web-game/battle-structural-redesign-pass/state-0.json`
+- Note:
+  - this is the first pass where the change is structurally visible; the main remaining issue is that the floating dossier still covers a chunk of the chart on desktop, so the next pass should decide whether that card becomes even smaller or collapses behind a toggle.
+
+TODO
+
+- Decide whether the floating battle dossier should stay always visible on desktop or collapse behind a single `Dossier` toggle so more of the chart remains unobstructed.
+
+2026-03-16
+
+- Stepped back from surface-by-surface tweaking and rewrote the intended game loop from the player's actual experience outward.
+- Added `docs/design-docs/COGOCHI_gameplay_first_loop_redesign_20260316.md` to define the new primary read:
+  - `travel -> read -> commit -> survive consequence -> care -> go again`
+  - core session should default to `camp -> field -> gate -> clash -> journal/care -> camp`
+  - `/field` becomes the main playable heartbeat instead of a wrapper
+  - `/battle` becomes a short thesis-first clash instead of the longest analytical screen
+  - `/journal` becomes consequence-and-care instead of log review
+  - `/lab` becomes a deeper intervention space after repeated problems, not the default post-run destination
+- Locked a stronger player-role definition:
+  - captain
+  - caretaker
+  - judgment coach
+- Locked three session-defining player decisions:
+  - where to go next
+  - what thesis to enter with
+  - what to care for after the result
+
+TODO
+
+- If this redesign is accepted, update `docs/MASTER_GAME_SPEC.md`, `docs/product-specs/core.md`, `docs/product-specs/field.md`, `docs/product-specs/battle.md`, and `docs/product-specs/journal.md` to match it.
+- Translate the new thesis-first clash model into concrete `/battle` command/flow changes.
+- Re-center `/` around return pressure and next destination instead of broad dashboard summary.
+
+2026-03-16
+
+- Promoted the gameplay-first redesign into canonical product truth instead of leaving it as an additive design note.
+- Rewrote `docs/MASTER_GAME_SPEC.md` so the game is now defined around:
+  - `my squad -> my next gate -> my thesis -> my consequence -> my care decision`
+  - `camp -> field travel -> gate read -> clash -> journal and care -> camp`
+  - captain / caretaker / judgment coach as the main player role
+- Rewrote the surface specs for `core`, `field`, `battle`, and `journal` so their responsibilities now align with the new heartbeat:
+  - `/` = return hub
+  - `/field` = main playable heartbeat
+  - `/battle` = short thesis-first clash
+  - `/journal` = consequence-and-care
+- Verified:
+  - `npm run docs:refresh`
+  - `npm run docs:check`
+  - `npm run ctx:check -- --strict`
+- Note:
+  - the design reset is now canonical; the next major work is implementation alignment, especially `/`, `/field`, `/battle`, and `/journal` flow/UI changes against these specs.
+
+TODO
+
+- Rewrite the actual `/` surface around return pressure, featured consequence, and next destination.
+- Translate the thesis-first clash spec into concrete `/battle` interaction and pacing changes.
+- Tighten `/field -> /battle -> /journal -> /` so the runtime flow matches the new canonical loop instead of the older lab-first structure.
+
+2026-03-16
+
+- Rewrote `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md` so it now matches the chart-world reset instead of the older thesis-first `/battle` dashboard shape.
+- The new battle-screen contract now fixes:
+  - normal combat belongs inside `/zone/[zoneId]` micro traversal, not a detached standard `/battle` route
+  - the canonical normal-play silhouette is `top HUD -> dominant chart stage -> one-line bark strip -> four-command dock`
+  - the only primary commands are `LONG`, `SHORT`, `HOLD`, and `RUN`
+  - post-command resolution becomes a short result posture with in-world outcome feedback
+  - boss encounters escalate into `/boss/[bossId]` cut-ins without changing the four-command grammar
+
+- The product direction was reset again, this time more radically: the previous split trainer, field, journal, and proof framing is no longer the target game.
+- Added `docs/design-docs/COGOCHI_chart_world_jrpg_reset_20260316.md` to capture the new core definition:
+  - real BTC history is the world map
+  - the player travels across macro, meso, and micro chart zoom levels
+  - normal play uses `LONG`, `SHORT`, `HOLD`, and `RUN` as the core battle commands
+  - camp becomes the main care and setup anchor
+  - major historical events become boss encounters
+- Added `docs/exec-plans/active/COGOCHI_chart_world_reset_execution_20260316.md` to break the reset into six implementation phases:
+  - data and engines
+  - macro world map
+  - zone play
+  - camp and onboarding
+  - boss encounters
+  - growth and cleanup
+- Rewrote the canonical L0 and L1 docs to match the new direction:
+  - `docs/MASTER_GAME_SPEC.md`
+  - `docs/AGENT_SYSTEM_DESIGN.md`
+  - `docs/BATTLEFIELD_DESIGN.md`
+  - `docs/VISUAL_WORLD_DESIGN.md`
+- Rewrote the short surface specs so they now describe the target IA instead of the previous split-screen structure:
+  - `core` = `/` macro world map
+  - `field` = `/zone/[zoneId]`
+  - `battle` = `/boss/[bossId]`
+  - `raising` = `/camp` and `/cogochi/[id]`
+  - `proof` and `journal` = deprecated standalone surfaces, absorbed into world, camp, boss, and passport flow
+
+TODO
+
+- Port the actual route tree from the current `/field`, `/battle`, `/lab`, `/journal` implementation to `/`, `/zone/[zoneId]`, `/boss/[bossId]`, `/camp`, and `/cogochi/[id]`.
+- Define the first playable `zones.ts`, `bosses.ts`, `world-engine.ts`, and `trade-engine.ts` contracts.
+- Replace the current page shell and dashboard UI with a world-first game shell.
+
+2026-03-16
+
+- Used the user-provided PDF screenshot as a visual reference and treated it as a cue to stop polishing the old bright dashboard composition.
+- Rebuilt `src/components/shared/PageShell.svelte` into a leaner dark command bar instead of a giant atlas-and-tabs banner.
+- Rewrote `src/routes/+page.svelte` into a darker single-focus home screen:
+  - one dominant stage instead of multiple competing panels
+  - chart-world screen with embedded terminal overlay, route tags, bark strip, and companion focus
+  - tighter right rail for sortie dossier, selected module controls, and route radar
+- Reduced the old "trainer room SaaS" read by:
+  - removing the oversized tab board feel
+  - collapsing the home information hierarchy around one active route
+  - shifting tone closer to a dark command video / embedded ops screen reference
+- Left the deeper route migration untouched for now:
+  - `/field`, `/battle`, `/journal`, `/lab` still follow the older runtime structure
+  - this pass only improves the shell and `/` entry feel
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - preview screenshot saved to `output/web-game/pdf-home-refresh-3/shot-0.png`
+
+TODO
+
+- Port the same visual simplification into `/field` so the world itself, not the overlays, owns the screen.
+- Reduce the remaining surface sprawl in `/battle` and reframe it as either boss cut-in or route-local escalation.
+- Start Phase 1 runtime migration for the chart-world reset instead of only restyling the old route tree.
+
+2026-03-16
+
+- Continued the PDF-driven reset into `/field` and `/battle`.
+- Reworked `src/routes/field/+page.svelte` from stacked cream cards into:
+  - compact top HUD
+  - small right-side dossier
+  - single bottom dock for interact/control hints
+- Recolored `src/components/shared/FieldScene.svelte` into a darker chart-world palette so the route finally feels like a night traversal instead of a pastel infographic.
+- Reworked `/battle` at `src/routes/battle/+page.svelte` to reduce preamble chrome:
+  - removed the bulky contract-card + phase-ribbon stack
+  - replaced it with a thinner brief strip
+  - increased battlefield height
+  - darkened the stage rendering with stronger stage-first emphasis
+- Verified with fresh screenshots:
+  - `output/web-game/field-after-reset/shot-0.png`
+  - `output/web-game/battle-after-reset/shot-0.png`
+- Verified:
+  - `npm run check`
+  - `npm run build`
+
+TODO
+
+- `/battle` still needs a deeper route-level redesign because the command grammar is still legacy (`Focus/Memory/Risk/Retarget`) instead of canonical `LONG/SHORT/HOLD/RUN`.
+- `PageShell` on dense surfaces still eats more vertical space than ideal; a battle/field-specific ultra-compact shell variant would help.
+- Start replacing route-era UI cleanup with real Phase 1 chart-world runtime work (`zones`, `bosses`, `world-engine`, `trade-engine`).
+
+2026-03-17
+
+- Pulled in a new visual reference set from `/Users/ej/Desktop/스크린샷 2026-03-16 오후 11.31.07.pdf`.
+- The strongest reusable pattern in that PDF was not the exact art style but the screen grammar:
+  - one large playable world surface
+  - one right-side companion/agent console
+  - controls and status compressed to the perimeter
+- Reworked `src/routes/field/+page.svelte` to follow that structure:
+  - turned `/field` into a split layout with a large world stage on the left and a dedicated companion console on the right
+  - removed the old floating right dossier from inside the stage
+  - moved route read, companion state, action CTA, and party roster into the side console
+- Continued the battle cleanup:
+  - darkened `src/components/shared/ChartBattlefield.svelte` so the battlefield base, fighter cards, callouts, and chart sky no longer read like light paper cards
+  - kept `src/routes/battle/+page.svelte` stage-first shell pass in place and verified the darker battlefield component inside it
+- Verified with fresh screenshots:
+  - `output/web-game/field-reference-pass-2/shot-0.png`
+  - `output/web-game/battle-reference-pass-2/shot-0.png`
+- Verified:
+  - `npm run check`
+  - `npm run build`
+
+TODO
+
+- Push the same `world + right companion console` grammar into `/` so the macro map matches `/field`.
+- Rebuild `/battle` around canonical `LONG / SHORT / HOLD / RUN` commands; visual tone is closer now, but the interaction grammar is still old.
+- Decide which elements from the reference are product-level:
+  - definitely keep: right companion console, fuller world stage, compressed chrome
+  - probably avoid copying directly: generic browser-video framing, third-party web3 UI details, unrelated staking/dashboard modules
+
+- Took `/field` one more step toward the Pancake Town reference rather than stopping at a generic split layout.
+- Reworked `src/routes/field/+page.svelte` so the route now reads as:
+  - immersive map-first shell with hidden top nav
+  - one small floating route plaque on the stage
+  - one right-side trail console with stacked chat bubbles, action CTA, keycaps, party strip, and fake composer
+- Re-tuned `src/components/shared/FieldScene.svelte` toward a brighter daytime overworld:
+  - warmer sand / aqua sky palette
+  - lighter route and node treatment
+  - reduced chart padding and adjusted camera framing
+  - added landmark silhouettes near camp, journal, lab, archive, spar gate, and battle gate so the route feels like places instead of abstract pins
+- Verified with fresh browser harness captures:
+  - `.agent-context/harness/immersive-field-vibe-pass-20260317-v5/browser/screenshots/page_field.png`
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - `bash scripts/dev/run-browser-context-harness.sh --run-id immersive-field-vibe-pass-20260317-v5 --base-url http://127.0.0.1:4198 --page /field`

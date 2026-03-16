@@ -4,9 +4,9 @@ This generated report is the fastest way to explain why the context system is us
 
 ## Why It Feels Different
 
-- You start from about `4261` tokens instead of `107371` across the broader docs set.
+- You start from about `4261` tokens instead of `100070` across the broader docs set.
 - You can discover `7` surfaces, `11` reusable agents, and `11` reusable tools without replaying chat history.
-- Ambiguous tasks can fall back to retrieval over `1382` indexed chunks.
+- Ambiguous tasks can fall back to retrieval over `1356` indexed chunks.
 - Measured runtime evidence currently shows `n/a` minutes of estimated time saved.
 - Routed-vs-baseline evidence currently has `0` wins across `0` recorded comparisons.
 
@@ -14,9 +14,9 @@ This generated report is the fastest way to explain why the context system is us
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Small start bundle | PASS | 4261 tokens vs 107371 tokens across all docs (96% smaller) |
+| Small start bundle | PASS | 4261 tokens vs 100070 tokens across all docs (95.7% smaller) |
 | Discovery works without chat memory | PASS | 7 surfaces, 11 agents, 11 tools |
-| Ambiguity has a retrieval escape hatch | PASS | 1382 retrieval chunks across 77 sources |
+| Ambiguity has a retrieval escape hatch | PASS | 1356 retrieval chunks across 81 sources |
 | Time-saved evidence exists | NEEDS EVIDENCE | 0 finished runs, n/a minutes estimated saved |
 | Routed mode beat baseline at least once | NEEDS EVIDENCE | 0/0 routed wins |
 

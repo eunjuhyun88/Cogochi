@@ -6,6 +6,7 @@
   import FieldScene from '$components/shared/FieldScene.svelte';
   import PixelSprite from '$components/shared/PixelSprite.svelte';
   import PageShell from '$components/shared/PageShell.svelte';
+  import { careStateLabels } from '$lib/data/seed';
   import { getScenarioForHistoricalFrame, resolveHistoricalFieldFrame } from '$lib/engine/chart-frame-model';
   import { fieldNodes, fieldStore } from '$lib/stores/fieldStore';
   import { labStore } from '$lib/stores/labStore';
@@ -17,10 +18,12 @@
   let fieldStage: HTMLElement | null = null;
 
   type FieldReturnContext = PageData['returnContext'];
-
-  function roleMark(role: string) {
-    return role.slice(0, 1);
-  }
+  type FieldConsoleEntry = {
+    label: string;
+    text: string;
+    tone: 'accent' | 'info' | 'quiet';
+    speaker: 'agent' | 'system';
+  };
 
   function artifactGateQuery(gate: ProofArtifact['entryGate']): FieldReturnContext['gate'] {
     if (gate === 'PROOF') {
@@ -131,6 +134,91 @@
     return checks.find((check) => keywords.some((keyword) => check.toLowerCase().includes(keyword))) ?? checks[0];
   }
 
+  function sanitizeRuntimeCheck(text: string): string | null {
+    const cleaned = text.replace(/`/g, '').replace(/\s+/g, ' ').trim();
+    if (!cleaned) {
+      return null;
+    }
+    if (/(src\/|runtime\/|\.ts\b|\.json\b|package\.json|readme\.md)/i.test(cleaned)) {
+      return null;
+    }
+    if (cleaned.length <= 96) {
+      return cleaned;
+    }
+    return `${cleaned.slice(0, 93).trim()}...`;
+  }
+
+  function flavorRuntimeCheck(text: string | null, careState: CareState | null): string | null {
+    if (!text) {
+      return null;
+    }
+
+    const lower = text.toLowerCase();
+    if (careState === 'MEMORY_DRIFT' || lower.includes('memory')) {
+      return 'Pin one usable lesson before crossing the next gate.';
+    }
+    if (careState === 'DOCTRINE_BLUR' || lower.includes('bundle') || lower.includes('doctrine') || lower.includes('prompt')) {
+      return 'Retighten the room rules before the next march.';
+    }
+    if (careState === 'CONFIDENCE_SHAKE' || lower.includes('battle truth') || lower.includes('calibration') || lower.includes('proof')) {
+      return 'Take a cleaner spar until the squad trusts the read again.';
+    }
+    if (careState === 'SQUAD_FRICTION' || lower.includes('relay') || lower.includes('coordination') || lower.includes('cross-agent')) {
+      return 'Pull the squad back onto one call before advancing.';
+    }
+    if (lower.includes('context') || lower.includes('surface') || lower.includes('program')) {
+      return 'Reset the trail rules so the next gate reads cleanly.';
+    }
+    return 'Carry only the clue that helps the next gate.';
+  }
+
+  function trailRuleForContext(returnContext: FieldReturnContext, careState: CareState | null): string {
+    if (returnContext.verdict === 'ACCEPTED') {
+      return 'Carry the kept mutation straight to the next proof.';
+    }
+    if (returnContext.verdict === 'QUARANTINED') {
+      return 'Keep the shard sealed until the journal clears it.';
+    }
+    if (returnContext.verdict === 'REVERTED') {
+      return 'Scrub the bad branch before the next march.';
+    }
+    if (careState === 'MEMORY_DRIFT') {
+      return 'Carry one lesson, not the whole archive.';
+    }
+    if (careState === 'DOCTRINE_BLUR') {
+      return 'One doctrine line at a time.';
+    }
+    if (careState === 'SQUAD_FRICTION') {
+      return 'One call, one push, one finish.';
+    }
+    if (careState === 'CONFIDENCE_SHAKE') {
+      return 'Take the safer line until the squad settles.';
+    }
+    return 'Carry only the clue that helps the next gate.';
+  }
+
+  function toolLabelForContext(careState: CareState | null, returnContext: FieldReturnContext): string {
+    if (returnContext.verdict === 'QUARANTINED') {
+      return 'Shard Quarantine';
+    }
+    if (returnContext.verdict === 'REVERTED') {
+      return 'Reset Bench';
+    }
+    if (careState === 'MEMORY_DRIFT') {
+      return 'Memory Anchor';
+    }
+    if (careState === 'DOCTRINE_BLUR') {
+      return 'Doctrine Tuner';
+    }
+    if (careState === 'SQUAD_FRICTION') {
+      return 'Party Relay';
+    }
+    if (careState === 'CONFIDENCE_SHAKE') {
+      return 'Risk Reader';
+    }
+    return 'Trail Reader';
+  }
+
   function cueTextForContext(
     returnContext: FieldReturnContext,
     careState: CareState | null,
@@ -138,29 +226,29 @@
   ): string {
     const target = targetLabel ?? 'the next gate';
     if (returnContext.verdict === 'ACCEPTED') {
-      return `The proof survived. Escalate toward ${target}.`;
+      return `The mutation held. March for ${target}.`;
     }
     if (returnContext.verdict === 'QUARANTINED') {
-      return `Keep the mutation in review and walk to ${target}.`;
+      return `Keep the shard under watch and escort it to ${target}.`;
     }
     if (returnContext.verdict === 'REVERTED') {
-      return `Reset the build at ${target} before the next gate.`;
+      return `The run broke form. Reset at ${target} before pushing again.`;
     }
 
     if (careState === 'MEMORY_DRIFT') {
-      return `Memory drift is rising. Stabilize the squad at ${target}.`;
+      return `The trail is thinning. Re-anchor the squad at ${target}.`;
     }
     if (careState === 'DOCTRINE_BLUR') {
-      return `Doctrine blur is visible. Tighten the bundle at ${target}.`;
+      return `The room rules slipped. Retune them at ${target}.`;
     }
     if (careState === 'SQUAD_FRICTION') {
-      return `The squad is out of sync. Regroup at ${target}.`;
+      return `Calls are splitting. Rally everyone at ${target}.`;
     }
     if (careState === 'CONFIDENCE_SHAKE') {
-      return `Confidence is shaking. Rehearse first at ${target}.`;
+      return `The read wobbled. Rehearse at ${target} first.`;
     }
 
-    return `Nightly distill still points the squad toward ${target}.`;
+    return `The night trail still points toward ${target}.`;
   }
 
   function cueVerbForContext(returnContext: FieldReturnContext, careState: CareState | null): string {
@@ -208,27 +296,27 @@
 
     if (returnContext.verdict === 'ACCEPTED') {
       return returnContext.outcome === 'WIN'
-        ? `The squad returned from ${frameTitle} with a kept mutation and a clean finish.`
-        : `The squad returned from ${frameTitle}; the trainer still kept the mutation after a rough field run.`;
+        ? `The squad came back from ${frameTitle} carrying a kept mutation and a clean finish.`
+        : `The squad came back from ${frameTitle} bruised, but the mutation still holds.`;
     }
 
     if (returnContext.verdict === 'QUARANTINED') {
-      return `The squad returned from ${frameTitle}; the field proof stays in review.`;
+      return `The squad came back from ${frameTitle}. Keep the shard under watch.`;
     }
 
     if (returnContext.verdict === 'REVERTED') {
-      return `The squad returned from ${frameTitle}; the mutation was rejected after the field run.`;
+      return `The squad came back from ${frameTitle}. The field result was scrubbed before camp.`;
     }
 
     if (returnContext.outcome === 'WIN') {
-      return `The squad returned from ${frameTitle} with a clean finish.`;
+      return `The squad came back from ${frameTitle} with a clean line.`;
     }
 
     if (returnContext.outcome === 'LOSS') {
-      return `The squad retreated from ${frameTitle} and needs a steadier read.`;
+      return `The squad fell back from ${frameTitle} and needs a steadier read.`;
     }
 
-    return `The squad returned from ${frameTitle} for review.`;
+    return `The squad came back from ${frameTitle} for debrief.`;
   }
 
   const dinoParty = $derived($rosterStore.agents.filter((agent) => agent.family === 'DINO').slice(0, 4));
@@ -261,17 +349,36 @@
     targetNodeIdForCue(effectiveReturnContext, leader?.careState ?? null, state.objectiveNodeId),
   );
   const runtimeCueNode = $derived(fieldNodes.find((node) => node.id === runtimeCueNodeId) ?? null);
-  const runtimeFocusCheck = $derived(
-    chooseRuntimeCheck(data.runtime.distill.suggestedNextChecks, leader?.careState ?? null),
-  );
-  const routeStops = $derived(
-    ['camp', 'journal-board', 'lab-bench', 'archive-well', 'spar-gate', 'battle-gate']
-      .map((nodeId) => fieldNodes.find((node) => node.id === nodeId))
-      .filter((node): node is (typeof fieldNodes)[number] => Boolean(node)),
-  );
+  const runtimeFocusCheck = $derived.by(() => {
+    const rawCheck = chooseRuntimeCheck(data.runtime.distill.suggestedNextChecks, leader?.careState ?? null);
+    const sanitized = rawCheck ? sanitizeRuntimeCheck(rawCheck) : null;
+    return flavorRuntimeCheck(sanitized, leader?.careState ?? null);
+  });
   const runtimeCueText = $derived(cueTextForContext(effectiveReturnContext, leader?.careState ?? null, runtimeCueNode?.label ?? null));
   const runtimeCueVerb = $derived(cueVerbForContext(effectiveReturnContext, leader?.careState ?? null));
   const returnSummary = $derived(returnSummaryForContext(effectiveReturnContext));
+  const trailRule = $derived(trailRuleForContext(effectiveReturnContext, leader?.careState ?? null));
+  const fieldConsoleFeed = $derived.by<FieldConsoleEntry[]>(() =>
+    [
+      { label: leader?.name ?? 'Companion read', text: runtimeCueText, tone: 'accent', speaker: 'agent' },
+      runtimeFocusCheck
+        ? { label: 'Scout check', text: runtimeFocusCheck, tone: 'info' as const, speaker: 'agent' }
+        : null,
+      { label: 'Trail rule', text: trailRule, tone: 'quiet', speaker: 'system' },
+      returnSummary ? { label: 'Return mark', text: returnSummary, tone: 'quiet' as const, speaker: 'system' } : null,
+    ].filter((entry): entry is FieldConsoleEntry => Boolean(entry)),
+  );
+  const fieldConsolePrompt = $derived(
+    nearbyNode
+      ? `cross into ${nearbyNode.label.toLowerCase()}`
+      : `guide the squad toward ${(runtimeCueNode?.label ?? objectiveNode?.label ?? 'the next gate').toLowerCase()}`,
+  );
+  const fieldConsoleTool = $derived(toolLabelForContext(leader?.careState ?? null, effectiveReturnContext));
+  const fieldConsoleStatus = $derived(
+    nearbyNode
+      ? `Holding at ${nearbyNode.label}`
+      : activeHistoricalFrame?.title ?? runtimeCueNode?.label ?? objectiveNode?.label ?? 'Chart trail live',
+  );
 
   function triggerInteract() {
     const node = fieldStore.interact();
@@ -288,7 +395,7 @@
     labStore.setActiveScenario(mappedScenarioId);
 
     if (node.kind === 'ARCHIVE') {
-      fieldStore.setFieldStatus('Archive opened. Inspect the squad and then head back toward the spar gate.', 'spar-gate');
+      fieldStore.setFieldStatus('Archive well opened. Read the squad, then drift back toward the spar gate.', 'spar-gate');
       if (targetAgent) {
         goto(`/agent/${targetAgent.id}`);
       }
@@ -302,9 +409,9 @@
     }
 
     if (node.kind === 'JOURNAL') {
-      fieldStore.setFieldStatus('Journal reviewed. Pick the next gate and move the squad back onto the chart.', 'spar-gate');
+      fieldStore.setFieldStatus('Journal board checked. Pick the next gate and move the squad back onto the trail.', 'spar-gate');
     } else if (node.kind === 'LAB') {
-      fieldStore.setFieldStatus('Bench tuning locked in. Head to the spar gate and test the rewrite.', 'spar-gate');
+      fieldStore.setFieldStatus('Bench tuning held. Head for the spar gate and test the rewrite.', 'spar-gate');
     }
 
     if (node.href) {
@@ -383,8 +490,9 @@
       runtimeCueNode: runtimeCueNode?.label ?? null,
       runtimeCueVerb,
       runtimeCueText,
-      runtimeGoal: data.runtime.distill.goal,
+      runtimeGoal: trailRule,
       runtimeFocusCheck,
+      trailRule,
       activeFrame: activeHistoricalFrame?.title ?? null,
       activeScenarioId,
       nearbyNode: nearbyNode?.label ?? null,
@@ -433,7 +541,7 @@
   });
 </script>
 
-<PageShell>
+<PageShell condensed minimal immersive>
   <section class="field-layout">
     <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
     <div
@@ -447,458 +555,589 @@
       <div class="field-stage__viewport">
         <FieldScene {state} agents={fallbackParty} runtimeCueNodeId={runtimeCueNodeId} runtimeCueVerb={runtimeCueVerb} />
 
-        <div class="field-overlay field-overlay--top" aria-hidden="true">
-          <div class="field-route-card">
-            <span class="field-route-card__kicker">Route</span>
+        <div class="field-plaque">
+          <div class="field-plaque__board">
+            <span class="field-plaque__kicker">Zone Traverse</span>
             <strong>{activeHistoricalFrame?.title ?? runtimeCueNode?.label ?? objectiveNode?.label ?? 'Gate'}</strong>
-            <div class="field-route-card__progress">
-              {#each routeStops as node}
-                <span
-                  class:active={nearbyNode?.id === node.id}
-                  class:objective={objectiveNode?.id === node.id}
-                  class:runtimeCue={runtimeCueNode?.id === node.id}
-                  class="field-route-card__stop"
-                >
-                  {node.label}
-                </span>
-              {/each}
-            </div>
-            <div class="field-route-card__party">
-              {#each fallbackParty as agent}
-                <div class:leader={leader?.id === agent.id} class="field-route-card__slot">
-                  <PixelSprite agent={agent} frameIndex={0} size={24} alt={agent.name} />
-                  <span>{roleMark(agent.role)}</span>
-                </div>
-              {/each}
-            </div>
-            <span>{returnSummary ?? (nearbyNode ? `Near ${nearbyNode.label}` : `Next ${runtimeCueNode?.label ?? objectiveNode?.label ?? 'gate'}`)}</span>
-          </div>
-
-          <div class="field-overlay__stack">
-            {#if data.runtime.available}
-              <div class="field-cue-card">
-                <span class="field-cue-card__kicker">Next beacon</span>
-                <strong>{runtimeCueNode?.label ?? objectiveNode?.label ?? 'Next gate'}</strong>
-                <p>{runtimeCueText}</p>
-                {#if runtimeFocusCheck}
-                  <span class="field-cue-card__check">{runtimeFocusCheck}</span>
-                {/if}
-                {#if data.runtime.distill.goal}
-                  <span class="field-cue-card__goal">{data.runtime.distill.goal}</span>
-                {/if}
-              </div>
-            {/if}
-
-            <div class="field-overlay__cluster field-overlay__cluster--controls">
-              <span class="hud-key">WASD</span>
-              <span class="hud-key">Shift</span>
-              <span class="hud-key">E</span>
+            <p>{runtimeCueText}</p>
+            <div class="field-plaque__route">
+              {#if activeHistoricalFrame}
+                <span class="field-route-chip field-route-chip--frame">{activeHistoricalFrame.shortLabel}</span>
+              {/if}
+              <span class="field-route-chip runtimeCue">{runtimeCueNode?.label ?? objectiveNode?.label ?? 'Next gate'}</span>
+              {#if nearbyNode}
+                <span class="field-route-chip active">At {nearbyNode.label}</span>
+              {/if}
             </div>
           </div>
         </div>
 
-        <div class="field-overlay field-overlay--bottom">
-          <div class="field-actions">
-            {#if nearbyNode}
-              <button class="action-button field-actions__button" onclick={triggerInteract}>
-                Enter {nearbyNode.label}
-              </button>
-            {:else}
-              <span class="hud-pill hud-pill--ghost">Move to {runtimeCueNode?.label ?? objectiveNode?.label ?? 'gate'}</span>
-            {/if}
-          </div>
-        </div>
-
-        <div class="field-overlay field-overlay--center">
-          {#if state.canInteract && nearbyNode}
-            <div class="field-signal field-signal--active">
-              <span class="field-signal__verb">Enter</span>
-              <strong>{nearbyNode.label}</strong>
-            </div>
-          {:else}
-            <div class="field-signal">
-              <span class="field-signal__verb">Frame</span>
-              <strong>{activeHistoricalFrame?.title ?? runtimeCueNode?.label ?? objectiveNode?.label ?? 'Battle Gate'}</strong>
-            </div>
-          {/if}
+        <div class="field-stage__footer">
+          <span>Party {fallbackParty.length}/4</span>
+          <span>{leader ? careStateLabels[leader.careState] : 'Route ready'}</span>
+          <span>{nearbyNode ? `Press E at ${nearbyNode.label}` : 'WASD / Shift / E'}</span>
         </div>
       </div>
     </div>
+
+    <aside class="field-console panel">
+      <div class="field-console__masthead">
+        <div>
+          <p class="section-kicker">Trail Console</p>
+          <h2 class="section-title">{leader?.name ?? 'Lead companion'}</h2>
+          <p class="field-console__subtitle">{fieldConsoleStatus}</p>
+        </div>
+        {#if leader}
+          <div class="field-console__hero-avatar">
+            <PixelSprite agent={leader} frameIndex={0} size={58} alt={leader.name} />
+          </div>
+        {/if}
+      </div>
+
+      <div class="field-console__topics">
+        <span class="field-console__topic">route</span>
+        <span class="field-console__topic">risk</span>
+        <span class="field-console__topic">camp</span>
+      </div>
+
+      <div class="field-console__stream">
+        <article class="field-console__bubble field-console__bubble--user">
+          <small>You</small>
+          <p>{fieldConsolePrompt}</p>
+        </article>
+
+        <div class="field-console__tool">Using: {fieldConsoleTool}</div>
+
+        {#each fieldConsoleFeed as entry}
+          <article
+            class={`field-console__bubble field-console__bubble--${entry.speaker} field-console__bubble--${entry.tone}`}
+          >
+            <small>{entry.label}</small>
+            <p>{entry.text}</p>
+          </article>
+        {/each}
+      </div>
+
+      <div class="field-console__cta">
+        {#if nearbyNode}
+          <button class="action-button field-console__action" onclick={triggerInteract}>
+            Cross into {nearbyNode.label}
+          </button>
+        {:else}
+          <button class="action-button field-console__action field-console__action--quiet" disabled>
+            March toward {runtimeCueNode?.label ?? objectiveNode?.label ?? 'the next gate'}
+          </button>
+        {/if}
+
+        <div class="field-console__keyline">
+          <span>WASD</span>
+          <span>SHIFT</span>
+          <span>E</span>
+        </div>
+      </div>
+
+      <div class="field-console__party-strip">
+        {#each fallbackParty as agent}
+          <div class:leader={leader?.id === agent.id} class="field-console__member">
+            <div class="field-console__member-avatar">
+              <PixelSprite agent={agent} frameIndex={0} size={28} alt={agent.name} />
+            </div>
+            <div class="field-console__member-copy">
+              <strong>{agent.name}</strong>
+              <span>{agent.role}</span>
+            </div>
+          </div>
+        {/each}
+      </div>
+
+      <div aria-hidden="true" class="field-console__composer">
+        <span>Ask about route, risk, camp...</span>
+        <button type="button">SEND</button>
+      </div>
+    </aside>
   </section>
 </PageShell>
 
 <style>
   .field-layout {
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 356px;
+    gap: 12px;
+    align-items: stretch;
+    min-height: 100vh;
+    padding: 12px;
+    background:
+      radial-gradient(circle at 50% 0, rgba(115, 86, 255, 0.12), transparent 24%),
+      linear-gradient(180deg, rgba(2, 4, 8, 0.98), rgba(5, 8, 12, 1));
   }
 
   .field-stage {
     width: 100%;
-    margin: 0 auto;
     min-width: 0;
     position: relative;
-    padding: clamp(10px, 1vw, 14px);
+    padding: 4px;
     background:
-      linear-gradient(180deg, rgba(255, 250, 241, 0.86), rgba(239, 234, 221, 0.72));
-    border-color: rgba(147, 140, 111, 0.18);
+      linear-gradient(180deg, rgba(7, 8, 12, 0.98), rgba(3, 5, 9, 0.98));
+    border: 1px solid rgba(223, 167, 90, 0.28);
+    border-radius: 24px;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.48),
-      0 18px 34px rgba(88, 83, 59, 0.12);
+      inset 0 0 0 1px rgba(255, 219, 163, 0.08),
+      0 30px 60px rgba(0, 0, 0, 0.36);
   }
 
   .field-stage__viewport {
     position: relative;
-    height: clamp(520px, 78vh, 860px);
+    height: calc(100vh - 32px);
+    min-height: 680px;
+    border-radius: 20px;
+    overflow: hidden;
   }
 
-  .field-overlay {
+  .field-plaque,
+  .field-stage__footer {
     position: absolute;
-    left: 18px;
-    right: 18px;
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
     pointer-events: none;
     z-index: 10;
   }
 
-  .field-overlay--top {
+  .field-plaque {
     top: 18px;
-    align-items: flex-start;
+    left: 18px;
+    max-width: min(480px, calc(100% - 140px));
   }
 
-  .field-overlay--bottom {
-    bottom: 18px;
-    align-items: flex-end;
-  }
-
-  .field-overlay--center {
-    inset: auto 18px 88px auto;
-    right: 18px;
-    left: auto;
-    justify-content: flex-end;
-  }
-
-  .field-overlay__cluster {
+  .field-plaque__board {
     display: grid;
-    grid-auto-flow: column;
-    gap: 8px;
-    align-items: center;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(188, 137, 66, 0.34);
+    background: rgba(9, 12, 18, 0.7);
+    backdrop-filter: blur(12px);
+    box-shadow:
+      0 18px 36px rgba(0, 0, 0, 0.24),
+      inset 0 1px 0 rgba(255, 239, 208, 0.06);
   }
 
-  .field-overlay__stack {
-    display: grid;
-    gap: 10px;
-    justify-items: end;
-    align-items: flex-start;
+  .field-plaque__kicker,
+  .field-console small {
+    color: rgba(209, 216, 230, 0.58);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 
-  .field-route-card,
-  .field-cue-card {
-    min-width: 208px;
-    max-width: min(320px, 46vw);
-    padding: 11px 14px;
-    border-radius: 20px;
-    border: 1px solid rgba(150, 139, 102, 0.18);
-    background:
-      linear-gradient(180deg, rgba(255, 250, 239, 0.92), rgba(244, 235, 215, 0.84));
-    backdrop-filter: blur(10px);
-    display: grid;
-    gap: 4px;
-    color: rgba(58, 64, 43, 0.94);
-    box-shadow: 0 10px 24px rgba(113, 102, 66, 0.14);
-  }
-
-  .field-route-card strong,
-  .field-cue-card strong {
-    font-size: 0.96rem;
+  .field-plaque__board strong {
+    color: rgba(250, 239, 213, 0.98);
     line-height: 1.2;
+    font-size: 1.02rem;
   }
 
-  .field-route-card__progress {
+  .field-plaque__board p {
+    margin: 0;
+    color: rgba(228, 236, 244, 0.74);
+    line-height: 1.4;
+    font-size: 0.82rem;
+  }
+
+  .field-plaque__route {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 2px;
   }
 
-  .field-route-card__party {
+  .field-route-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 225, 174, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(246, 236, 211, 0.76);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .field-route-chip--frame {
+    color: rgba(230, 221, 194, 0.72);
+  }
+
+  .field-route-chip.runtimeCue {
+    border-color: rgba(114, 220, 210, 0.26);
+    background: rgba(35, 131, 136, 0.24);
+    color: rgba(232, 252, 250, 0.96);
+  }
+
+  .field-route-chip.active {
+    box-shadow: 0 0 0 1px rgba(240, 194, 105, 0.16);
+  }
+
+  .field-stage__footer {
+    left: 18px;
+    bottom: 18px;
     display: flex;
     gap: 8px;
     align-items: center;
-    margin-top: 2px;
+    flex-wrap: wrap;
+    max-width: calc(100% - 36px);
   }
 
-  .field-route-card__slot {
+  .field-stage__footer span {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 7px 4px 5px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.54);
-    border: 1px solid rgba(176, 157, 109, 0.14);
-  }
-
-  .field-route-card__slot :global(img) {
-    image-rendering: pixelated;
-  }
-
-  .field-route-card__slot span {
-    min-width: 18px;
-    height: 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    background: rgba(245, 238, 217, 0.92);
-    border: 1px solid rgba(180, 155, 93, 0.18);
-    color: rgba(96, 82, 42, 0.9);
+    min-height: 26px;
+    padding: 0 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(247, 217, 164, 0.14);
+    background: rgba(11, 15, 21, 0.68);
+    color: rgba(238, 231, 215, 0.74);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     font-size: 0.62rem;
-    font-weight: 700;
-    text-transform: uppercase;
   }
 
-  .field-route-card__slot.leader span {
-    color: rgba(255, 241, 206, 0.96);
-    border-color: rgba(239, 218, 156, 0.32);
-  }
-
-  .field-route-card__stop {
-    display: inline-flex;
-    align-items: center;
-    min-height: 22px;
-    padding: 0 8px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.54);
-    border: 1px solid rgba(176, 157, 109, 0.16);
-    color: rgba(93, 84, 53, 0.82);
-    font-size: 0.64rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-  }
-
-  .field-route-card__stop.objective {
-    background: rgba(252, 235, 189, 0.86);
-    border-color: rgba(202, 158, 78, 0.28);
-    color: rgba(111, 80, 26, 0.92);
-  }
-
-  .field-route-card__stop.runtimeCue {
-    background: rgba(233, 245, 224, 0.9);
-    border-color: rgba(115, 164, 103, 0.22);
-    color: rgba(55, 97, 52, 0.92);
-  }
-
-  .field-route-card__stop.active {
-    box-shadow: 0 0 0 1px rgba(98, 155, 90, 0.12);
-  }
-
-  .field-route-card span:last-child {
-    color: rgba(87, 97, 72, 0.82);
-    font-size: 0.76rem;
-  }
-
-  .field-route-card__kicker,
-  .field-cue-card__kicker {
-    color: rgba(118, 120, 85, 0.78);
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .field-cue-card {
-    min-width: min(280px, 40vw);
-    border-color: rgba(120, 168, 118, 0.22);
-    background:
-      linear-gradient(180deg, rgba(240, 249, 236, 0.92), rgba(223, 238, 217, 0.86));
-    gap: 6px;
-  }
-
-  .field-cue-card p {
-    margin: 0;
-    color: rgba(74, 92, 68, 0.88);
-    font-size: 0.76rem;
-    line-height: 1.45;
-  }
-
-  .field-cue-card__check,
-  .field-cue-card__goal {
-    font-size: 0.7rem;
-    color: rgba(83, 111, 79, 0.82);
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
+  .field-console {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+    gap: 12px;
+    min-height: calc(100vh - 24px);
+    padding: 0;
     overflow: hidden;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
+    border-radius: 22px;
+    border: 1px solid rgba(183, 134, 255, 0.24);
+    background:
+      radial-gradient(circle at top right, rgba(154, 91, 255, 0.18), transparent 24%),
+      linear-gradient(180deg, rgba(13, 16, 25, 0.98), rgba(8, 11, 18, 0.98));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 28px 50px rgba(0, 0, 0, 0.34);
   }
 
-  .field-cue-card__check {
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(120, 168, 118, 0.2);
-    background: rgba(255, 255, 255, 0.52);
-    color: rgba(61, 94, 58, 0.92);
-    display: inline-flex;
-    width: fit-content;
-    max-width: 100%;
+  .field-console__masthead {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    padding: 18px 16px 14px;
+    background: linear-gradient(90deg, rgba(140, 74, 255, 0.94), rgba(214, 161, 89, 0.84));
   }
 
-  .field-overlay__cluster--controls {
-    justify-content: end;
+  .field-console__masthead h2,
+  .field-console__masthead p {
+    margin: 0;
   }
 
-  .hud-pill,
-  .hud-key {
+  .field-console__subtitle {
+    color: rgba(247, 244, 255, 0.8);
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+
+  .field-console__hero-avatar {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 240, 211, 0.18);
+    background: rgba(12, 12, 18, 0.24);
+  }
+
+  .field-console__topics {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px;
+  }
+
+  .field-console__topic {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    min-height: 34px;
+    min-height: 28px;
     padding: 0 12px;
     border-radius: 999px;
-    border: 1px solid rgba(160, 146, 109, 0.18);
-    color: rgba(83, 83, 62, 0.92);
-    background: rgba(255, 249, 239, 0.82);
-    backdrop-filter: blur(10px);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    border: 1px solid rgba(87, 214, 222, 0.28);
+    background: rgba(16, 26, 37, 0.86);
+    color: rgba(115, 233, 241, 0.88);
     font-size: 0.72rem;
-    box-shadow: 0 8px 20px rgba(118, 104, 59, 0.12);
-  }
-
-  .hud-pill--ghost {
-    opacity: 0.72;
-  }
-
-  .hud-key {
-    min-width: 50px;
     font-weight: 700;
-    color: rgba(220, 230, 225, 0.92);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
-  .field-actions {
+  .field-console__stream {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 0 16px;
+    overflow: auto;
+  }
+
+  .field-console__bubble {
+    display: grid;
+    gap: 5px;
+    padding: 12px 13px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(19, 23, 33, 0.96);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .field-console__bubble p {
+    margin: 0;
+    color: rgba(233, 237, 245, 0.84);
+    line-height: 1.42;
+    font-size: 0.88rem;
+  }
+
+  .field-console__bubble--user {
+    justify-self: end;
+    width: min(100%, 260px);
+    border-color: rgba(142, 86, 236, 0.22);
+    background: linear-gradient(180deg, rgba(135, 69, 241, 0.96), rgba(96, 54, 191, 0.96));
+  }
+
+  .field-console__bubble--user small,
+  .field-console__bubble--user p {
+    color: rgba(251, 247, 255, 0.94);
+  }
+
+  .field-console__bubble--agent {
+    width: min(100%, 292px);
+  }
+
+  .field-console__bubble--system {
+    width: min(100%, 300px);
+    border-style: dashed;
+    border-color: rgba(255, 225, 174, 0.12);
+    background: rgba(14, 18, 27, 0.92);
+  }
+
+  .field-console__bubble--accent {
+    border-color: rgba(255, 202, 124, 0.18);
+    background: linear-gradient(180deg, rgba(31, 34, 47, 0.98), rgba(24, 27, 39, 0.98));
+  }
+
+  .field-console__bubble--info {
+    border-color: rgba(66, 206, 216, 0.24);
+    background: rgba(12, 31, 39, 0.94);
+  }
+
+  .field-console__tool {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(66, 206, 216, 0.36);
+    background: rgba(6, 30, 39, 0.84);
+    color: rgba(97, 230, 240, 0.92);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .field-console__cta {
+    display: grid;
+    gap: 10px;
+    padding: 0 16px;
+  }
+
+  .field-console__action {
+    min-height: 46px;
+    justify-content: center;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(239, 192, 101, 0.98), rgba(218, 153, 70, 0.98));
+    color: rgba(18, 18, 24, 0.98);
+    box-shadow: none;
+  }
+
+  .field-console__action--quiet {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(223, 231, 238, 0.72);
+  }
+
+  .field-console__keyline {
+    display: flex;
+    gap: 8px;
+  }
+
+  .field-console__keyline span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    min-width: 58px;
+    padding: 0 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 239, 208, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(243, 231, 204, 0.82);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .field-console__party-strip {
+    display: grid;
+    gap: 8px;
+    padding: 0 16px;
+  }
+
+  .field-console__member {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid rgba(118, 144, 138, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .field-console__member.leader {
+    border-color: rgba(218, 159, 83, 0.22);
+    background: rgba(218, 159, 83, 0.08);
+  }
+
+  .field-console__member-avatar {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(12, 18, 24, 0.92);
+  }
+
+  .field-console__member-copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .field-console__member-copy strong {
+    color: rgba(245, 240, 225, 0.96);
+    font-size: 0.86rem;
+  }
+
+  .field-console__member-copy span {
+    color: rgba(196, 208, 202, 0.68);
+    font-size: 0.74rem;
+    line-height: 1.3;
+  }
+
+  .field-console__composer {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 14px 16px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(10, 12, 19, 0.96);
+  }
+
+  .field-console__composer span {
+    flex: 1 1 auto;
+    min-height: 42px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    pointer-events: auto;
+    padding: 0 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(146, 89, 255, 0.28);
+    background: rgba(8, 10, 18, 0.98);
+    color: rgba(146, 154, 172, 0.78);
+    font-size: 0.82rem;
   }
 
-  .field-actions__button {
-    min-width: 136px;
+  .field-console__composer button {
+    min-width: 72px;
     min-height: 42px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, rgba(75, 150, 111, 0.96), rgba(45, 106, 79, 0.96));
-    box-shadow: 0 10px 24px rgba(49, 95, 72, 0.22);
-  }
-
-  .field-signal {
-    min-width: 160px;
-    padding: 12px 14px;
-    border-radius: 18px;
-    background: rgba(255, 249, 239, 0.88);
-    border: 1px solid rgba(157, 143, 101, 0.16);
-    color: rgba(77, 71, 49, 0.94);
-    display: grid;
-    gap: 2px;
-    box-shadow: 0 10px 28px rgba(118, 102, 63, 0.14);
-  }
-
-  .field-signal--active {
-    border-color: rgba(115, 167, 108, 0.28);
-    background: rgba(234, 246, 228, 0.92);
-  }
-
-  .field-signal__verb {
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(119, 119, 87, 0.78);
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(154, 91, 255, 0.96), rgba(109, 58, 214, 0.96));
+    color: rgba(251, 247, 255, 0.96);
+    font-weight: 800;
+    letter-spacing: 0.08em;
   }
 
   .field-stage:focus-visible {
-    outline: 2px solid rgba(89, 180, 144, 0.7);
+    outline: 2px solid rgba(104, 192, 161, 0.64);
     outline-offset: 2px;
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1100px) {
+    .field-layout {
+      grid-template-columns: 1fr;
+      min-height: auto;
+      padding: 10px;
+    }
+
+    .field-stage__viewport,
+    .field-console {
+      min-height: 0;
+    }
+
     .field-stage__viewport {
-      height: clamp(480px, 72vh, 760px);
+      height: min(72vh, 760px);
     }
 
-    .field-overlay {
-      left: 12px;
-      right: 12px;
-    }
-
-    .field-overlay--top,
-    .field-overlay--bottom {
-      gap: 10px;
-    }
-
-    .field-overlay__stack {
-      gap: 8px;
-    }
-
-    .field-overlay__cluster {
-      grid-auto-flow: row;
-      justify-items: start;
-    }
-
-    .field-route-card,
-    .field-cue-card {
-      max-width: 62vw;
-    }
-
-    .field-overlay__cluster--controls {
-      display: none;
-    }
-
-    .field-signal {
-      min-width: 132px;
-      padding: 10px 12px;
+    .field-console {
+      grid-template-rows: auto auto auto auto auto auto;
     }
   }
 
   @media (max-width: 640px) {
-    .field-stage {
-      width: 100%;
+    .field-layout {
       padding: 8px;
     }
 
     .field-stage__viewport {
-      height: clamp(420px, 70vh, 620px);
+      height: min(68vh, 620px);
     }
 
-    .field-overlay--top {
+    .field-plaque {
       top: 12px;
-      flex-direction: column;
-      align-items: stretch;
+      left: 12px;
+      max-width: calc(100% - 24px);
     }
 
-    .field-overlay--bottom {
+    .field-stage__footer {
+      left: 12px;
       bottom: 12px;
+    }
+
+    .field-console__masthead {
+      padding: 16px 14px 12px;
+    }
+
+    .field-console__hero-avatar {
+      width: 60px;
+      height: 60px;
+      flex-basis: 60px;
+    }
+
+    .field-console__topics,
+    .field-console__stream,
+    .field-console__cta,
+    .field-console__party-strip,
+    .field-console__composer {
+      padding-left: 14px;
+      padding-right: 14px;
+    }
+
+    .field-console__composer {
       flex-direction: column;
       align-items: stretch;
     }
 
-    .field-overlay--center {
-      right: 12px;
-      bottom: 78px;
-    }
-
-    .field-route-card,
-    .field-cue-card {
-      min-width: 0;
-      max-width: none;
+    .field-console__composer button {
       width: 100%;
     }
 
-    .field-overlay__stack {
-      justify-items: stretch;
-    }
-
-    .field-actions {
-      justify-content: flex-end;
+    .field-console__keyline {
+      flex-wrap: wrap;
     }
   }
 </style>

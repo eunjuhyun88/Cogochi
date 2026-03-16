@@ -1,1034 +1,336 @@
 # Cogochi Agent System Design
 
-Last updated: 2026-03-06
+Last updated: 2026-03-16
 
 ## 1. Purpose
 
-This document is the buildable source of truth for Cogochi as an AI agent raising and evaluation simulator.
+This document defines how the AI companion, growth, memory, and deterministic combat systems fit inside the chart-world JRPG version of Cogochi.
 
-It defines:
+It exists to answer:
 
-- the product thesis
-- the domain model
-- the RAG runtime
-- the training loop
-- the evaluation battle loop
-- the page and store responsibilities
-- the implementation order
+- what the AI layer does in moment-to-moment play
+- what the player still decides directly
+- which stores and engines own which parts of the new loop
+- how historical BTC data becomes traversable game data
 
-If another document conflicts with this one, this document wins.
+If another implementation doc conflicts with this one, this document wins for system role and ownership.
 
 ## 2. Product Thesis
 
-Cogochi is not primarily a monster battler.
+Cogochi is no longer primarily an agent-training simulator with a battle wrapper.
 
-Cogochi is a game where the player owns AI agent instances built on top of a base model, configures their prompts, data sources, and memory, retrains them over time, and sends them into evaluation matches to see whether their preparation was better than the opponent's.
+Cogochi is a chart-world game where:
 
-The battle layer exists to prove whether the training setup worked.
+- the player explores real BTC history as regions
+- a Cogochi companion reads the market and comments on it
+- the player chooses `LONG`, `SHORT`, `HOLD`, or `RUN`
+- deterministic engines resolve outcome
+- camp, growth, and archetypes deepen the companion over time
 
-The product ratio is:
-
-- 70% agent training, memory, and experimentation
-- 30% battle presentation and evaluation
+The AI layer supports the judgment fantasy.
+It does not replace it.
 
 ## 3. Core Loop
 
-The correct product loop is:
+The correct system loop is:
 
-`base model -> owned agent -> data and memory setup -> prompt/policy tuning -> squad formation -> evaluation match -> reflection -> memory writeback -> progression`
+`load world region` -> `walk zone` -> `read current candle context` -> `Cogochi advisory line` -> `player command` -> `deterministic resolution` -> `camp return` -> `growth and unlocks`
 
 Short version:
 
-`agent -> train -> evaluate -> reflect -> improve`
-
-### 3.1 Proof Versus Battle
-
-Cogochi needs two evaluation layers:
-
-- `battle`
-  - one readable clash on one historical frame
-- `proof`
-  - one deterministic historical validation bundle around several clashes
-
-The player-facing word can stay `proof`.
-The system-facing concept is a game-native backtest.
-
-Battle answers:
-
-- what happened in this clash
-
-Proof answers:
-
-- whether this mutation or setup deserves trust beyond one clash
+`travel -> read -> command -> resolve -> recover -> grow`
 
 ## 4. Non-Goals
 
 The MVP does not attempt to do the following:
 
-- full custom pretraining from scratch
-- real brokerage or exchange integration
 - real-money trading
-- synchronous live PvP with authoritative servers
-- giant cloud training orchestration
-- tokenomics or NFT systems
+- brokerage execution
+- live market PvP
+- hidden autoplay
+- giant external training infrastructure
+- a standalone proof workstation as the main player loop
 
-## 5. Design Principles
+## 5. Player Authority vs AI Authority
 
-### 5.1 The player owns agents, not species
+### 5.1 Player authority
 
-Species or archetypes are presentation and default configuration layers.
+The player always owns:
 
-The real gameplay object is the owned agent instance.
+- region selection
+- movement
+- `LONG`, `SHORT`, `HOLD`, `RUN`
+- risk acceptance
+- camp decisions
+- archetype commitment
 
-### 5.2 Current market state is direct input, not RAG
+### 5.2 AI companion authority
 
-Structured current state such as price, news score, volatility, or OI is fed directly to the model.
+The Cogochi may provide:
 
-RAG is used for past experiences, playbooks, failures, and user doctrine.
+- commentary
+- pattern reads
+- warning barks
+- archetype-triggered skill effects
+- memory callbacks to past events
 
-### 5.3 Battle is evaluation, not the whole product
+The Cogochi must not:
 
-The battle screen must answer:
+- silently override the command
+- take hidden positions
+- own the final outcome logic
 
-- what the agent saw
-- what memory it retrieved
-- why it made the decision
-- how that decision performed
+## 6. Domain Model
 
-### 5.4 Growth means better decisions
+### 6.1 Core gameplay objects
 
-Progression is not just XP.
+#### `Cogochi`
 
-Progression means:
+The player-owned companion.
 
-- stronger policy
-- better retrieval quality
-- cleaner memory
-- clearer specialization
-- better coordination with the squad
+Fields should include:
 
-## 6. Terminology
+- id
+- name
+- level
+- xp
+- hp
+- gold
+- hunger
+- energy
+- mood
+- archetype
+- unlocked skills
+- equipped loadout
+- historical memory cards
 
-### BaseModel
+#### `Zone`
 
-The inference model the agent runs on top of.
+One region or sub-region of BTC history.
 
-Example:
+Fields should include:
 
-- `qwen2.5-7b-instruct`
+- id
+- label
+- start time
+- end time
+- difficulty
+- zoom defaults
+- landmarks
+- boss id if present
 
-### Archetype
+#### `CandleSlice`
 
-A visual and gameplay-flavor template that provides:
+The currently loaded micro encounter window.
 
-- default prompts
-- suggested data sources
-- visual identity
-- starter role hints
+Fields should include:
 
-Archetypes are not the same thing as owned agents.
+- interval
+- visible candles
+- hidden next candles
+- support and resistance marks
+- volume flags
+- hazard markers
 
-### OwnedAgent
+#### `PositionState`
 
-A player-owned agent instance with its own:
+The current combat stance.
 
-- prompt stack
-- data bindings
-- retrieval policy
-- memory bank
-- history
-- progression
+Fields should include:
 
-### TrainingLoadout
+- side: `LONG` | `SHORT` | `FLAT`
+- entry price
+- size or leverage tier
+- realized PnL
+- unrealized PnL
+- liquidation threshold if relevant
 
-The active behavior definition of one agent.
+#### `BossEncounter`
 
-It includes:
+A special scripted historical event fight.
 
-- system prompt
-- role prompt
-- policy prompt
-- risk style
-- retrieval policy
-- enabled tools
-- enabled data sources
+Fields should include:
 
-### MemoryBank
+- boss id
+- boss hp
+- phase
+- scripted attack rules
+- clear condition
 
-The searchable memory attached to an agent.
+## 7. Store Responsibilities
 
-It stores:
-
-- match summaries
-- failure cases
-- success cases
-- generalized playbooks
-- user-authored notes
-
-### TrainingRun
-
-A recorded improvement operation against one agent.
-
-Examples:
-
-- prompt revision
-- retrieval tuning
-- memory compaction
-- SFT or LoRA run
-
-### EvalScenario
-
-A controlled benchmark setting used for one match.
-
-Examples:
-
-- trend day with high OI
-- volatile chop regime
-- macro shock news window
-
-### EvalMatch
-
-One evaluation battle run under a defined scenario.
-
-### RewardPacket
-
-The post-match progression output that updates:
-
-- the agent
-- the player profile
-- the memory bank
-
-## 7. Domain Model
-
-```ts
-export type AgentRole = 'SCOUT' | 'ANALYST' | 'RISK' | 'EXECUTOR';
-export type AgentStatus = 'READY' | 'TRAINING' | 'QUEUED' | 'IN_MATCH' | 'RECOVERING';
-export type DataSourceKind = 'PRICE' | 'NEWS' | 'ONCHAIN' | 'SOCIAL' | 'USER_NOTE' | 'MACRO';
-export type ToolKind = 'RETRIEVER' | 'SUMMARIZER' | 'SCORER' | 'RISK_FILTER';
-export type MemoryKind = 'MATCH_SUMMARY' | 'FAILURE_CASE' | 'SUCCESS_CASE' | 'PLAYBOOK' | 'USER_NOTE';
-export type TrainingRunType = 'PROMPT_TUNE' | 'RETRIEVAL_TUNE' | 'MEMORY_COMPACT' | 'SFT' | 'LORA' | 'CPT';
-export type MatchMode = 'PVE_BENCHMARK' | 'GHOST_DUEL' | 'ASYNC_PVP';
-```
-
-### 7.1 BaseModelDefinition
-
-```ts
-export interface BaseModelDefinition {
-  id: string;
-  family: string;
-  variant: string;
-  provider: 'OLLAMA' | 'OPENAI_COMPAT';
-  parameterScale: 'SMALL' | 'MEDIUM' | 'LARGE';
-  contextWindow: number;
-  supportsJsonMode: boolean;
-  supportsToolUse: boolean;
-}
-```
-
-### 7.2 AgentArchetype
-
-```ts
-export interface AgentArchetype {
-  id: string;
-  name: string;
-  fantasy: string;
-  visualType: string;
-  defaultRole: AgentRole;
-  defaultLoadout: TrainingLoadoutTemplate;
-  starterTags: string[];
-}
-```
-
-```ts
-export interface TrainingLoadoutTemplate {
-  systemPrompt: string;
-  rolePrompt: string;
-  policyPrompt: string;
-  enabledDataSourceKinds: DataSourceKind[];
-  enabledToolKinds: ToolKind[];
-  riskTolerance: number;
-  confidenceStyle: 'CONSERVATIVE' | 'BALANCED' | 'AGGRESSIVE';
-  horizon: 'SCALP' | 'INTRADAY' | 'SWING';
-}
-```
-
-### 7.3 OwnedAgent
-
-```ts
-export interface OwnedAgent {
-  id: string;
-  name: string;
-  archetypeId: string;
-  baseModelId: string;
-  role: AgentRole;
-  status: AgentStatus;
-  level: number;
-  xp: number;
-  bond: number;
-  specializationTags: string[];
-  loadout: TrainingLoadout;
-  memoryBankId: string;
-  record: AgentRecord;
-  progression: AgentProgression;
-  createdAt: number;
-  updatedAt: number;
-}
-```
-
-```ts
-export interface AgentRecord {
-  matches: number;
-  wins: number;
-  losses: number;
-  draws: number;
-  lastOutcome?: 'WIN' | 'LOSS' | 'DRAW';
-  lastMatchAt?: number;
-}
-
-export interface AgentProgression {
-  specializationTier: number;
-  unlockedToolIds: string[];
-  unlockedDataSourceIds: string[];
-  memoryCapacityBonus: number;
-}
-```
-
-Invariants:
-
-- `id` is globally unique
-- one agent has exactly one active `loadout`
-- one agent has exactly one `memoryBankId`
-- one agent can exist in at most one active squad slot at a time
-
-### 7.4 TrainingLoadout
-
-```ts
-export interface TrainingLoadout {
-  systemPrompt: string;
-  rolePrompt: string;
-  policyPrompt: string;
-  enabledDataSourceIds: string[];
-  enabledToolIds: string[];
-  riskTolerance: number;
-  confidenceStyle: 'CONSERVATIVE' | 'BALANCED' | 'AGGRESSIVE';
-  horizon: 'SCALP' | 'INTRADAY' | 'SWING';
-  retrievalPolicy: RetrievalPolicy;
-  outputSchemaVersion: string;
-}
-
-export interface RetrievalPolicy {
-  topK: number;
-  recencyWeight: number;
-  similarityWeight: number;
-  successWeight: number;
-  importanceWeight: number;
-  roleMatchWeight: number;
-  regimeMatchWeight: number;
-}
-```
-
-Invariants:
-
-- `riskTolerance` is `0..1`
-- `topK` is `1..10`
-- every referenced data source must exist in the lab catalog
-
-### 7.5 DataSourceBinding
-
-```ts
-export interface DataSourceBinding {
-  id: string;
-  kind: DataSourceKind;
-  name: string;
-  enabled: boolean;
-  qualityScore: number;
-  config: Record<string, string | number | boolean>;
-  lastSyncedAt?: number;
-}
-```
-
-### 7.6 ToolBinding
-
-```ts
-export interface ToolBinding {
-  id: string;
-  kind: ToolKind;
-  name: string;
-  enabled: boolean;
-  description: string;
-}
-```
-
-### 7.7 MemoryRecord and MemoryBank
-
-```ts
-export interface MemoryRecord {
-  id: string;
-  agentId: string;
-  kind: MemoryKind;
-  title: string;
-  summary: string;
-  lesson: string;
-  tags: string[];
-  role: AgentRole;
-  regime: string;
-  symbol: string;
-  timeframe: string;
-  sourceIds: string[];
-  successScore: number;
-  importance: number;
-  retrievalCount: number;
-  createdAt: number;
-  lastRetrievedAt?: number;
-}
-
-export interface MemoryBank {
-  id: string;
-  agentId: string;
-  capacity: number;
-  compactionLevel: number;
-  records: MemoryRecord[];
-}
-```
-
-Invariants:
-
-- only records created before the current scenario start can be retrieved
-- raw logs are not stored as long-term memory records
-- only summarized, tagged records enter the bank
-
-### 7.8 TrainingRun
-
-```ts
-export interface TrainingRun {
-  id: string;
-  agentId: string;
-  type: TrainingRunType;
-  hypothesis: string;
-  changes: string[];
-  beforeVersion: string;
-  afterVersion: string;
-  metricsBefore?: EvalMetrics;
-  metricsAfter?: EvalMetrics;
-  status: 'QUEUED' | 'RUNNING' | 'DONE' | 'FAILED';
-  startedAt?: number;
-  finishedAt?: number;
-}
-```
-
-### 7.9 Squad
-
-```ts
-export interface Squad {
-  id: string;
-  name: string;
-  memberAgentIds: [string, string, string, string];
-  roleMap: {
-    scout: string;
-    analyst: string;
-    risk: string;
-    executor: string;
-  };
-  tacticPreset: 'BALANCED' | 'TREND' | 'DEFENSIVE' | 'EXPERIMENTAL';
-}
-```
-
-Invariants:
-
-- exactly four agents
-- no duplicate agent ids
-- each role is assigned exactly once
-
-### 7.10 EvalScenario
-
-```ts
-export interface EvalScenario {
-  id: string;
-  mode: MatchMode;
-  symbol: string;
-  timeframe: string;
-  marketWindowId: string;
-  objective: string;
-  allowedDataSourceKinds: DataSourceKind[];
-  scoringWeights: EvalScoreWeights;
-  opponentSnapshotId?: string;
-  scenarioStartAt: number;
-}
-```
-
-### 7.11 OpponentSnapshot
-
-```ts
-export interface OpponentSnapshot {
-  id: string;
-  label: string;
-  squad: SquadSnapshot;
-  createdAt: number;
-}
-
-export interface SquadSnapshot {
-  memberNames: string[];
-  roles: AgentRole[];
-  summarizedPolicies: string[];
-}
-```
-
-### 7.12 EvalMatchResult
-
-```ts
-export interface EvalMatchResult {
-  id: string;
-  scenarioId: string;
-  squadId: string;
-  outcome: 'WIN' | 'LOSS' | 'DRAW';
-  teamMetrics: EvalMetrics;
-  agentResults: AgentEvalResult[];
-  rewards: RewardPacket;
-  lessons: string[];
-  createdAt: number;
-}
-
-export interface AgentEvalResult {
-  agentId: string;
-  action: 'LONG' | 'SHORT' | 'FLAT';
-  confidence: number;
-  accuracyScore: number;
-  coordinationScore: number;
-  reasoningScore: number;
-  xpGain: number;
-  bondGain: number;
-  memoryWrites: MemoryRecord[];
-}
-
-export interface EvalMetrics {
-  returnScore: number;
-  riskScore: number;
-  accuracyScore: number;
-  calibrationScore: number;
-  reasoningScore: number;
-  coordinationScore: number;
-  totalScore: number;
-}
-
-export interface EvalScoreWeights {
-  returnWeight: number;
-  riskWeight: number;
-  accuracyWeight: number;
-  calibrationWeight: number;
-  reasoningWeight: number;
-  coordinationWeight: number;
-}
-
-export interface RewardPacket {
-  trainerResearchGain: number;
-  unlockProgressGain: number;
-  agentXpGain: Record<string, number>;
-  agentBondGain: Record<string, number>;
-}
-```
-
-## 8. Runtime Architecture
-
-The MVP is local-first.
-
-The runtime layers are:
-
-```text
-Routes
-  -> Stores
-  -> Services
-  -> Model Provider / Memory Provider
-  -> Eval Resolver
-```
-
-### 8.1 Route Responsibilities
-
-- `src/routes/+page.svelte`
-  - Agent Ops Hub
-- `src/routes/roster/+page.svelte`
-  - owned agent list and filtering
-- `src/routes/agent/[id]/+page.svelte`
-  - one agent deep detail
-- `src/routes/team/+page.svelte`
-  - role-based squad assignment
-- `src/routes/battle/+page.svelte`
-  - evaluation console
-- `src/routes/lab/+page.svelte`
-  - training queue and data setup
-
-Routes assemble views only.
-
-No route should contain RAG logic or scoring logic.
-
-### 8.2 Store Responsibilities
-
-#### playerStore
+### `playerStore`
 
 - trainer profile
-- research points
-- unlocked systems
+- unlocked regions
+- current progression
+- first-run onboarding state
 
-#### rosterStore
+### `cogochiStore`
 
-- owned agents
-- selected agent id
-- agent updates
-- apply rewards to agents
+- owned companions
+- vitals
+- level and skill unlocks
+- archetype state
+- camp-facing care actions
 
-#### squadStore
+### `worldStore`
 
-- active squad
-- saved squad presets
-- slot validation
+- current region
+- current zoom layer
+- current scroll position
+- current zone progress
+- landmark selection
 
-#### labStore
+### `battleStore`
 
-- data source catalog
-- tools catalog
-- training runs
-- prompt variants
-- memory compaction jobs
+- current stance
+- current encounter slice
+- recent command history
+- deterministic trade outcome payloads
 
-#### matchStore
+### `bossStore`
 
-- current evaluation scenario
-- current phase
-- per-agent traces
-- match lifecycle
+- boss phase
+- boss hp
+- special event state
+- boss reward resolution
 
-### 8.3 Service Responsibilities
+### `passportStore`
 
-#### modelProvider
+- public run history
+- boss clears
+- major region records
 
-- call the selected base model
-- enforce JSON output schema
+## 8. Engine Responsibilities
 
-#### embeddingProvider
+### `worldEngine`
 
-- generate embeddings for memory records
+- zoom transitions
+- region entry and exit
+- candle-space navigation
+- landmark activation
 
-#### memoryService
+### `tradeEngine`
 
-- write memory records
-- retrieve memory records
-- compact memory banks
+- deterministic `LONG`, `SHORT`, `HOLD`, `RUN` resolution
+- HP change calculation
+- XP and gold consequences
+- liquidation and squeeze handling
 
-#### contextAssembler
+### `bossEngine`
 
-- build the final prompt package for each agent
+- scripted boss attacks
+- multi-turn encounter sequencing
+- boss clear and fail states
 
-#### evalService
+### `growthEngine`
 
-- compute match metrics
-- score agents and squads
+- level thresholds
+- skill unlock evaluation
+- archetype progression
+- vitals and camp-effect application
 
-#### reflectionService
+### `passportEngine`
 
-- turn raw match traces into lessons and memory cards
+- convert clears, losses, boss outcomes, and milestones into public history records
 
-## 9. RAG Design
+## 9. Service Responsibilities
 
-RAG is mandatory, but it is not used for everything.
+### `marketHistoryService`
 
-### 9.1 What goes in direct structured input
+- load static macro BTC history
+- load per-zone micro candle payloads
+- provide deterministic historical slices
 
-The following belong in the current scenario payload:
+### `memoryService`
 
-- price and derived indicators
-- volatility
-- OI and funding
-- macro event flags
-- news scores
-- opponent summary
-- current squad messages
+- store durable historical lessons
+- surface memory cards to camp and passport
+- provide memory callbacks for Cogochi speech
 
-These values are not retrieved from memory.
+### `advisoryService`
 
-### 9.2 What goes in RAG memory
+- build Cogochi bark lines
+- expose archetype-based hints
+- never own the final trade verdict
 
-Only durable experience should enter the memory bank:
+### `saveService`
 
-- previous match summaries
-- failure cases
-- success cases
-- generalized playbook lessons
-- user doctrine
+- persist trainer, region, and companion progression
 
-### 9.3 Retrieval pipeline
+## 10. Route Responsibilities
 
-For each agent turn:
+- `src/routes/+page.svelte`
+  - macro world map and first-visit nursery
+- `src/routes/zone/[zoneId]/+page.svelte`
+  - meso and micro region traversal plus command play
+- `src/routes/boss/[bossId]/+page.svelte`
+  - special boss encounter
+- `src/routes/camp/+page.svelte`
+  - care, setup, and save
+- `src/routes/cogochi/[id]/+page.svelte`
+  - profile, growth, archetype, and history
+- `src/routes/passport/[id]/+page.svelte`
+  - public history
 
-1. Build a retrieval query using current role, regime, symbol, timeframe, and objective
-2. Filter memory records that are eligible
-3. Rank by hybrid score
-4. Return top-k summarized records
-5. Assemble them into context
+Routes assemble views only.
+No route should contain deterministic outcome logic.
 
-### 9.4 Eligibility rules
+## 11. Data Model Rules
 
-A memory record is eligible only if:
+### 11.1 Historical truth is fixed
 
-- `record.agentId == currentAgentId`
-- `record.createdAt <= scenario.scenarioStartAt`
-- role or tags are relevant enough
-- it is not archived or invalidated
+BTC candles are historical input, not mutable gameplay state.
 
-This prevents future leakage during evaluation.
+### 11.2 Current live market data is optional future flavor
 
-### 9.5 Hybrid retrieval score
+If future live features exist, they must not contaminate fixed historical zone truth.
 
-The retrieval score is:
+### 11.3 Determinism is mandatory
 
-```text
-score =
-  similarityWeight * semanticSimilarity +
-  recencyWeight * recencyScore +
-  successWeight * normalizedSuccessScore +
-  importanceWeight * importance +
-  roleMatchWeight * roleMatch +
-  regimeMatchWeight * regimeMatch
-```
+The same candle sequence and command sequence must resolve the same way.
 
-Recommended defaults:
+## 12. AI and Memory Rules
 
-- semantic similarity: `0.45`
-- recency: `0.15`
-- success score: `0.15`
-- importance: `0.10`
-- role match: `0.10`
-- regime match: `0.05`
+### 12.1 What memory may contain
 
-### 9.6 Memory writeback
+- prior boss clears
+- failure lessons
+- player-authored notes
+- historical event cards
+- archetype-specific pattern memories
 
-After every match:
+### 12.2 What memory may not do
 
-1. Keep the raw trace in short-term match storage
-2. Generate a structured reflection
-3. Extract at most 1 to 3 durable memory cards per agent
-4. Tag them with scenario metadata
-5. Save them into the agent memory bank
+- rewrite historical candles
+- fabricate hidden market truth
+- override the player's command
 
-### 9.7 Memory compaction
+### 12.3 Output style
 
-Compaction is a training action, not an invisible cleanup job.
+Cogochi lines should be short, useful, and legible:
 
-It should:
+- warning
+- confidence cue
+- pattern callout
+- historical callback
 
-- merge duplicate lessons
-- archive stale low-value records
-- promote repeated high-value rules into `PLAYBOOK` records
-- reduce prompt context bloat
+## 13. Implementation Order
 
-## 10. Prompt Assembly
+1. historical data and zone definitions
+2. world navigation
+3. trade resolution
+4. camp loop
+5. boss loop
+6. progression and public history
 
-Each agent turn is built from the following layers:
+## 14. Acceptance Criteria
 
-```text
-1. System Prompt
-2. Role Prompt
-3. Policy Prompt
-4. Scenario Structured State
-5. Retrieved Memories
-6. Squad Messages
-7. Output Schema Instructions
-```
+This system design is correct only if:
 
-The output must be structured JSON.
-
-```ts
-export interface AgentDecision {
-  action: 'LONG' | 'SHORT' | 'FLAT';
-  confidence: number;
-  thesis: string;
-  evidence: string[];
-  riskNote: string;
-  invalidation: string;
-  messageToSquad: string;
-}
-```
-
-The model provider must reject or repair malformed outputs before match resolution.
-
-## 11. Training System
-
-The training system has three layers.
-
-### 11.1 Fast loop
-
-Runs often and powers the main gameplay:
-
-- prompt edits
-- retrieval policy edits
-- memory compaction
-- data source enabling and disabling
-
-### 11.2 Medium loop
-
-Runs after multiple matches:
-
-- prompt variant comparison
-- benchmark suite runs
-- lesson curation
-
-### 11.3 Slow loop
-
-Optional advanced system:
-
-- SFT
-- LoRA
-- continued pretraining
-
-The MVP only requires the fast loop and medium loop.
-
-### 11.4 Training queue states
-
-```text
-QUEUED -> RUNNING -> DONE | FAILED
-```
-
-Every training run must record:
-
-- what changed
-- why it changed
-- what metrics improved or regressed
-
-## 12. Evaluation Match Design
-
-Battle is an evaluation console with strong presentation.
-
-### 12.1 Squad roles
-
-The four default roles are:
-
-- `SCOUT`
-  - find candidate signals
-- `ANALYST`
-  - explain the thesis
-- `RISK`
-  - bound downside and veto bad entries
-- `EXECUTOR`
-  - produce the final team action
-
-### 12.2 Match phases
-
-The match phases are:
-
-1. `OBSERVE`
-2. `RETRIEVE`
-3. `REASON`
-4. `DEBATE`
-5. `DECIDE`
-6. `RESOLVE`
-7. `REFLECT`
-
-### 12.3 Score model
-
-Default team score weights:
-
-- return: `0.35`
-- risk control: `0.20`
-- accuracy: `0.15`
-- calibration: `0.10`
-- reasoning quality: `0.10`
-- coordination: `0.10`
-
-### 12.4 Reward rules
-
-Trainer rewards:
-
-- research points
-- unlock progress
-
-Agent rewards:
-
-- XP
-- bond
-- memory cards
-- specialization progress
-
-### 12.5 Match outputs
-
-One match must produce:
-
-- final outcome
-- per-agent decision trace
-- per-agent score breakdown
-- reward packet
-- reflection lessons
-
-## 13. UI and UX Structure
-
-### 13.1 `/` Agent Ops Hub
-
-Must show:
-
-- active squad
-- key agents
-- recent match results
-- training queue
-- recommended next action
-
-### 13.2 `/roster`
-
-Must show:
-
-- owned agent grid
-- filters by role, model, specialization
-- recent performance
-- memory health
-
-### 13.3 `/agent/[id]`
-
-This is the most important page.
-
-It must show:
-
-- identity and archetype
-- base model
-- prompt stack
-- data bindings
-- retrieval policy
-- memory bank preview
-- training history
-- evaluation history
-
-### 13.4 `/team`
-
-Must behave as a four-slot role board, not a simple checklist.
-
-### 13.5 `/battle`
-
-Must center on:
-
-- phase timeline
-- decisions
-- retrieved memories
-- messages between squad members
-- score panel
-
-### 13.6 `/lab`
-
-Must center on:
-
-- data source setup
-- prompt variants
-- memory compaction
-- training queue
-- evaluation presets
-
-## 14. Persistence Plan
-
-The MVP uses local persistence with versioned keys.
-
-Recommended keys:
-
-- `cogochi.player.v2`
-- `cogochi.roster.v2`
-- `cogochi.squad.v2`
-- `cogochi.lab.v2`
-- `cogochi.match-history.v2`
-
-Migration is required whenever schema versions change.
-
-## 15. Suggested File Map
-
-```text
-src/lib/aimon/
-  data/
-    baseModels.ts
-    agentArchetypes.ts
-    evalScenarios.ts
-  services/
-    modelProvider.ts
-    embeddingProvider.ts
-    memoryService.ts
-    contextAssembler.ts
-    evalService.ts
-    reflectionService.ts
-  stores/
-    playerStore.ts
-    rosterStore.ts
-    squadStore.ts
-    labStore.ts
-    matchStore.ts
-  engine/
-    evalEngine.ts
-    phaseMachine.ts
-  types.ts
-```
-
-## 16. MVP Build Order
-
-### Step 1. Types and storage boundaries
-
-Deliverables:
-
-- target domain types in `types.ts`
-- storage key versions
-- empty stores with typed interfaces
-
-Definition of done:
-
-- no more `teamDexIds` as product-facing truth
-
-### Step 2. Roster-first data model
-
-Deliverables:
-
-- `rosterStore`
-- starter agents
-- `squadStore`
-- `/roster`
-
-Definition of done:
-
-- the app can render owned agents that are not just species ids
-
-### Step 3. Agent detail and lab
-
-Deliverables:
-
-- `/agent/[id]`
-- prompt editor
-- data source toggles
-- retrieval policy editor
-- memory preview
-
-Definition of done:
-
-- one agent can be configured end to end
-
-### Step 4. Evaluation battle
-
-Deliverables:
-
-- `matchStore`
-- phase timeline
-- structured decisions
-- per-agent scoring
-
-Definition of done:
-
-- a full eval run can start and end using owned agents
-
-### Step 5. Reflection and progression
-
-Deliverables:
-
-- reward packet application
-- memory writeback
-- training queue seeding
-
-Definition of done:
-
-- one match changes the next match through memory and progression
-
-## 17. Acceptance Criteria
-
-The product is on track only if all of the following are true:
-
-1. The player remembers individual agents by role and behavior
-2. Data and memory choices change match outcomes
-3. The battle screen explains why a result happened
-4. Match results update the roster, not just a global XP number
-5. RAG affects future decisions through visible retrieval and writeback
+- the player remains the final decision-maker
+- the AI companion adds personality and signal without becoming autoplay
+- stores own UI and session state only
+- deterministic engines own all outcome rules
+- fixed BTC history remains the authoritative world substrate

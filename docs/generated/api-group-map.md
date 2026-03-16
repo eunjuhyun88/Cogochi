@@ -2,13 +2,6 @@
 
 ## API Group Overview
 
-### aimon
-
-| API | Source | File | Surfaces |
-| --- | --- | --- | --- |
-| `/api/aimon/decide` | discovered | `src/routes/api/aimon/decide/+server.ts` | none |
-| `/api/aimon/runtime` | discovered | `src/routes/api/aimon/runtime/+server.ts` | none |
-
 ### doctrine-terminal
 
 | API | Source | File | Surfaces |

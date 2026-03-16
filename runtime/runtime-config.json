@@ -79,8 +79,8 @@
       "tier": "M90"
     },
     {
-      "path": "progress.md",
-      "label": "Committed progress log",
+      "path": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
       "tier": "M30"
     }
   ]

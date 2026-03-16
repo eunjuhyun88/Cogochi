@@ -1,5 +1,5 @@
 {
-  "count": 78,
+  "count": 88,
   "entries": [
     {
       "id": "src-lib-services-memory-claude-md-1",
@@ -618,12 +618,92 @@
       "preview": "This refactor is complete only if: - the repo no longer reads like a Memento bootstrap - the memory layer is explicit in code and UI - runtime artifacts can be generated locally - autoresearch scores runtime readiness explicitly -"
     },
     {
-      "id": "progress-md-1",
-      "source": "progress.md",
-      "label": "Committed progress log",
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-1",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
       "tierHint": "M30",
-      "heading": "Overview",
-      "preview": "Original prompt: dinoCharactersVersion1.1.zip 에 들어 있는 dino pixel character assets를 Cogochi에 적용하고 싶다. 2026-03-12 - Confirmed the archive contents: four 24x24 sprite sheets (`doux`, `mort`, `tard`, `vita`), four matching GIFs, two Aseprite sources, a shadow sprite, and a changelog. -"
+      "heading": "Checkpoint",
+      "preview": "- Work ID: memento-autoresearch-refactor-v2 - Branch: codex/pixel-raising-spec - Head: no-commit - Surface: core - Status: in_progress - Updated At: 2026-03-15 03:18:17 +0900"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-2",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Objective",
+      "preview": "Apply Memento-style memory/runtime refactor and redesign autoresearch for judgment RPG goal"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-3",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Why Now",
+      "preview": "- none"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-4",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Scope",
+      "preview": "- none"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-5",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Owned Files",
+      "preview": "- none"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-6",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Canonical Docs Opened",
+      "preview": "- none"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-7",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Decisions Made",
+      "preview": "- none"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-8",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Rejected Alternatives",
+      "preview": "- none"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-9",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Open Questions",
+      "preview": "- none"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-10",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Next Actions",
+      "preview": "- none"
+    },
+    {
+      "id": "-agent-context-checkpoints-memento-autoresearch-refactor-v2-md-11",
+      "source": ".agent-context/checkpoints/memento-autoresearch-refactor-v2.md",
+      "label": "Latest checkpoint",
+      "tierHint": "M30",
+      "heading": "Exit Criteria",
+      "preview": "- none"
     }
   ]
 }

@@ -141,8 +141,8 @@ This generated manifest is the portable index for open-source discovery, local A
 ## Retrieval
 
 - Retrieval enabled: `yes`
-- Indexed sources: `77`
-- Indexed chunks: `1382`
+- Indexed sources: `81`
+- Indexed chunks: `1356`
 
 ## Telemetry
 

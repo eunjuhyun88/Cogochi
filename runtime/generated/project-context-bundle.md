@@ -52,9 +52,8 @@ The goal is not to read more files. The goal is to read the right files first.
 11. Agent runtime telemetry: `docs/AGENT_OBSERVABILITY.md`
 12. Open-source platform layers: `docs/CONTEXT_PLATFORM.md`, `docs/SANDBOX_POLICY.md`
 13. Parallel-agent ownership and handoff: `docs/MULTI_AGENT_COORDINATION.md`
-14. Work dependency queue and handoff routing: `docs/ORCHESTRATION.md`
-15. Git operating rules: `docs/GIT_WORKFLOW.md`
-16. Stable operating docs:
+14. Git operating rules: `docs/GIT_WORKFLOW.md`
+15. Stable operating docs:
    - `docs/DESIGN.md`
    - `docs/ENGINEERING.md`
    - `docs/PLANS.md`
@@ -80,7 +79,6 @@ npm run safe:status
 - `npm run ctx:save`
 - `npm run ctx:checkpoint`
 - `npm run ctx:compact`
-- `npm run ctx:resume`
 - `npm run ctx:check -- --strict`
 - `npm run ctx:restore -- --mode brief`
 - `npm run ctx:restore -- --mode handoff`
@@ -92,15 +90,6 @@ npm run safe:status
 - `npm run coord:list`
 - `npm run coord:check`
 - `npm run coord:release`
-
-## 3.1.1) Orchestration Commands
-
-- `npm run orch:work`
-- `npm run orch:list`
-- `npm run orch:list -- --json`
-- `npm run orch:check`
-- `npm run pilot:start`
-- `npm run pilot:sync`
 
 ## 3.2) Git Commands
 
@@ -141,14 +130,6 @@ npm run safe:status
    - fast resume surface
 4. `handoff`
    - fuller transfer artifact for the next session or agent
-5. `resume`
-   - active-work bundle resolved from claim/work pointers plus brief/handoff/state
-6. `work item`
-   - dependency-aware queue record linked to a work ID
-7. `orchestration board`
-   - runtime-ready summary of ready, active, blocked, and handoff work
-8. `autopilot session`
-   - optional start/sync wrapper that keeps resume-first flows structured
 
 Paths:
 
@@ -179,7 +160,6 @@ Project-specific truth for this kit lives in:
 - `docs/TOOL_DESIGN.md`
 - `docs/AGENT_OBSERVABILITY.md`
 - `docs/MULTI_AGENT_COORDINATION.md`
-- `docs/ORCHESTRATION.md`
 - `docs/GIT_WORKFLOW.md`
 - `docs/SANDBOX_POLICY.md`
 - `agents/*.json`
@@ -2202,22 +2182,6 @@ The player should leave a failed run with one clear care action, not just a lowe
 6. The player runs the next battle and sees the companion express the trained tendency on the chart stage.
 7. The result screen writes back a lesson and suggests one next raising action.
 
-## Home Hub Continuity
-
-`raising` should not live only in `/roster` or `/agent/[id]`.
-The home route `/` should preview the same raising loop through a featured center-stage companion.
-
-That means the player should be able to do the following without leaving the home hub:
-
-- read headline raising state
-- perform one care or customization action
-- preview one visible change
-- move directly into deploy or deeper raising screens
-
-The detailed layout contract for that home composition lives in:
-
-- `docs/design-docs/COGOCHI_trainer_hub_character_layout_20260315.md`
-
 ## Key Screens
 
 ### `/roster`
@@ -2381,7 +2345,6 @@ lock the party for the next battle
 - `docs/VISUAL_WORLD_DESIGN.md`
 - `docs/design-docs/pixel-agent-raising-direction.md`
 - `docs/design-docs/judgment-tamagotchi-loop.md`
-- `docs/design-docs/COGOCHI_trainer_hub_character_layout_20260315.md`
 
 ## Field surface
 Source: `docs/product-specs/field.md`
@@ -2506,8 +2469,6 @@ read the last lesson and next care action
 - The field shows the next best destination without loud quest UI.
 - The field consumes runtime distill output and turns it into a visible next-node cue on the HUD.
 - The field consumes runtime distill output and turns it into a visible next-node beacon in world-space.
-- If the player returns from battle with a `ProofArtifact`, the field uses that artifact as the first source of truth for return framing instead of rebuilding the result from scattered query params.
-- canonical post-verdict return from battle should usually carry `artifact` as the main transport token and only fall back to raw `return/verdict/frame/gate` fields for older links or non-artifact entry paths.
 
 ## Should Have
 
@@ -2562,8 +2523,6 @@ read the last lesson and next care action
   - next training edits and care actions
 - `battleStore`
   - current clash entry and result return
-- `proofStore`
-  - canonical proof/battle result packet used for field return framing
 - future likely store:
   - `fieldStore`
 
@@ -2620,15 +2579,12 @@ After one clash, the player should be able to say:
 - one obvious clash objective
 - clear field or lab entry reason
 - one entry brief tied to gate pressure or care-state repair
-- handed-off doctrine session remains visible when battle came from `/proof`
 - visible chart terrain and active proof frame
 - readable support versus objection explanation
 - keep, quarantine, or revert before return
 - writeback into trust, mutation history, proven frame, and memory
-- one canonical `ProofArtifact` written after verdict so later surfaces do not reconstruct the result from scattered query state
 - direct handoff into `/journal` after verdict so the return loop does not collapse into a raw field jump
 - runtime-derived focus checks may appear in the entry brief, but only as advisory guidance and never as battle authority
-- when a verdict has already produced a `ProofArtifact`, post-battle navigation should prefer `artifact + identity context` instead of duplicating the full return summary in query state
 
 ## Context Contracts
 
@@ -2640,7 +2596,6 @@ After one clash, the player should be able to say:
 
 - `battleStore`
 - `rosterStore`
-- `proofStore`
 
 ## Deep Links
 
@@ -2683,12 +2638,9 @@ After opening `/journal`, the player should immediately know:
 - latest mutation and frame surfaced first
 - current care action above older history
 - direct links back to lab, field, and battle
-- handed-off doctrine session remains readable after battle return
-- latest `ProofArtifact` is the first source of truth for mutation/result context; route query is fallback only
 - visible trust and body-change story
 - runtime distill guidance surfaced as an advisory rail
 - memory index tiers translated into one obvious next repair or proof step
-- canonical battle return should normally arrive with `artifact` plus lightweight identity context, not a second duplicated outcome summary
 
 ## Context Contracts
 
@@ -2700,7 +2652,6 @@ After opening `/journal`, the player should immediately know:
 
 - `rosterStore`
 - `labStore`
-- `proofStore`
 
 ## Deep Links
 

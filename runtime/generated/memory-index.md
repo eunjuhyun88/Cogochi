@@ -1,6 +1,6 @@
 # Cogochi Runtime Memory Index
 
-Entries: 78
+Entries: 88
 
 - `M0` Memory guardrails -> Memory Service Guardrails (`src/lib/services/memory/CLAUDE.md`)
   - This directory is the memory and writeback boundary.
@@ -156,6 +156,26 @@ Entries: 78
   - Following the `nanochat` round-1 lesson: - each autoresearch round should stay small and coherent - keep/reject should happen after one bounded experiment, not a sweeping rewrite - accepted rounds should improve a reusable rail such as memory writeback, runtime distill,
 - `M90` Current runtime refactor plan -> Exit Criteria (`docs/exec-plans/active/COGOCHI_memento_autoresearch_refactor_20260315.md`)
   - This refactor is complete only if: - the repo no longer reads like a Memento bootstrap - the memory layer is explicit in code and UI - runtime artifacts can be generated locally - autoresearch scores runtime readiness explicitly -
-- `M30` Committed progress log -> Overview (`progress.md`)
-  - Original prompt: dinoCharactersVersion1.1.zip 에 들어 있는 dino pixel character assets를 Cogochi에 적용하고 싶다. 2026-03-12 - Confirmed the archive contents: four 24x24 sprite sheets (`doux`, `mort`, `tard`, `vita`), four matching GIFs, two Aseprite sources, a shadow sprite, and a changelog. -
+- `M30` Latest checkpoint -> Checkpoint (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - Work ID: memento-autoresearch-refactor-v2 - Branch: codex/pixel-raising-spec - Head: no-commit - Surface: core - Status: in_progress - Updated At: 2026-03-15 03:18:17 +0900
+- `M30` Latest checkpoint -> Objective (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - Apply Memento-style memory/runtime refactor and redesign autoresearch for judgment RPG goal
+- `M30` Latest checkpoint -> Why Now (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - none
+- `M30` Latest checkpoint -> Scope (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - none
+- `M30` Latest checkpoint -> Owned Files (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - none
+- `M30` Latest checkpoint -> Canonical Docs Opened (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - none
+- `M30` Latest checkpoint -> Decisions Made (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - none
+- `M30` Latest checkpoint -> Rejected Alternatives (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - none
+- `M30` Latest checkpoint -> Open Questions (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - none
+- `M30` Latest checkpoint -> Next Actions (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - none
+- `M30` Latest checkpoint -> Exit Criteria (`.agent-context/checkpoints/memento-autoresearch-refactor-v2.md`)
+  - - none
 

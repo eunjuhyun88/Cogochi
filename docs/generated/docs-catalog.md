@@ -12,8 +12,6 @@
 | `docs/AGENT_OBSERVABILITY.md` | `canonical-entry` | `canonical` | Canonical runtime telemetry and value-evidence doc. |
 | `docs/AGENT_SYSTEM_DESIGN.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/AGENT_WATCH_LOG.md` | `ops-log` | `historical` | Operational evidence log. |
-| `docs/AI_IMPLEMENTATION_CONTRACTS.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
-| `docs/AI_RUNTIME_TRAINING_SPEC.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/ARCHITECTURE.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/BATTLEFIELD_DESIGN.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/CHART_BATTLEFIELD_RULEBOOK_v1.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
@@ -23,18 +21,13 @@
 | `docs/CONTEXT_PLATFORM.md` | `canonical-entry` | `canonical` | Canonical platform and registry doc. |
 | `docs/DESIGN.md` | `canonical-entry` | `canonical` | Canonical design router. |
 | `docs/ENGINEERING.md` | `canonical-entry` | `canonical` | Canonical engineering/state authority router. |
-| `docs/GAME_DESIGN.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/GIT_WORKFLOW.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/HARNESS.md` | `canonical-entry` | `canonical` | Canonical harness router. |
-| `docs/INDEX.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/MASTER_GAME_SPEC.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/MULTI_AGENT_COORDINATION.md` | `canonical-entry` | `canonical` | Canonical multi-agent ownership and conflict-control doc. |
 | `docs/ORCHESTRATION.md` | `canonical-entry` | `canonical` | Canonical workboard and dependency-routing doc. |
 | `docs/PLANS.md` | `canonical-entry` | `canonical` | Canonical plans router. |
-| `docs/PRODUCT_BLUEPRINT.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/PRODUCT_SENSE.md` | `canonical-entry` | `canonical` | Canonical product heuristics router. |
-| `docs/PROGRESSION_MODEL.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
-| `docs/PROJECT_CONTEXT.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/QUALITY_SCORE.md` | `canonical-entry` | `canonical` | Canonical quality scorecard. |
 | `docs/README.md` | `canonical-entry` | `canonical` | Task-level docs router. |
 | `docs/RELIABILITY.md` | `canonical-entry` | `canonical` | Canonical reliability router. |
@@ -43,9 +36,11 @@
 | `docs/SYSTEM_INTENT.md` | `canonical-entry` | `canonical` | Canonical system intent and invariants. |
 | `docs/TECH_ARCHITECTURE.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/TOOL_DESIGN.md` | `canonical-entry` | `canonical` | Canonical tool contract design doc. |
-| `docs/UIUX_SYSTEM.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/VISUAL_WORLD_DESIGN.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/archive/README.md` | `archive-router` | `tracked-only` | Archive interpretation policy. |
+| `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md` | `design-doc` | `canonical` | Structured design document. |
+| `docs/design-docs/COGOCHI_chart_world_jrpg_reset_20260316.md` | `design-doc` | `canonical` | Structured design document. |
+| `docs/design-docs/COGOCHI_gameplay_first_loop_redesign_20260316.md` | `design-doc` | `canonical` | Structured design document. |
 | `docs/design-docs/COGOCHI_hybrid_game_market_20260315.md` | `design-doc` | `canonical` | Structured design document. |
 | `docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md` | `design-doc` | `canonical` | Structured design document. |
 | `docs/design-docs/COGOCHI_pokemon_grade_game_target_20260313.md` | `design-doc` | `canonical` | Structured design document. |
@@ -60,10 +55,10 @@
 | `docs/design-docs/index.md` | `design-doc` | `canonical` | Structured design document. |
 | `docs/design-docs/judgment-tamagotchi-loop.md` | `design-doc` | `canonical` | Structured design document. |
 | `docs/design-docs/pixel-agent-raising-direction.md` | `design-doc` | `canonical` | Structured design document. |
-| `docs/exec-plans/README.md` | `plans-support` | `canonical` | Planning support doc. |
 | `docs/exec-plans/active/COGOCHI_autoresearch_bottlenecks_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_autoresearch_org_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
+| `docs/exec-plans/active/COGOCHI_chart_world_reset_execution_20260316.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_founder_goal_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_judgment_tamagotchi_loop_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
@@ -73,11 +68,6 @@
 | `docs/exec-plans/active/COGOCHI_terminal_doctrine_prd_20260315.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/README.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/context-system-rollout.md` | `active-plan` | `canonical` | Active execution plan. |
-| `docs/exec-plans/completed/2026-03-07-context-engineering-foundation.md` | `completed-plan` | `historical` | Completed execution plan. |
-| `docs/exec-plans/completed/2026-03-07-dataset-builder.md` | `completed-plan` | `historical` | Completed execution plan. |
-| `docs/exec-plans/completed/2026-03-07-eval-reflection-services.md` | `completed-plan` | `historical` | Completed execution plan. |
-| `docs/exec-plans/completed/2026-03-07-repo-governance-hardening.md` | `completed-plan` | `historical` | Completed execution plan. |
-| `docs/exec-plans/completed/2026-03-07-training-orchestrator.md` | `completed-plan` | `historical` | Completed execution plan. |
 | `docs/exec-plans/completed/README.md` | `completed-plan` | `historical` | Completed execution plan. |
 | `docs/exec-plans/index.md` | `plans-support` | `canonical` | Planning support doc. |
 | `docs/exec-plans/tech-debt-tracker.md` | `plans-support` | `canonical` | Planning support doc. |

@@ -6,6 +6,7 @@
 - highlighted active planning docs:
   - `docs/exec-plans/active/COGOCHI_proof_validation_execution_20260315.md`
   - `docs/exec-plans/active/COGOCHI_terminal_doctrine_prd_20260315.md`
+  - `docs/exec-plans/active/COGOCHI_chart_world_reset_execution_20260316.md`
 
 ## Completed
 

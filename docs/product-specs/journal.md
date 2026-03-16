@@ -1,56 +1,44 @@
 # Surface Spec: journal
 
-- Status: active
-- Canonical route entry: `/journal`
+- Status: deprecated target
+- Canonical route entry: absorbed into `/camp` and world HUD
 - Surface ID: `journal`
 
 ## Purpose
 
-`journal` is the return-pressure surface that turns a finished proof run into one obvious next action.
+In the chart-world reset, the old standalone `journal` route is no longer a primary surface.
 
-It must let the player:
+Return-state communication should happen through:
 
-- see the latest accepted, reverted, or quarantined mutation
-- see which historical frame shaped the current body
-- understand current care pressure
-- choose the next repair, spar, or proof step
+- camp presentation
+- world HUD
+- companion profile history
+- passport history when needed
 
-If `journal` feels like a dump of logs instead of a compelling return point, it has failed.
+If the player must leave the main world loop to read a detached report screen after every run, the new direction has failed.
 
-## Core Outcome
+## One-Line Definition
 
-After opening `/journal`, the player should immediately know:
-
-- what just happened
-- what changed on the creature
-- what to do next
+`journal` is no longer a standalone route in the target IA; its information is redistributed into camp and history surfaces.
 
 ## Must Have
 
-- latest mutation and frame surfaced first
-- current care action above older history
-- direct links back to lab, field, and battle
-- handed-off doctrine session remains readable after battle return
-- latest `ProofArtifact` is the first source of truth for mutation/result context; route query is fallback only
-- visible trust and body-change story
-- runtime distill guidance surfaced as an advisory rail
-- memory index tiers translated into one obvious next repair or proof step
-- canonical battle return should normally arrive with `artifact` plus lightweight identity context, not a second duplicated outcome summary
+- recent result can be understood from camp
+- current care pressure can be understood from camp
+- long-term history can still be reached through companion profile or passport
 
 ## Context Contracts
 
-## Routes
+### Routes
 
-- `/journal`
+- no primary player route in the target IA
 
-## Stores
+### Stores
 
-- `rosterStore`
-- `labStore`
-- `proofStore`
+- `cogochiStore`
+- `passportStore`
 
 ## Deep Links
 
-- `docs/product-specs/evolution.md`
-- `docs/design-docs/judgment-tamagotchi-loop.md`
-- `docs/exec-plans/active/COGOCHI_pokemon_grade_autoresearch_20260313.md`
+- `docs/MASTER_GAME_SPEC.md`
+- `docs/design-docs/COGOCHI_chart_world_jrpg_reset_20260316.md`

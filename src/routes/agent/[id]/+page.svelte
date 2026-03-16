@@ -2,7 +2,7 @@
   import AgentSpriteCard from '$components/shared/AgentSpriteCard.svelte';
   import ComparePanel from '$components/shared/ComparePanel.svelte';
   import PageShell from '$components/shared/PageShell.svelte';
-  import { careStateLabels, growthStageLabels, memorySourceLabels, memoryTierLabels } from '$lib/data/seed';
+  import { careStateLabels, growthStageLabels, homeStyleLabels, memorySourceLabels, memoryTierLabels } from '$lib/data/seed';
   import { compareLoadouts, evaluateAgentLoadout } from '$lib/engine/eval-engine';
   import { buildMemoryTierSummary } from '$lib/services/memory/writeback';
   import { labStore } from '$lib/stores/labStore';
@@ -43,6 +43,7 @@
               <span class="chip">{agent.loadout.confidenceStyle.toLowerCase()}</span>
               <span class="chip">{growthStageLabels[agent.growthStage]}</span>
               <span class="chip">{careStateLabels[agent.careState]}</span>
+              <span class="chip">{homeStyleLabels[agent.homeStyle]}</span>
             </div>
             <div class="metric-grid">
               {#if committedReport}
@@ -78,6 +79,11 @@
             <div class="metric-card">
               <small>Next care action</small>
               <strong>{agent.nextCareAction}</strong>
+            </div>
+            <div class="metric-card">
+              <small>Saved presence</small>
+              <strong>{homeStyleLabels[agent.homeStyle]}</strong>
+              <p>{agent.recentCareSummary}</p>
             </div>
             <div class="chip-row">
               <a class="link-button" href="/proof">Open proof</a>

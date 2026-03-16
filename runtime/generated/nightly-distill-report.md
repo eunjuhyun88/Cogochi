@@ -16,7 +16,12 @@ Goal: chart-native judgment RPG with owned-agent memory, mutation proof, and opt
 - Memory guardrails: If You Change This Layer
 
 ## M30
-- Committed progress log: Overview
+- Latest checkpoint: Checkpoint
+- Latest checkpoint: Objective
+- Latest checkpoint: Why Now
+- Latest checkpoint: Scope
+- Latest checkpoint: Owned Files
+- Latest checkpoint: Canonical Docs Opened
 
 ## M90
 - Evolution reference: Atlas Judgment Evolution

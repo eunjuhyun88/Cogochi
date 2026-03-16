@@ -1,6 +1,6 @@
 import { evalScenarios } from '$lib/data/seed';
 import { buildScenarioCandles, getHistoricalChartFrame, type ChartCandle } from '$lib/engine/chart-frame-model';
-import { battleCommandDefinitions } from '$lib/engine/battle-session';
+import { battleCommandDefinitions, recommendBattleCommand } from '$lib/engine/battle-session';
 import { evaluateAgentLoadout } from '$lib/engine/eval-engine';
 import type {
   AgentRole,
@@ -73,6 +73,28 @@ export interface BattleCommandCard {
   hotkey: string;
   selected: boolean;
   lastUsed: boolean;
+  recommended: boolean;
+}
+
+export interface BattleEncounterBeat {
+  id: BattlePhaseId;
+  label: string;
+  detail: string;
+  state: 'complete' | 'active' | 'queued';
+}
+
+export interface BattleEncounterContract {
+  turnLabel: string;
+  phaseLabel: string;
+  question: string;
+  successLine: string;
+  failureLine: string;
+  stakesLine: string;
+  coachLine: string;
+  recommendedCommandId: BattleCommandId;
+  recommendedCommandLabel: string;
+  recommendedReason: string;
+  beats: BattleEncounterBeat[];
 }
 
 export interface BattleViewModel {
@@ -95,6 +117,7 @@ export interface BattleViewModel {
   companions: BattleCompanion[];
   callouts: BattleCallout[];
   commandCards: BattleCommandCard[];
+  encounter: BattleEncounterContract;
   activeSlice: {
     start: number;
     end: number;
@@ -324,7 +347,180 @@ function buildCallouts(messages: BattleMessage[], companions: BattleCompanion[],
   }));
 }
 
-function buildCommandCards(session: BattleSession): BattleCommandCard[] {
+const encounterBeatBlueprints: Record<BattlePhaseId, Pick<BattleEncounterBeat, 'label' | 'detail'>> = {
+  APPROACH: {
+    label: 'Read Lane',
+    detail: 'Confirm the live path.',
+  },
+  LOCK: {
+    label: 'Hold Floor',
+    detail: 'Protect the thesis line.',
+  },
+  COMMIT: {
+    label: 'Break Gate',
+    detail: 'Turn the read into damage.',
+  },
+  RESOLVE: {
+    label: 'Carry Verdict',
+    detail: 'Decide what survives.',
+  },
+};
+
+function buildEncounterBeats(session: BattleSession): BattleEncounterBeat[] {
+  const order: BattlePhaseId[] = ['APPROACH', 'LOCK', 'COMMIT', 'RESOLVE'];
+  const activeIndex = order.indexOf(session.phase);
+
+  return order.map((id, index) => ({
+    id,
+    ...encounterBeatBlueprints[id],
+    state: index < activeIndex ? 'complete' : index === activeIndex ? 'active' : 'queued',
+  }));
+}
+
+function buildRecommendationReason(
+  commandId: BattleCommandId,
+  session: BattleSession,
+  report: EvalReport,
+  scenario: EvalScenario,
+): string {
+  if (commandId === 'RISK_VETO') {
+    return session.trapRisk >= 64 || session.supportIntegrity <= 42
+      ? 'Trap pressure is live and the squad needs footing before it can commit.'
+      : 'The floor is too unstable to cash out aggression right now.';
+  }
+  if (commandId === 'MEMORY_PULSE') {
+    return session.revealLevel === 0
+      ? `The squad still needs one cleaner replay before it can trust this ${scenario.targetAction.toLowerCase()} read.`
+      : `Retrieval is still a weak link and one more replay can steady ${report.weakLink.toLowerCase()}.`;
+  }
+  if (commandId === 'RETARGET') {
+    return session.structureIntegrity <= 48 || session.phase === 'COMMIT'
+      ? 'The gate is vulnerable now, so redirecting pressure into the live objective is the clean finish.'
+      : 'The read is already good enough to stop drifting and hit the actual objective.';
+  }
+  return session.phase === 'APPROACH'
+    ? 'Early pressure is useful once the lane is readable and the squad can push without drifting.'
+    : `Your accuracy and coordination are strong enough to drive a cleaner ${scenario.targetAction.toLowerCase()} push.`;
+}
+
+function buildEncounterContract(
+  session: BattleSession,
+  report: EvalReport,
+  scenario: EvalScenario,
+  recommendedCommandId: BattleCommandId,
+): BattleEncounterContract {
+  const recommendedCommandLabel = battleCommandDefinitions.find((item) => item.id === recommendedCommandId)?.label ?? recommendedCommandId;
+  const beats = buildEncounterBeats(session);
+  const phaseDetail = encounterBeatBlueprints[session.phase];
+  const turnLabel =
+    session.outcome === 'ONGOING'
+      ? `Turn ${Math.min(session.turn, session.turnLimit)} of ${session.turnLimit}`
+      : session.outcome === 'WIN'
+        ? 'Clash won'
+        : 'Clash lost';
+
+  if (session.outcome === 'WIN') {
+    return {
+      turnLabel,
+      phaseLabel: 'Carry the lesson home',
+      question: 'What survives this proof before the squad leaves the field?',
+      successLine: 'Lock the clean read into memory and preserve the mutation worth carrying.',
+      failureLine: 'If you leave without a verdict, even a win collapses back into noise.',
+      stakesLine: 'A win only matters if you decide what the squad keeps.',
+      coachLine: 'Choose what survives this proof before returning to the field.',
+      recommendedCommandId,
+      recommendedCommandLabel,
+      recommendedReason: 'The clash is already decided. The next real action is the trainer verdict below.',
+      beats,
+    };
+  }
+
+  if (session.outcome === 'LOSS') {
+    return {
+      turnLabel,
+      phaseLabel: 'Stabilize the return',
+      question: 'What has to be repaired before the next gate?',
+      successLine: 'Name the bad line clearly and quarantine or revert before re-entering.',
+      failureLine: 'If you carry panic forward, the next run starts compromised before it begins.',
+      stakesLine: 'A bad proof still has value if it becomes care instead of denial.',
+      coachLine: 'Do not leave this loss as mood. Turn it into a concrete care decision.',
+      recommendedCommandId,
+      recommendedCommandLabel,
+      recommendedReason: 'The clash is over. The remaining play is to convert failure into a clean verdict.',
+      beats,
+    };
+  }
+
+  if (session.phase === 'APPROACH') {
+    return {
+      turnLabel,
+      phaseLabel: 'Read the lane',
+      question: scenario.targetAction === 'LONG' ? 'Is the floor real enough to climb?' : 'Is the ceiling weak enough to short?',
+      successLine:
+        scenario.targetAction === 'LONG'
+          ? 'Leave this turn with lower trap risk and a cleaner path upward.'
+          : 'Leave this turn with lower rebound risk and a cleaner fade setup.',
+      failureLine:
+        scenario.targetAction === 'LONG'
+          ? 'If you misread the floor, the squad climbs directly into a trap.'
+          : 'If you misread the ceiling, the squad shorts straight into a rebound.',
+      stakesLine: 'This turn is for certainty, not heroics.',
+      coachLine: `Get one clear read on ${report.weakLink.toLowerCase()} before you try to finish the clash.`,
+      recommendedCommandId,
+      recommendedCommandLabel,
+      recommendedReason: buildRecommendationReason(recommendedCommandId, session, report, scenario),
+      beats,
+    };
+  }
+
+  if (session.phase === 'LOCK') {
+    return {
+      turnLabel,
+      phaseLabel: 'Hold the floor',
+      question: 'What has to stay stable before the squad commits?',
+      successLine: 'Protect support, cancel the bad line, and keep the thesis playable.',
+      failureLine: 'If footing breaks now, the commit turn becomes panic instead of proof.',
+      stakesLine: 'You are defending the structure that makes this thesis valid.',
+      coachLine: session.supportIntegrity <= 46 ? 'Footing is thin. Protect it before you ask for damage.' : phaseDetail.detail,
+      recommendedCommandId,
+      recommendedCommandLabel,
+      recommendedReason: buildRecommendationReason(recommendedCommandId, session, report, scenario),
+      beats,
+    };
+  }
+
+  if (session.phase === 'COMMIT') {
+    return {
+      turnLabel,
+      phaseLabel: scenario.targetAction === 'LONG' ? 'Break the gate' : 'Force the drop',
+      question: scenario.targetAction === 'LONG' ? 'Is this the turn to break through?' : 'Is this the turn to force the collapse?',
+      successLine: 'Convert the read into objective damage before rival pressure resets.',
+      failureLine: 'If you drift now, the rival carries enough pressure to deny the finish.',
+      stakesLine: 'This is where judgment turns into consequence.',
+      coachLine: session.structureIntegrity <= 40 ? 'One clean push can end the clash.' : 'Commit only if the lane is already earned.',
+      recommendedCommandId,
+      recommendedCommandLabel,
+      recommendedReason: buildRecommendationReason(recommendedCommandId, session, report, scenario),
+      beats,
+    };
+  }
+
+  return {
+    turnLabel,
+    phaseLabel: 'Carry the verdict',
+    question: 'Did your squad leave the slice owning more pressure than resistance?',
+    successLine: 'Exit with control, then decide what the squad keeps from this proof.',
+    failureLine: 'If the rival leaves stronger, the thesis fails even if the chart looked close.',
+    stakesLine: 'The final exchange decides whether this run becomes proof or noise.',
+    coachLine: 'Close the clash cleanly, then record the lesson.',
+    recommendedCommandId,
+    recommendedCommandLabel,
+    recommendedReason: buildRecommendationReason(recommendedCommandId, session, report, scenario),
+    beats,
+  };
+}
+
+function buildCommandCards(session: BattleSession, recommendedCommandId: BattleCommandId): BattleCommandCard[] {
   return battleCommandDefinitions.map((definition) => ({
     id: definition.id,
     label: definition.label,
@@ -333,6 +529,7 @@ function buildCommandCards(session: BattleSession): BattleCommandCard[] {
     hotkey: definition.hotkey,
     selected: definition.id === session.selectedCommandId,
     lastUsed: definition.id === session.lastCommandId,
+    recommended: definition.id === recommendedCommandId,
   }));
 }
 
@@ -377,6 +574,7 @@ function buildZones(scenario: EvalScenario, session: BattleSession, priceRange: 
 export function buildBattleView(selectedAgent: OwnedAgent, roster: OwnedAgent[], session: BattleSession): BattleViewModel {
   const scenario = findScenario(session.scenarioId);
   const report = evaluateAgentLoadout(selectedAgent, selectedAgent.loadout, session.scenarioId);
+  const recommendedCommandId = recommendBattleCommand(session, selectedAgent);
   const squad = resolveSquad(selectedAgent, roster);
   const stageFrame = buildStageFrame(session, scenario);
   const candles = stageFrame.mode === 'historical'
@@ -407,7 +605,8 @@ export function buildBattleView(selectedAgent: OwnedAgent, roster: OwnedAgent[],
     messages,
     companions,
     callouts,
-    commandCards: buildCommandCards(session),
+    commandCards: buildCommandCards(session, recommendedCommandId),
+    encounter: buildEncounterContract(session, report, scenario, recommendedCommandId),
     activeSlice,
     priceRange: {
       min: minPrice,

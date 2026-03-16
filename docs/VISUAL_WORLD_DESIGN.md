@@ -1,274 +1,244 @@
 # Visual World Design
 
 Status: canonical  
-Scope: visual feel, camera, movement, environment density, coordinate readability, and UI tone for the chart world
+Last updated: 2026-03-16  
+Scope: world readability, zoom presentation, HUD tone, character motion, and boss-cut-in feel
 
-## Purpose
+## 1. Purpose
 
-Define how Cogochi should look and read on screen without changing the technical stack or the product thesis.
+Define how the chart-world version of Cogochi should look on screen.
 
-This document exists because battlefield rules alone are not enough.
-The player must be able to read the screen as both a chart and a game world.
+This document exists because the product is no longer a set of detached surfaces.
+The player must feel like they are inside Bitcoin history.
 
-It defines:
-
-- rendering priorities
-- camera behavior
-- movement readability
-- world density
-- UI layering
-- the balance between chart legibility and game-world presence
-
-## Non-Negotiable Constraint
-
-Cogochi remains:
-
-- SvelteKit
-- TypeScript
-- Canvas 2D
-- chart-first battlefield
-
-This document changes feel and readability, not engine choice.
-
-## Core Feel Goal
+## 2. Core Feel Goal
 
 The player should feel:
 
-- "I am walking through a living market landscape"
-- "my 3 agents are companions, not UI widgets"
-- "the chart is history-rich terrain, not a black trading screen"
-- "combat is a punctuating event inside an exploration and training loop"
+- `I am walking through a mythologized market landscape`
+- `my Cogochi is a real travel companion`
+- `the chart remains legible while still feeling like a world`
+- `combat is a direct reading of the next candle, not a dashboard panel`
 
 The player should not feel:
 
-- cyber terminal
-- esports HUD
-- sterile finance dashboard
-- constant combat stress
+- SaaS product UI
+- finance terminal
+- esports overlay
+- abstract tactical board detached from BTC history
 
-## Experience Split
+## 3. Presentation Modes
 
-The game should alternate between two visual modes.
+### 3.1 Macro World Map
 
-### Explore Mode
+Mood:
 
-Primary mood:
+- adventurous
+- geographic
+- legible at a glance
 
-- calm
-- legible
-- inviting
-- world-first
+Read:
 
-Rules:
+- one silhouette line across the whole screen
+- regions rendered as mountain chains, valleys, ruined zones, or gates
+- clear current location marker
+- locked and cleared regions visible from afar
 
-- full chart remains visible as terrain
-- UI stays quiet
-- movement is soft and readable
-- companions idle, drift, and react with personality
-- environment details carry memory of old positions and market events
+### 3.2 Zone Traverse
 
-### Clash Mode
+Mood:
 
-Primary mood:
+- exploratory
+- focused
+- lightly dangerous
+
+Read:
+
+- candles become structures and stepping terrain
+- landmarks appear as real props in the chart world
+- the screen is mostly world, not chrome
+
+### 3.3 Micro Combat
+
+Mood:
 
 - tense
-- precise
-- high-contrast
-- short-duration
-
-Rules:
-
-- active battle slice becomes emphasized
-- tactical overlay may appear temporarily
-- effect density rises only around the contested zone
-- after the clash, the screen must relax back into Explore Mode
-
-## Art Direction
-
-### Palette
-
-Base palette should be warm and earthy.
-
-Preferred families:
-
-- slate blue for deep background
-- desaturated teal for market flow
-- olive and sage for safe regions
-- ochre and amber for opportunity
-- brick and wine for danger
-- cream and sand for panels and highlights
-
-Avoid:
-
-- neon cyan as default identity
-- saturated red-green trading palette across the whole screen
-- pure black backgrounds
-- scanline and terminal effects as constant overlays
-
-### Chart As World
-
-The chart should read like terrain.
-
-Mapping:
-
-- candles become ridges, steps, walls, or soft slopes
-- moving averages become old roads, wind paths, or magical current lines
-- support becomes grounded platforms
-- resistance becomes cliff walls or barricades
-- liquidity zones become hazard flora, trap pits, or unstable crystal fields
-- old entries become flags, scars, shrines, or faded markers
-
-The player must recognize the underlying chart, but the screen should still feel like a world.
-
-## Rendering Spec
-
-### Internal Resolution
-
-Recommended internal render target:
-
-- `320x180` for strict retro look
-- `480x270` for slightly richer readability
-
-Use integer upscaling only.
-
-### Pixel Rules
-
-- all sprite work should align to a fixed pixel grid
-- no subpixel scaling on character sprites
-- camera smoothing is allowed, but sprite sampling must remain crisp
-- background terrain can use limited subpixel motion only if it does not blur the pixel read
-
-### Sprite Size
-
-- player: `16x24` or `16x32`
-- companions: `12x16` or `16x16`
-- major structures: multiples of `16`
-
-## Camera Spec
-
-Camera should feel gentle, not tactical by default.
-
-Rules:
-
-- soft follow on player
-- small look-ahead in move direction
-- slight vertical easing when traversing chart slopes
-- active clash zoom-in is allowed
-- hard snap only on major commitment moments
-
-Avoid:
-
-- permanent full-screen shake
-- aggressive zoom pulsing
-- fighting-game style snap cuts in exploration
-
-## Movement Spec
-
-Movement must feel alive before it feels tactical.
-
-Required states:
-
-- idle
-- walk
-- run
-- interact
-- think
-- commit-long
-- commit-short
-- hit
-- recover
-
-Required feel:
-
-- gentle acceleration and deceleration
-- idle bob or breathing
-- visible foot planting on chart terrain
-- small landing compression when dropping to lower price bands
-- companion follow delay so the team feels organic
-
-## Companion Feel Spec
-
-The 3 trainable agents are companions first, roles second.
-
-They must feel:
-
-- loyal
+- immediate
 - readable
-- trainable
-- emotionally distinct
 
-They must not feel:
+Read:
 
-- floating badges
-- interchangeable drones
-- permanent combat summons
+- the current candle terrain dominates the center
+- command dock is fixed and clear
+- one Cogochi bark line explains the current tension
 
-Behavior in Explore Mode:
+### 3.4 Boss Cut-In
 
-- Scout roams slightly ahead, then returns
-- Analyst pauses, points, or emits reading cues
-- Risk lingers nearer to the player and warns around hazard zones
+Mood:
 
-Behavior in Clash Mode:
+- ceremonial
+- dramatic
+- historical
 
-- each companion briefly breaks formation to express role contribution
-- they return to formation after the action resolves
+Read:
 
-## Environment Density Spec
+- hero panel versus boss panel
+- chart background remains visible
+- boss identity is unmistakable
 
-The current prototypes are too sparse and too HUD-dominant to feel cozy.
+## 4. Camera Rules
 
-Every active map slice should contain some mix of:
+### Macro
 
-- path markers
-- old trade flags
-- tiny plants or ambient particles
-- zone-specific props
-- ruins or remnants of prior battles
-- visual traces of support and resistance history
+- wide framing
+- current marker visible without clutter
 
-The battlefield should feel inhabited by memory.
+### Zone
 
-## UI Tone Spec
+- soft follow
+- readable terrain ahead
+- gentle anticipation in move direction
 
-UI should support the world, not dominate it.
+### Micro
+
+- slightly tighter follow
+- enough look-ahead to read the next revealed candle
+
+### Boss
+
+- staged presentation
+- deliberate focus shifts
+- no over-shaky camera
+
+## 5. Character Rules
+
+The main Cogochi should read as:
+
+- cute
+- vulnerable
+- persistent
+- capable of growth
+
+Companions or support sprites should never overpower the main avatar.
+The player's eyes should always know which body is theirs.
+
+## 6. Terrain Translation Rules
+
+### Macro
+
+- line-chart slopes become landmass silhouette
+- peaks feel like mountains
+- crashes feel like ravines or scarred cliffs
+
+### Meso
+
+- candle clusters become architecture
+- major moves become towers, ridges, broken stairways, or walls
+
+### Micro
+
+- each candle body becomes standable ground or a pressure column
+- long wicks feel unstable
+- support lines feel like shelves or bridges
+- resistance lines feel like walls or gates
+
+## 7. HUD Rules
+
+The screen should carry a simple HUD:
+
+- Cogochi name
+- level
+- HP
+- gold
+- current market frame label
+- map button or zoom access
+
+The HUD must stay lightweight.
+The chart world should own most of the screen.
+
+## 8. Command Dock Rules
+
+The bottom command dock is sacred.
+
+It must always make `LONG`, `SHORT`, `HOLD`, and `RUN` readable in one glance.
 
 Rules:
 
-- default panels use muted surfaces and low-contrast borders
-- pixel font for labels, softer mono or readable bitmap font for body copy
-- key battle data stays visible, but noncritical chrome should stay quiet
-- persistent top-and-bottom tactical bars should be minimized outside clashes
-- reflections and rewards should feel like journal pages, field notes, or keepsakes
+- equal visual weight
+- strong readability
+- controller and keyboard friendly
+- short Korean and English sublabels acceptable
+
+No secondary analytics panel should compete with the dock in the first playable loop.
+
+## 9. Boss Screen Rules
+
+Boss cut-ins should feel like JRPG encounters born from real BTC history.
+
+Rules:
+
+- hero and boss panels visibly oppose each other
+- chart background remains tied to the actual event
+- boss title should carry the real historical label
+- command set remains unchanged
+
+The boss screen is presentation escalation, not rules escalation by interface bloat.
+
+## 10. Palette Direction
+
+Use a clear market-world palette:
+
+- deep slate and muted midnight for distance
+- sand, stone, and warm gray for traversable terrain
+- green accents for long opportunity
+- wine, brick, and rust for danger
+- gold for reward and unlocks
 
 Avoid:
 
-- always-on esports HUD
-- trading terminal framing
-- loud damage numbers everywhere
-- constant flashing objective meters
+- pure trading red-green takeover
+- neon cyberpunk terminal framing
+- flat black dashboards
 
-## Audio Direction
+## 11. Motion Direction
 
-Explore Mode:
+Movement should feel:
 
-- soft loops
-- environmental ticks
-- low-intensity ambient motifs
+- stepped
+- readable
+- lightly bouncy
 
-Clash Mode:
+Outcome animation should feel:
 
-- short, sharp emphasis
-- percussive but not metallic overload
+- sharp on success
+- painful on liquidation or squeeze
+- short enough to preserve loop speed
 
-Return to calm quickly after resolution.
+Boss motion may be more dramatic, but normal play should stay readable and quick.
 
-## Acceptance Criteria
+## 12. UI Tone
+
+UI must support the world, not dominate it.
+
+Rules:
+
+- most of the screen is map, terrain, or candle space
+- panels should feel like game overlays, not productivity cards
+- support and resistance labels may appear in-world
+- history notes may appear as monuments, boards, or plaques
+
+Avoid:
+
+- sidebars that permanently steal stage area
+- dense comparison tables during active play
+- multi-panel analytics layouts
+
+## 13. Acceptance Criteria
 
 This spec is successful when:
 
-- a screenshot without combat still feels like a place worth walking through
-- the player and 3 companions look like a traveling team
-- the chart remains readable without feeling like a finance UI screenshot
-- entering combat feels like an escalation from exploration, not the permanent base state
-- the player can imagine tending, training, and revisiting the same chart world over time
+- a macro screenshot reads like a playable map of BTC history
+- a zone screenshot reads like candle terrain, not a charting app
+- a micro screenshot reads like a game with four battle commands
+- a boss screenshot reads like a historical JRPG encounter
+- none of the above read like a SaaS dashboard

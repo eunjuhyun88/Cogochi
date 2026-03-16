@@ -23,9 +23,9 @@
     runtimeCueVerb?: string | null;
   } = $props();
   const chartPadding = {
-    top: 112,
+    top: 72,
     right: chartFieldPadding.right,
-    bottom: 176,
+    bottom: 108,
     left: chartFieldPadding.left,
   };
 
@@ -61,6 +61,14 @@
     { id: 'stone-1', kind: 'stone', x: 1120, y: 1310, width: 44, height: 26 },
     { id: 'stone-2', kind: 'stone', x: 1908, y: 884, width: 52, height: 28 },
     { id: 'stone-3', kind: 'stone', x: 2264, y: 1004, width: 48, height: 26 },
+  ];
+  const fieldLandmarks = [
+    { id: 'camp-house', kind: 'camp-house', x: 388, y: 1060, width: 190, height: 170 },
+    { id: 'journal-kiosk', kind: 'journal-kiosk', x: 710, y: 1016, width: 178, height: 150 },
+    { id: 'lab-workshop', kind: 'lab-workshop', x: 1120, y: 830, width: 214, height: 186 },
+    { id: 'archive-tower', kind: 'archive-tower', x: 1590, y: 474, width: 188, height: 214 },
+    { id: 'spar-banner', kind: 'spar-banner', x: 1968, y: 778, width: 180, height: 188 },
+    { id: 'battle-fort', kind: 'battle-fort', x: 2246, y: 344, width: 212, height: 232 },
   ];
   const routeNodeIds = ['camp', 'journal-board', 'lab-bench', 'archive-well', 'spar-gate', 'battle-gate'];
 
@@ -99,8 +107,8 @@
 
   function frameInnerY(frame: { y: number; height: number }, price: number, min: number, max: number) {
     const span = max - min || 1;
-    const innerTop = frame.y + 94;
-    const innerBottom = frame.y + frame.height - 84;
+    const innerTop = frame.y + 72;
+    const innerBottom = frame.y + frame.height - 64;
     const innerHeight = innerBottom - innerTop;
     return innerTop + ((max - price) / span) * innerHeight;
   }
@@ -171,21 +179,21 @@
   });
   const cameraZoom = $derived.by(() => {
     if (!browser) {
-      return 1.14;
+      return 1.04;
     }
     if (viewportWidth <= 480) {
-      return 1.48;
+      return 1.28;
     }
     if (viewportWidth <= 768) {
-      return 1.34;
+      return 1.16;
     }
     if (viewportWidth <= 1100) {
-      return 1.22;
+      return 1.04;
     }
     if (viewportWidth <= 1440) {
-      return 1.14;
+      return 1.02;
     }
-    return 1.08;
+    return 0.98;
   });
   const visibleWorld = $derived.by(() => {
     const zoom = cameraZoom;
@@ -197,15 +205,15 @@
     };
   });
   const ambientFocus = $derived.by(() => ({
-    x: Math.min(visibleWorld.width * 0.1, 112),
-    y: Math.min(visibleWorld.height * 0.18, 136),
+    x: Math.min(visibleWorld.width * 0.02, 22),
+    y: -Math.min(visibleWorld.height * 0.06, 46),
   }));
   const lookAhead = $derived.by(() => {
     if (!leader || !leader.moving) {
       return { x: 0, y: 0 };
     }
-    const horizontal = Math.min(visibleWorld.width * 0.18, 180);
-    const vertical = Math.min(visibleWorld.height * 0.14, 132);
+    const horizontal = Math.min(visibleWorld.width * 0.1, 88);
+    const vertical = Math.min(visibleWorld.height * 0.08, 64);
     if (leader.facing === 'RIGHT') return { x: horizontal, y: 0 };
     if (leader.facing === 'LEFT') return { x: -horizontal, y: 0 };
     if (leader.facing === 'UP') return { x: 0, y: -vertical };
@@ -347,6 +355,14 @@
       ></div>
     {/each}
 
+    {#each fieldLandmarks as landmark}
+      <div
+        aria-hidden="true"
+        class={`field-landmark field-landmark--${landmark.kind}`}
+        style={`left:${landmark.x}px;top:${landmark.y}px;width:${landmark.width}px;height:${landmark.height}px;`}
+      ></div>
+    {/each}
+
     {#each fieldBarriers as barrier}
       <div
         aria-hidden="true"
@@ -410,27 +426,28 @@
     position: relative;
     overflow: hidden;
     border-radius: 28px;
-    border: 1px solid rgba(169, 171, 134, 0.28);
+    border: 1px solid rgba(246, 193, 112, 0.18);
     background:
-      radial-gradient(circle at top left, rgba(255, 234, 171, 0.92), transparent 30%),
-      linear-gradient(180deg, rgba(231, 244, 255, 0.98), rgba(241, 234, 205, 0.98) 56%, rgba(194, 219, 180, 0.98));
+      radial-gradient(circle at top left, rgba(255, 244, 195, 0.42), transparent 22%),
+      radial-gradient(circle at 88% 8%, rgba(117, 230, 255, 0.26), transparent 26%),
+      linear-gradient(180deg, rgba(117, 224, 249, 0.98) 0%, rgba(128, 221, 236, 0.98) 28%, rgba(241, 195, 119, 0.96) 28.1%, rgba(227, 170, 85, 0.98) 100%);
     box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.32),
-      0 22px 50px rgba(97, 95, 59, 0.18);
+      inset 0 0 0 1px rgba(255, 252, 240, 0.08),
+      0 22px 50px rgba(0, 0, 0, 0.24);
   }
 
   .field-scene__sun {
     position: absolute;
-    top: 22px;
-    right: 52px;
-    width: 136px;
-    height: 136px;
+    top: 20px;
+    right: 54px;
+    width: 126px;
+    height: 126px;
     border-radius: 999px;
     background:
-      radial-gradient(circle, rgba(255, 252, 220, 0.98) 0 28%, rgba(255, 223, 145, 0.94) 29% 58%, rgba(255, 223, 145, 0) 59% 100%);
-    opacity: 0.82;
+      radial-gradient(circle, rgba(255, 250, 214, 0.92) 0 24%, rgba(255, 201, 105, 0.44) 25% 56%, rgba(255, 223, 145, 0) 57% 100%);
+    opacity: 0.92;
     pointer-events: none;
-    filter: blur(0.4px);
+    filter: blur(0.5px);
   }
 
   .field-world {
@@ -447,31 +464,31 @@
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(circle at 22% 18%, rgba(255, 246, 204, 0.56), transparent 22%),
-      radial-gradient(circle at 72% 16%, rgba(187, 223, 188, 0.3), transparent 22%),
-      linear-gradient(180deg, rgba(206, 231, 248, 0.98) 0%, rgba(214, 236, 238, 0.98) 28%, rgba(188, 216, 176, 0.96) 60%, rgba(160, 198, 132, 0.96) 100%);
+      radial-gradient(circle at 14% 66%, rgba(87, 207, 238, 0.9) 0 13%, transparent 14%),
+      radial-gradient(circle at 76% 14%, rgba(255, 244, 199, 0.28), transparent 18%),
+      linear-gradient(180deg, rgba(123, 224, 247, 0.98) 0%, rgba(133, 224, 236, 0.98) 26%, rgba(246, 199, 124, 0.96) 26.1%, rgba(231, 179, 95, 0.98) 72%, rgba(214, 152, 78, 0.98) 100%);
   }
 
   .field-world__grid {
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(88, 103, 68, 0.08)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
       repeating-linear-gradient(
         to right,
-        rgba(127, 164, 131, 0.04) 0,
-        rgba(127, 164, 131, 0.04) 59px,
-        rgba(127, 164, 131, 0.09) 59px,
-        rgba(127, 164, 131, 0.09) 60px
+        rgba(255, 255, 255, 0.015) 0,
+        rgba(255, 255, 255, 0.015) 59px,
+        rgba(201, 162, 95, 0.06) 59px,
+        rgba(201, 162, 95, 0.06) 60px
       ),
       repeating-linear-gradient(
         to bottom,
-        rgba(127, 164, 131, 0.04) 0,
-        rgba(127, 164, 131, 0.04) 59px,
-        rgba(127, 164, 131, 0.08) 59px,
-        rgba(127, 164, 131, 0.08) 60px
+        rgba(255, 255, 255, 0.012) 0,
+        rgba(255, 255, 255, 0.012) 59px,
+        rgba(201, 162, 95, 0.04) 59px,
+        rgba(201, 162, 95, 0.04) 60px
       );
-    opacity: 0.34;
+    opacity: 0.24;
   }
 
   .field-scene__skyline {
@@ -479,8 +496,8 @@
     inset: auto 0 0;
     height: 44%;
     background:
-      radial-gradient(circle at 14% 32%, rgba(255, 235, 166, 0.22), transparent 18%),
-      linear-gradient(180deg, rgba(125, 153, 112, 0), rgba(124, 161, 103, 0.22) 28%, rgba(108, 141, 84, 0.7) 100%);
+      radial-gradient(circle at 14% 18%, rgba(255, 248, 224, 0.24), transparent 18%),
+      linear-gradient(180deg, rgba(255, 225, 170, 0), rgba(236, 181, 96, 0.12) 20%, rgba(189, 124, 58, 0.26) 100%);
   }
 
   .field-cloud {
@@ -491,8 +508,8 @@
       radial-gradient(circle at 48% 42%, rgba(255, 255, 255, 0.94) 0 30%, transparent 31%),
       radial-gradient(circle at 68% 50%, rgba(255, 255, 255, 0.9) 0 24%, transparent 25%),
       linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(230, 240, 244, 0.68));
-    opacity: 0.86;
-    filter: drop-shadow(0 10px 12px rgba(130, 156, 167, 0.12));
+    opacity: 0.52;
+    filter: drop-shadow(0 10px 12px rgba(85, 128, 143, 0.16));
   }
 
   .field-scene__chart {
@@ -500,30 +517,30 @@
     inset: 0;
     width: 100%;
     height: 100%;
-    opacity: 0.92;
+    opacity: 0.88;
   }
 
   .field-scene__frame {
-    stroke: rgba(98, 105, 73, 0.22);
+    stroke: rgba(161, 120, 69, 0.18);
     stroke-width: 2;
-    filter: drop-shadow(0 10px 18px rgba(115, 126, 87, 0.12));
+    filter: drop-shadow(0 10px 16px rgba(120, 84, 42, 0.14));
   }
 
   .field-scene__frame--bull {
-    fill: rgba(211, 235, 205, 0.34);
+    fill: rgba(88, 193, 166, 0.18);
   }
 
   .field-scene__frame--bear {
-    fill: rgba(240, 221, 205, 0.3);
+    fill: rgba(243, 163, 118, 0.2);
   }
 
   .field-scene__frame--flat {
-    fill: rgba(241, 236, 214, 0.32);
+    fill: rgba(244, 216, 160, 0.16);
   }
 
   .field-scene__frame.active {
-    stroke: rgba(214, 173, 82, 0.58);
-    fill: rgba(245, 227, 168, 0.22);
+    stroke: rgba(191, 115, 57, 0.42);
+    fill: rgba(255, 239, 193, 0.18);
   }
 
   .field-scene__terrain {
@@ -531,40 +548,40 @@
     stroke-width: 86;
     stroke-linecap: round;
     stroke-linejoin: round;
-    opacity: 0.94;
+    opacity: 0.98;
   }
 
   .field-scene__terrain--bull {
-    stroke: rgba(137, 184, 114, 0.52);
+    stroke: rgba(232, 189, 98, 0.78);
   }
 
   .field-scene__terrain--bear {
-    stroke: rgba(190, 154, 109, 0.44);
+    stroke: rgba(219, 155, 91, 0.74);
   }
 
   .field-scene__terrain--flat {
-    stroke: rgba(190, 181, 138, 0.42);
+    stroke: rgba(227, 188, 118, 0.68);
   }
 
   .field-scene__frame-date {
-    fill: rgba(92, 109, 83, 0.74);
-    font-size: 20px;
+    fill: rgba(121, 96, 60, 0.62);
+    font-size: 13px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
   .field-scene__frame-title {
-    fill: rgba(51, 68, 43, 0.9);
-    font-size: 26px;
-    font-weight: 700;
+    fill: rgba(111, 73, 34, 0.88);
+    font-size: 16px;
+    font-weight: 600;
   }
 
   .field-scene__chart-line {
-    stroke: rgba(68, 138, 117, 0.74);
-    stroke-width: 10;
+    stroke: rgba(131, 93, 48, 0.46);
+    stroke-width: 8;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 2px 8px rgba(77, 134, 116, 0.16));
+    filter: drop-shadow(0 2px 8px rgba(131, 93, 48, 0.16));
   }
 
   .field-scene__route-shadow,
@@ -576,45 +593,45 @@
   }
 
   .field-scene__route-shadow {
-    stroke: rgba(95, 74, 35, 0.18);
+    stroke: rgba(118, 85, 43, 0.18);
     stroke-width: 78;
   }
 
   .field-scene__route-bed {
-    stroke: rgba(241, 224, 173, 0.94);
+    stroke: rgba(163, 116, 57, 0.82);
     stroke-width: 58;
-    filter: drop-shadow(0 14px 18px rgba(121, 99, 53, 0.16));
+    filter: drop-shadow(0 10px 12px rgba(127, 89, 42, 0.18));
   }
 
   .field-scene__route-center {
-    stroke: rgba(185, 133, 56, 0.62);
+    stroke: rgba(251, 232, 181, 0.82);
     stroke-width: 8;
     stroke-dasharray: 16 18;
     animation: route-center-flow 4s linear infinite;
   }
 
   .field-scene__route-stop {
-    fill: rgba(255, 248, 226, 0.92);
-    stroke: rgba(183, 145, 75, 0.46);
+    fill: rgba(106, 178, 198, 0.92);
+    stroke: rgba(255, 235, 191, 0.72);
     stroke-width: 4;
   }
 
   .field-scene__route-stop.objective {
-    fill: rgba(253, 232, 184, 0.98);
+    fill: rgba(255, 198, 109, 0.96);
   }
 
   .field-scene__route-stop.runtimeCue {
-    fill: rgba(244, 240, 201, 0.98);
-    filter: drop-shadow(0 0 12px rgba(245, 223, 153, 0.28));
+    fill: rgba(86, 227, 216, 0.94);
+    filter: drop-shadow(0 0 12px rgba(86, 227, 216, 0.2));
   }
 
   .field-scene__cue-guide {
     fill: none;
-    stroke: rgba(201, 160, 78, 0.58);
+    stroke: rgba(255, 241, 202, 0.78);
     stroke-width: 8;
     stroke-linecap: round;
     stroke-dasharray: 18 14;
-    filter: drop-shadow(0 0 14px rgba(244, 223, 150, 0.12));
+    filter: drop-shadow(0 0 14px rgba(244, 223, 150, 0.18));
     animation: cue-guide-flow 2.4s linear infinite;
   }
 
@@ -630,12 +647,181 @@
     pointer-events: none;
   }
 
+  .field-landmark {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 18px;
+    filter: drop-shadow(0 12px 16px rgba(128, 84, 32, 0.16));
+  }
+
+  .field-landmark::before,
+  .field-landmark::after {
+    content: '';
+    position: absolute;
+  }
+
+  .field-landmark--camp-house {
+    background:
+      linear-gradient(180deg, rgba(242, 206, 142, 0.98), rgba(220, 168, 92, 0.98));
+    border: 8px solid rgba(144, 98, 48, 0.64);
+    border-bottom-width: 14px;
+  }
+
+  .field-landmark--camp-house::before {
+    inset: -36px 12px auto;
+    height: 54px;
+    border-radius: 18px 18px 8px 8px;
+    background: linear-gradient(180deg, rgba(132, 83, 44, 0.98), rgba(111, 69, 34, 0.98));
+    clip-path: polygon(10% 100%, 50% 0, 90% 100%);
+  }
+
+  .field-landmark--camp-house::after {
+    inset: auto 28px 14px;
+    height: 52px;
+    border-radius: 12px;
+    background:
+      linear-gradient(90deg, transparent 0 38%, rgba(112, 73, 31, 0.96) 38% 62%, transparent 62% 100%),
+      linear-gradient(180deg, rgba(77, 164, 214, 0.9), rgba(36, 104, 149, 0.92));
+  }
+
+  .field-landmark--journal-kiosk {
+    background:
+      linear-gradient(180deg, rgba(233, 215, 178, 0.98), rgba(206, 173, 112, 0.98));
+    border: 6px solid rgba(136, 94, 44, 0.58);
+  }
+
+  .field-landmark--journal-kiosk::before {
+    inset: 16px 14px auto;
+    height: 64px;
+    border-radius: 10px;
+    background:
+      linear-gradient(90deg, rgba(193, 150, 83, 0.96) 0 12%, transparent 12% 88%, rgba(193, 150, 83, 0.96) 88% 100%),
+      linear-gradient(180deg, rgba(98, 58, 26, 0.96), rgba(74, 44, 20, 0.96));
+  }
+
+  .field-landmark--journal-kiosk::after {
+    inset: auto 34px 14px;
+    height: 58px;
+    border-radius: 8px;
+    background:
+      linear-gradient(90deg, rgba(137, 91, 40, 0.96) 0 10%, transparent 10% 90%, rgba(137, 91, 40, 0.96) 90% 100%),
+      linear-gradient(180deg, rgba(255, 245, 220, 0.98), rgba(248, 228, 173, 0.98));
+  }
+
+  .field-landmark--lab-workshop {
+    background:
+      linear-gradient(180deg, rgba(240, 218, 176, 0.98), rgba(223, 170, 102, 0.98));
+    border: 8px solid rgba(128, 79, 38, 0.62);
+    border-bottom-width: 16px;
+  }
+
+  .field-landmark--lab-workshop::before {
+    inset: -42px 12px auto;
+    height: 64px;
+    border-radius: 24px 24px 10px 10px;
+    background: linear-gradient(180deg, rgba(96, 74, 146, 0.98), rgba(77, 51, 123, 0.98));
+    clip-path: polygon(4% 100%, 18% 34%, 40% 14%, 58% 20%, 80% 8%, 96% 100%);
+  }
+
+  .field-landmark--lab-workshop::after {
+    inset: auto 22px 16px;
+    height: 54px;
+    border-radius: 12px;
+    background:
+      linear-gradient(90deg, rgba(103, 64, 35, 0.96) 0 16%, transparent 16% 84%, rgba(103, 64, 35, 0.96) 84% 100%),
+      linear-gradient(180deg, rgba(85, 191, 214, 0.92), rgba(53, 112, 162, 0.96));
+  }
+
+  .field-landmark--archive-tower {
+    border-radius: 20px 20px 28px 28px;
+    background:
+      linear-gradient(180deg, rgba(245, 222, 176, 0.98), rgba(222, 169, 96, 0.98));
+    border: 8px solid rgba(137, 88, 38, 0.6);
+  }
+
+  .field-landmark--archive-tower::before {
+    inset: -56px 28px auto;
+    height: 92px;
+    border-radius: 28px 28px 18px 18px;
+    background: linear-gradient(180deg, rgba(167, 112, 52, 0.98), rgba(128, 82, 34, 0.98));
+    clip-path: polygon(50% 0, 88% 18%, 100% 72%, 88% 100%, 12% 100%, 0 72%, 12% 18%);
+  }
+
+  .field-landmark--archive-tower::after {
+    inset: 22px 36px auto;
+    height: 92px;
+    border-radius: 12px;
+    background:
+      linear-gradient(90deg, rgba(120, 81, 43, 0.96) 0 20%, transparent 20% 80%, rgba(120, 81, 43, 0.96) 80% 100%),
+      linear-gradient(180deg, rgba(93, 196, 202, 0.88), rgba(52, 126, 166, 0.92));
+  }
+
+  .field-landmark--spar-banner {
+    background:
+      linear-gradient(180deg, rgba(127, 191, 190, 0.28), rgba(127, 191, 190, 0.02));
+  }
+
+  .field-landmark--spar-banner::before {
+    inset: 8px auto 8px 18px;
+    width: 16px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(145, 96, 42, 0.98), rgba(102, 62, 26, 0.98));
+    box-shadow:
+      98px 0 0 rgba(145, 96, 42, 0.98),
+      50px 18px 0 0 rgba(145, 96, 42, 0.98);
+  }
+
+  .field-landmark--spar-banner::after {
+    inset: 22px 24px auto;
+    height: 82px;
+    border-radius: 16px;
+    background:
+      linear-gradient(90deg, rgba(255, 238, 210, 0.18), transparent 55%),
+      linear-gradient(180deg, rgba(90, 233, 216, 0.98), rgba(52, 176, 177, 0.98));
+    clip-path: polygon(0 0, 100% 0, 100% 76%, 62% 100%, 0 80%);
+  }
+
+  .field-landmark--battle-fort {
+    background:
+      linear-gradient(180deg, rgba(247, 212, 148, 0.98), rgba(220, 156, 82, 0.98));
+    border: 9px solid rgba(143, 89, 40, 0.64);
+    border-bottom-width: 16px;
+  }
+
+  .field-landmark--battle-fort::before {
+    inset: -34px 14px auto;
+    height: 52px;
+    border-radius: 20px 20px 8px 8px;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(153, 94, 42, 0.98) 0 12%,
+        rgba(204, 140, 70, 0.98) 12% 24%,
+        rgba(153, 94, 42, 0.98) 24% 36%,
+        rgba(204, 140, 70, 0.98) 36% 48%,
+        rgba(153, 94, 42, 0.98) 48% 60%,
+        rgba(204, 140, 70, 0.98) 60% 72%,
+        rgba(153, 94, 42, 0.98) 72% 84%,
+        rgba(204, 140, 70, 0.98) 84% 100%
+      );
+  }
+
+  .field-landmark--battle-fort::after {
+    inset: auto 30px 18px;
+    height: 84px;
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at 50% 74%, rgba(255, 143, 68, 0.86) 0 18%, transparent 19%),
+      linear-gradient(180deg, rgba(110, 69, 32, 0.98), rgba(84, 45, 19, 0.98));
+  }
+
   .field-prop--tuft {
     border-radius: 999px 999px 12px 12px;
     background:
-      radial-gradient(circle at 28% 88%, rgba(72, 134, 84, 0.9) 0 18%, transparent 19%),
-      radial-gradient(circle at 50% 26%, rgba(139, 189, 107, 0.96) 0 28%, transparent 29%),
-      radial-gradient(circle at 74% 88%, rgba(72, 134, 84, 0.9) 0 18%, transparent 19%);
+      radial-gradient(circle at 28% 88%, rgba(72, 134, 84, 0.84) 0 18%, transparent 19%),
+      radial-gradient(circle at 50% 26%, rgba(155, 214, 103, 0.96) 0 28%, transparent 29%),
+      radial-gradient(circle at 74% 88%, rgba(72, 134, 84, 0.84) 0 18%, transparent 19%);
   }
 
   .field-prop--flower {
@@ -651,7 +837,7 @@
   .field-prop--stone {
     border-radius: 18px;
     background:
-      linear-gradient(180deg, rgba(130, 129, 113, 0.94), rgba(96, 96, 82, 0.94));
+      linear-gradient(180deg, rgba(154, 149, 127, 0.94), rgba(112, 105, 88, 0.94));
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.26),
       0 6px 12px rgba(82, 80, 60, 0.16);
@@ -660,21 +846,21 @@
   .field-barrier {
     position: absolute;
     border-radius: 24px;
-    border: 1px solid rgba(85, 89, 63, 0.18);
+    border: 1px solid rgba(142, 115, 72, 0.18);
     box-sizing: border-box;
     overflow: hidden;
     opacity: 0.58;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.22),
-      0 10px 20px rgba(96, 97, 59, 0.12);
+      0 10px 20px rgba(136, 104, 54, 0.12);
   }
 
   .field-barrier--support {
     background:
       linear-gradient(
         180deg,
-        rgba(204, 235, 164, 0.98) 0 12%,
-        rgba(122, 170, 102, 0.72) 12% 20%,
+        rgba(236, 240, 176, 0.98) 0 12%,
+        rgba(149, 189, 100, 0.72) 12% 20%,
         rgba(110, 90, 58, 0.24) 20% 34%,
         rgba(110, 90, 58, 0.04) 34% 48%,
         rgba(110, 90, 58, 0) 48% 100%
@@ -685,7 +871,7 @@
   .field-barrier--pit {
     background:
       radial-gradient(circle at top, rgba(248, 186, 91, 0.62), transparent 28%),
-      linear-gradient(180deg, rgba(86, 63, 37, 0.84), rgba(42, 28, 15, 0.98));
+      linear-gradient(180deg, rgba(124, 83, 38, 0.84), rgba(63, 37, 17, 0.98));
     border-color: rgba(139, 97, 55, 0.32);
   }
 
@@ -693,10 +879,10 @@
     background:
       repeating-linear-gradient(
         180deg,
-        rgba(214, 159, 97, 0.94) 0,
-        rgba(214, 159, 97, 0.94) 18px,
-        rgba(167, 108, 52, 0.98) 18px,
-        rgba(167, 108, 52, 0.98) 36px
+        rgba(227, 178, 108, 0.94) 0,
+        rgba(227, 178, 108, 0.94) 18px,
+        rgba(183, 120, 55, 0.98) 18px,
+        rgba(183, 120, 55, 0.98) 36px
       );
     border-color: rgba(158, 111, 61, 0.32);
   }
@@ -732,8 +918,8 @@
     margin-left: -46px;
     border-radius: 999px;
     background:
-      radial-gradient(circle, rgba(115, 92, 48, 0.2) 0 36%, rgba(115, 92, 48, 0.04) 37% 72%, transparent 73% 100%),
-      rgba(112, 152, 88, 0.2);
+      radial-gradient(circle, rgba(0, 0, 0, 0.2) 0 36%, rgba(0, 0, 0, 0.04) 37% 72%, transparent 73% 100%),
+      rgba(83, 119, 106, 0.08);
     filter: blur(0.4px);
   }
 
@@ -744,8 +930,8 @@
     height: 50px;
     margin-left: -3px;
     border-radius: 999px;
-    background: linear-gradient(180deg, rgba(111, 84, 44, 0.98), rgba(150, 122, 64, 0.18));
-    opacity: 0.76;
+    background: linear-gradient(180deg, rgba(136, 101, 52, 0.8), rgba(150, 122, 64, 0.04));
+    opacity: 0.84;
   }
 
   .field-node__pulse {
@@ -755,8 +941,8 @@
     height: 32px;
     margin-left: -16px;
     border-radius: 999px;
-    background: rgba(230, 215, 154, 0.22);
-    box-shadow: 0 0 0 12px rgba(230, 215, 154, 0.08);
+    background: rgba(230, 215, 154, 0.12);
+    box-shadow: 0 0 0 12px rgba(230, 215, 154, 0.03);
   }
 
   .field-node__core {
@@ -767,14 +953,14 @@
     margin-left: -26px;
     border-radius: 16px;
     background:
-      linear-gradient(180deg, rgba(255, 249, 233, 0.94), rgba(227, 212, 162, 0.92));
-    border: 1px solid rgba(145, 118, 58, 0.24);
+      linear-gradient(180deg, rgba(132, 88, 44, 0.94), rgba(171, 117, 58, 0.92));
+    border: 1px solid rgba(255, 232, 185, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow:
-      0 8px 24px rgba(114, 92, 42, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.34);
+      0 8px 24px rgba(0, 0, 0, 0.24),
+      inset 0 1px 0 rgba(255, 245, 220, 0.12);
   }
 
   .field-node__beam {
@@ -784,7 +970,7 @@
     height: 124px;
     margin-left: -6px;
     border-radius: 999px;
-    background: linear-gradient(180deg, rgba(246, 232, 168, 0), rgba(246, 232, 168, 0.78) 52%, rgba(246, 232, 168, 0));
+    background: linear-gradient(180deg, rgba(246, 232, 168, 0), rgba(246, 232, 168, 0.64) 52%, rgba(246, 232, 168, 0));
     filter: blur(1px);
     opacity: 0.84;
   }
@@ -797,14 +983,14 @@
     padding: 4px 8px;
     border-radius: 999px;
     border: 1px solid rgba(177, 133, 63, 0.24);
-    background: rgba(255, 248, 232, 0.92);
-    color: rgba(98, 76, 37, 0.96);
+    background: rgba(84, 50, 21, 0.88);
+    color: rgba(255, 245, 220, 0.94);
     font-size: 0.62rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-align: center;
     text-transform: uppercase;
-    box-shadow: 0 10px 22px rgba(127, 102, 50, 0.16);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
   }
 
   .field-node__label {
@@ -815,36 +1001,36 @@
     max-width: 120px;
     padding: 4px 8px;
     border-radius: 999px;
-    background: rgba(255, 250, 236, 0.94);
-    border: 1px solid rgba(175, 143, 80, 0.22);
-    color: rgba(88, 70, 32, 0.92);
+    background: rgba(255, 250, 239, 0.94);
+    border: 1px solid rgba(175, 143, 80, 0.24);
+    color: rgba(86, 57, 24, 0.9);
     font-size: 0.62rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-align: center;
     white-space: nowrap;
-    box-shadow: 0 8px 20px rgba(110, 89, 44, 0.14);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   }
 
   .field-node__core span {
-    color: rgba(89, 71, 31, 0.92);
+    color: rgba(255, 246, 224, 0.98);
     font-size: 0.9rem;
     font-weight: 700;
     letter-spacing: 0.06em;
   }
 
   .field-node.active {
-    filter: drop-shadow(0 0 12px rgba(164, 198, 100, 0.36));
+    filter: drop-shadow(0 0 12px rgba(164, 198, 100, 0.22));
   }
 
   .field-node.active .field-node__core {
-    border-color: rgba(110, 165, 84, 0.46);
-    background: linear-gradient(180deg, rgba(243, 250, 231, 0.96), rgba(209, 232, 179, 0.94));
+    border-color: rgba(110, 165, 84, 0.32);
+    background: linear-gradient(180deg, rgba(114, 147, 68, 0.96), rgba(89, 128, 59, 0.94));
   }
 
   .field-node.objective .field-node__core {
-    border-color: rgba(198, 153, 68, 0.44);
-    background: linear-gradient(180deg, rgba(255, 247, 228, 0.98), rgba(242, 215, 156, 0.94));
+    border-color: rgba(198, 153, 68, 0.34);
+    background: linear-gradient(180deg, rgba(183, 117, 53, 0.98), rgba(136, 86, 35, 0.94));
   }
 
   .field-node.objective .field-node__pulse {
@@ -853,15 +1039,15 @@
   }
 
   .field-node.runtimeCue {
-    filter: drop-shadow(0 0 18px rgba(245, 223, 153, 0.28));
+    filter: drop-shadow(0 0 18px rgba(245, 223, 153, 0.22));
   }
 
   .field-node.runtimeCue .field-node__core {
-    border-color: rgba(214, 170, 78, 0.58);
-    background: linear-gradient(180deg, rgba(255, 251, 234, 0.98), rgba(247, 221, 160, 0.95));
+    border-color: rgba(214, 170, 78, 0.42);
+    background: linear-gradient(180deg, rgba(61, 151, 142, 0.98), rgba(48, 122, 119, 0.95));
     box-shadow:
-      0 12px 26px rgba(118, 89, 31, 0.22),
-      inset 0 0 0 1px rgba(245, 223, 153, 0.16);
+      0 12px 26px rgba(0, 0, 0, 0.24),
+      inset 0 0 0 1px rgba(245, 223, 153, 0.1);
   }
 
   .field-node.runtimeCue .field-node__pulse {
@@ -888,7 +1074,7 @@
     width: 68px;
     height: 68px;
     image-rendering: pixelated;
-    opacity: 0.56;
+    opacity: 0.42;
     transform: translateY(48px);
   }
 
@@ -914,8 +1100,8 @@
     width: 18px;
     height: 12px;
     border-radius: 999px;
-    background: linear-gradient(180deg, rgba(248, 231, 177, 0.98), rgba(227, 183, 85, 0.96));
-    box-shadow: 0 0 0 8px rgba(248, 231, 177, 0.1);
+    background: linear-gradient(180deg, rgba(248, 231, 177, 0.9), rgba(227, 183, 85, 0.86));
+    box-shadow: 0 0 0 8px rgba(248, 231, 177, 0.04);
     transform: translateY(76px);
   }
 

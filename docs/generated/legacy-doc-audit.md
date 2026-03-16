@@ -15,34 +15,19 @@ docs/
 
 src/
   routes/                    프론트엔드 페이지 (` | fail |
+| `docs/AGENT_SYSTEM_DESIGN.md` | broken-ref | `src/routes/boss/[bossId]/+page.svelte` | fail |
+| `docs/AGENT_SYSTEM_DESIGN.md` | broken-ref | `src/routes/camp/+page.svelte` | fail |
+| `docs/AGENT_SYSTEM_DESIGN.md` | broken-ref | `src/routes/cogochi/[id]/+page.svelte` | fail |
+| `docs/AGENT_SYSTEM_DESIGN.md` | broken-ref | `src/routes/zone/[zoneId]/+page.svelte` | fail |
 | `docs/AGENT_WATCH_LOG.md:1002` | absolute-local-path | `/Users/ej/Downloads/files` | tracked |
-| `docs/AI_IMPLEMENTATION_CONTRACTS.md:445` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/src/lib/aimon/types.ts` | tracked |
-| `docs/AI_RUNTIME_TRAINING_SPEC.md:128` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/src/lib/aimon/types.ts` | tracked |
-| `docs/AI_RUNTIME_TRAINING_SPEC.md:18` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/AI_IMPLEMENTATION_CONTRACTS.md` | tracked |
+| `docs/AGENT_WATCH_LOG.md:2664` | absolute-local-path | `/Users/ej/Desktop/스크린샷` | tracked |
 | `docs/CHART_BATTLEFIELD_RULEBOOK_v1.md:5` | absolute-local-path | `/Users/ej/Downloads/프로젝트/Cogochi_v1/docs/BATTLEFIELD_DESIGN.md` | tracked |
 | `docs/CONTEXT_ENGINEERING.md` | broken-ref | `docs/generated/agent-catalog.{md,json}` | fail |
 | `docs/CONTEXT_ENGINEERING.md` | broken-ref | `docs/generated/context-registry.{md,json}` | fail |
 | `docs/CONTEXT_ENGINEERING.md` | broken-ref | `docs/generated/{route-map,store-authority-map,api-group-map}.md` | fail |
 | `docs/CONTEXT_ENGINEERING.md` | broken-ref | `docs/{DESIGN,ENGINEERING,PLANS,PRODUCT_SENSE,QUALITY_SCORE,RELIABILITY,SECURITY,HARNESS}.md` | fail |
-| `docs/INDEX.md:10` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/PRODUCT_BLUEPRINT.md` | tracked |
-| `docs/INDEX.md:11` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/GAME_DESIGN.md` | tracked |
-| `docs/INDEX.md:12` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/PROGRESSION_MODEL.md` | tracked |
-| `docs/INDEX.md:13` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/UIUX_SYSTEM.md` | tracked |
-| `docs/INDEX.md:17` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/TECH_ARCHITECTURE.md` | tracked |
-| `docs/INDEX.md:18` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/AGENT_SYSTEM_DESIGN.md` | tracked |
-| `docs/INDEX.md:19` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/AI_RUNTIME_TRAINING_SPEC.md` | tracked |
-| `docs/INDEX.md:20` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/AI_IMPLEMENTATION_CONTRACTS.md` | tracked |
-| `docs/INDEX.md:24` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/CONTEXT_ENGINEERING.md` | tracked |
-| `docs/INDEX.md:25` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/PLANS.md` | tracked |
-| `docs/INDEX.md:26` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/QUALITY_SCORE.md` | tracked |
-| `docs/INDEX.md:27` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/RELIABILITY.md` | tracked |
-| `docs/INDEX.md:31` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/exec-plans/active` | tracked |
-| `docs/INDEX.md:32` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/exec-plans/completed` | tracked |
-| `docs/INDEX.md:33` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/exec-plans/README.md` | tracked |
-| `docs/INDEX.md:34` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/exec-plans/tech-debt-tracker.md` | tracked |
-| `docs/INDEX.md:35` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/AGENT_WATCH_LOG.md` | tracked |
-| `docs/INDEX.md:5` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/AGENTS.md` | tracked |
-| `docs/INDEX.md:9` | absolute-local-path | `/Users/ej/Downloads/maxidoge-clones/Cogochi/docs/PROJECT_CONTEXT.md` | tracked |
+| `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md` | broken-ref | `src/routes/boss/[bossId]/+page.svelte` | fail |
+| `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md` | broken-ref | `src/routes/zone/[zoneId]/+page.svelte` | fail |
 | `docs/design-docs/COGOCHI_zip_review_20260315.md:7` | absolute-local-path | `/Users/ej/Downloads/files` | tracked |
 | `docs/design-docs/cozy-chart-feel-spec.md:5` | absolute-local-path | `/Users/ej/Downloads/프로젝트/Cogochi_v1/docs/VISUAL_WORLD_DESIGN.md` | tracked |
 | `docs/references/imported/Cogochi_Dev_Prompt_20260308 (2).md` | broken-ref | `src/

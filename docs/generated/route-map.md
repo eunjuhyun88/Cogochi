@@ -16,4 +16,3 @@
 | `/passport/share/[token]` | discovered | `src/routes/passport/share/[token]/+page.svelte` | passport |
 | `/proof` | discovered | `src/routes/proof/+page.svelte` | proof |
 | `/roster` | discovered | `src/routes/roster/+page.svelte` | raising |
-| `/team` | discovered | `src/routes/team/+page.svelte` | none |
