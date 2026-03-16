@@ -6,44 +6,44 @@ This report estimates how much context the routing system saves before the agent
 
 | Bundle | Files | Lines | Approx Tokens | Reduction vs canonical | Reduction vs all docs |
 | --- | --- | --- | --- | --- | --- |
-| small map | 9 | 900 | 8159 | 83.0% | 94.8% |
-| canonical | 46 | 6920 | 48026 | 0.0% | 69.2% |
-| all docs | 101 | 21859 | 156126 | -225.1% | 0.0% |
+| small map | 9 | 900 | 8159 | 83.9% | 94.9% |
+| canonical | 49 | 7764 | 50719 | 0.0% | 68.5% |
+| all docs | 105 | 22146 | 160956 | -217.3% | 0.0% |
 
 ## Estimated Savings
 
-- Small map saves approximately `39867` tokens vs the canonical bundle.
-- Small map saves approximately `147967` tokens vs the all-doc bundle.
-- Surface `core` saves approximately `145783` tokens vs the all-doc bundle.
-- Surface `raising` saves approximately `144593` tokens vs the all-doc bundle.
-- Surface `field` saves approximately `145587` tokens vs the all-doc bundle.
-- Surface `proof` saves approximately `146441` tokens vs the all-doc bundle.
-- Surface `passport` saves approximately `146552` tokens vs the all-doc bundle.
-- Surface `battle` saves approximately `146891` tokens vs the all-doc bundle.
-- Surface `journal` saves approximately `146998` tokens vs the all-doc bundle.
+- Small map saves approximately `42560` tokens vs the canonical bundle.
+- Small map saves approximately `152797` tokens vs the all-doc bundle.
+- Surface `core` saves approximately `151879` tokens vs the all-doc bundle.
+- Surface `raising` saves approximately `151936` tokens vs the all-doc bundle.
+- Surface `field` saves approximately `151849` tokens vs the all-doc bundle.
+- Surface `proof` saves approximately `151965` tokens vs the all-doc bundle.
+- Surface `passport` saves approximately `151382` tokens vs the all-doc bundle.
+- Surface `battle` saves approximately `151944` tokens vs the all-doc bundle.
+- Surface `journal` saves approximately `151955` tokens vs the all-doc bundle.
 
 ## Surface Bundles
 
 | Bundle | Files | Lines | Approx Tokens | Reduction vs canonical | Reduction vs all docs |
 | --- | --- | --- | --- | --- | --- |
-| core | 13 | 1140 | 10343 | 78.5% | 93.4% |
-| raising | 13 | 1270 | 11533 | 76.0% | 92.6% |
-| field | 13 | 1148 | 10539 | 78.1% | 93.2% |
-| proof | 13 | 1134 | 9685 | 79.8% | 93.8% |
-| passport | 13 | 1080 | 9574 | 80.1% | 93.9% |
-| battle | 13 | 1015 | 9235 | 80.8% | 94.1% |
-| journal | 13 | 1009 | 9128 | 81.0% | 94.2% |
+| core | 13 | 1013 | 9077 | 82.1% | 94.4% |
+| raising | 13 | 1008 | 9020 | 82.2% | 94.4% |
+| field | 13 | 1016 | 9107 | 82.0% | 94.3% |
+| proof | 13 | 999 | 8991 | 82.3% | 94.4% |
+| passport | 13 | 1080 | 9574 | 81.1% | 94.1% |
+| battle | 13 | 1004 | 9012 | 82.2% | 94.4% |
+| journal | 13 | 997 | 9001 | 82.3% | 94.4% |
 
 ## Structural Scorecard
 
 | Check | Actual | Target | Result |
 | --- | --- | --- | --- |
-| Small-map reduction vs canonical | 83.0% | >= 40% | PASS |
-| Small-map reduction vs all docs | 94.8% | >= 55% | PASS |
-| Worst surface reduction vs all docs | 92.6% | >= 50% | PASS |
+| Small-map reduction vs canonical | 83.9% | >= 40% | PASS |
+| Small-map reduction vs all docs | 94.9% | >= 55% | PASS |
+| Worst surface reduction vs all docs | 94.1% | >= 50% | PASS |
 | Small-map approx tokens | 8159 | <= 3800 | FAIL |
 | Small-map file count | 9 | <= 6 | FAIL |
-| Canonical approx tokens | 48026 | <= 12000 | FAIL |
+| Canonical approx tokens | 50719 | <= 12000 | FAIL |
 
 ## Structural Readiness
 

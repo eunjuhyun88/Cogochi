@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { agentFamilyLabels, careStateLabels, growthStageLabels } from '$lib/data/seed';
+  import { agentFamilyLabels, careStateLabels, growthStageLabels, homeStyleLabels } from '$lib/data/seed';
   import type { OwnedAgent } from '$lib/types';
   import PixelSprite from '$components/shared/PixelSprite.svelte';
 
@@ -12,7 +12,7 @@
       <div class="sprite-card__screen">
         <div class="sprite-card__grid"></div>
         <div class="sprite-card__sprite">
-          <PixelSprite {agent} size={96} />
+          <PixelSprite {agent} homeStyle={agent.homeStyle} presentation="detail" size={96} />
         </div>
       </div>
     </div>
@@ -27,6 +27,7 @@
         <span class="chip">Trust {agent.trustWeight}</span>
         <span class="chip">{agentFamilyLabels[agent.family]}</span>
         <span class="chip">{careStateLabels[agent.careState]}</span>
+        <span class="chip">{homeStyleLabels[agent.homeStyle]}</span>
         <span class="chip">{agent.recentTrainingFocus}</span>
       </div>
     </div>

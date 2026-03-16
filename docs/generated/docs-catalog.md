@@ -38,6 +38,9 @@
 | `docs/TOOL_DESIGN.md` | `canonical-entry` | `canonical` | Canonical tool contract design doc. |
 | `docs/VISUAL_WORLD_DESIGN.md` | `unclassified` | `unknown` | Needs promotion or archive placement. |
 | `docs/archive/README.md` | `archive-router` | `tracked-only` | Archive interpretation policy. |
+| `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md` | `design-doc` | `canonical` | Structured design document. |
+| `docs/design-docs/COGOCHI_chart_world_jrpg_reset_20260316.md` | `design-doc` | `canonical` | Structured design document. |
+| `docs/design-docs/COGOCHI_gameplay_first_loop_redesign_20260316.md` | `design-doc` | `canonical` | Structured design document. |
 | `docs/design-docs/COGOCHI_hybrid_game_market_20260315.md` | `design-doc` | `canonical` | Structured design document. |
 | `docs/design-docs/COGOCHI_memento_runtime_architecture_20260315.md` | `design-doc` | `canonical` | Structured design document. |
 | `docs/design-docs/COGOCHI_pokemon_grade_game_target_20260313.md` | `design-doc` | `canonical` | Structured design document. |
@@ -55,6 +58,7 @@
 | `docs/exec-plans/active/COGOCHI_autoresearch_bottlenecks_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_autoresearch_org_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_autoresearch_scorecard_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
+| `docs/exec-plans/active/COGOCHI_chart_world_reset_execution_20260316.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_founder_goal_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_full_game_autoresearch_20260312.md` | `active-plan` | `canonical` | Active execution plan. |
 | `docs/exec-plans/active/COGOCHI_judgment_tamagotchi_loop_20260312.md` | `active-plan` | `canonical` | Active execution plan. |

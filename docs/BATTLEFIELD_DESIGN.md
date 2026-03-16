@@ -1,513 +1,260 @@
 # Battlefield Design
 
 Status: canonical  
-Last updated: 2026-03-08
+Last updated: 2026-03-16
 
 ## 1. Purpose
 
-This document defines how a crypto price chart becomes a playable battlefield.
+This document defines how a real BTC chart becomes a traversable world and a deterministic combat space.
 
-It exists to solve four missing pieces:
+It exists to answer:
 
-- how the chart reads as terrain
-- how a long or short position is visibly expressed
-- how the player avatar and 3 companion agents operate on the field
-- how battle outcomes become learning and progression instead of monetary payout
-
-This document is the canonical battlefield contract.
-It defines battle grammar and chart translation rules, not rendering implementation details and not code architecture ownership.
+- how chart history becomes terrain
+- how the player moves through time and price
+- how `LONG`, `SHORT`, `HOLD`, and `RUN` behave as battle commands
+- how ordinary encounters differ from boss fights
 
 ## 2. Core Thesis
 
 The chart is not decoration.
-The chart is the map, terrain, history layer, and combat lane.
+The chart is:
 
-The player does not change the market.
-The player chooses where to commit, where to hold, where to retreat, and how to train a squad to read and survive the market better.
+- the overworld
+- the level structure
+- the combat lane
+- the memory layer
 
-The battlefield must always communicate:
+The player does not change history.
+The player moves through history and chooses how to survive it.
 
-- what part of history is visible
-- where the current active combat zone is
-- where a long or short thesis was committed
-- which side currently owns vertical pressure
-- what the companions are contributing to the decision
+## 3. Zoom Layers
 
-## 3. Design Goals
+### 3.1 `MACRO`
 
-- The player must be able to say, at a glance, "a long was committed there" or "that short got trapped there."
-- The whole chart must remain recognizable as BTC or another coin chart, even during combat.
-- Battle must feel like interpretation of market structure, not abstract fantasy combat detached from price action.
-- The 3 companion agents must feel useful and trainable, not cosmetic followers.
-- Match rewards must reinforce learning quality, team cohesion, and doctrine growth, not fake profit.
+Purpose:
+region selection and global progression
 
-## 4. Non-Goals
+Visual read:
 
-- This is not a live trading simulator.
-- This is not paper trading with a skin.
-- The player does not directly move candles or rewrite price history.
-- The player does not earn real money from battle outcomes.
-- The battlefield should not become a generic RPG map with a chart wallpaper behind it.
+- full-history silhouette
+- mountains, valleys, and plateaus
+- one marker for current location
 
-## 5. Battlefield Coordinate Model
+### 3.2 `MESO`
 
-### 5.1 Axes
+Purpose:
+region routing and landmark approach
+
+Visual read:
+
+- daily and 4-hour candles as structures
+- camps, forges, monuments, and arenas anchored to history
+
+### 3.3 `MICRO`
+
+Purpose:
+direct playable judgment encounters
+
+Visual read:
+
+- candle body = immediate ground, wall, or tower
+- wick = unstable edge, spike, or trap limb
+- next hidden candle = incoming event
+
+## 4. Coordinate Model
+
+### Axes
 
 - `X axis`: time progression
 - `Y axis`: price level
 
-### 5.2 Ownership Read
+### Movement read
 
-- player squad pressure generally rises from lower regions toward upper regions
-- rival squad pressure generally descends from upper regions toward lower regions
-- long commitment usually attempts upward territory capture
-- short commitment usually attempts downward pressure or denial
+- move right to advance
+- move left to review or retreat
+- climb when price structure supports it
+- drop when the structure breaks or the path descends
 
-This vertical read is more important than clean left-to-right readability.
+The player should feel like they are traversing history physically, not scrolling a chart tool.
 
-### 5.3 Visible Layers
+## 5. Terrain Grammar
 
-The battlefield always renders three simultaneous layers:
+### 5.1 Candle terrain
 
-1. `History Layer`
-   - the broader chart history
-   - faded but readable
-   - used for market context and memory
-2. `Active Zone Layer`
-   - the current battle slice
-   - high contrast
-   - where units move and commit
-3. `Tactical Overlay Layer`
-   - temporary grid, position markers, danger zones, path indicators
-   - appears only when decisions or clashes need precision
-
-## 6. Chart Terrain Grammar
-
-### 6.1 Candle Terrain
-
-- `Bull Candle`
-  - rising support energy
-  - easier upward movement
-  - improves long commitment stability
-- `Bear Candle`
-  - downward compression
-  - easier descent or short pressure
-  - increases knockback risk for weak longs
-- `Large Body Candle`
+- `Bull candle`
+  - climbable or supportive terrain
+- `Bear candle`
+  - downward pressure terrain
+- `Large body`
   - momentum lane
-  - faster movement but higher commitment cost
-- `Long Wick`
-  - unstable footing
-  - signals rejection, trap, fake breakout, or panic sweep
-- `Tight Candle Cluster`
-  - range box
-  - low mobility, high setup potential
+- `Long wick`
+  - unstable rejection edge
+- `Tight cluster`
+  - range box or compressed corridor
 
-### 6.2 Structural Terrain
+### 5.2 Structural terrain
 
-- `Support Platform`
-  - safe foothold
-  - grants brace and recovery
-- `Resistance Wall`
-  - hard barrier
-  - must be broken, bypassed, or respected
-- `Breakout Gate`
-  - threshold object
-  - if captured, grants momentum swing
-- `Range Box`
-  - compressed neutral zone
-  - favors setup, feint, and trap play
-- `Long Liquidation Trap`
-  - punishes overextended longs
-- `Short Liquidation Trap`
-  - punishes overextended shorts
-- `Volume Spring`
-  - burst source that launches units vertically
-- `Volatility Storm`
-  - unstable region with movement and targeting variance
-- `Funding Bias Beam`
-  - directional pressure modifier
-- `Macro Shock Beacon`
-  - scripted event anchor that changes local rules
+- `Support shelf`
+  - safe footing
+- `Resistance wall`
+  - barrier or gate
+- `Breakout ridge`
+  - threshold terrain that rewards correct commitment
+- `Liquidation pit`
+  - catastrophic danger zone
+- `Volume burst spring`
+  - sudden movement amplifier
+- `Trap corridor`
+  - false breakout or fake breakdown space
 
-### 6.3 Terrain Rule
+Every terrain object must answer:
 
-Every visible terrain object must answer:
+- can I stand on it
+- does it push up or down
+- is it safe or dangerous
+- which command does it tempt
 
-- can units stand on it
-- does it push upward or downward
-- does it grant safety or danger
-- does it invite long, short, or hold
+## 6. Core Commands
 
-If the object cannot answer those four questions, it should not exist in MVP.
-
-## 7. Position Event Grammar
-
-This is the most important missing layer in the current design.
-
-### 7.1 Long Commit
+### `LONG`
 
 Meaning:
-- the player believes this region should be defended and pushed upward
+commit to upward move or rebound
 
-Visual:
-- green position marker planted from below
-- upward thrust line or banner
-- squad compresses, then surges upward
+Read:
 
-Gameplay:
-- starts a territory push
-- creates a `Long Commitment Zone`
-- may trigger clash if rival pressure is present
+- aggressive climb
+- upward banner, surge, or leap
 
-### 7.2 Short Commit
+### `SHORT`
 
 Meaning:
-- the player believes this region should fail or be forced downward
+commit to breakdown or downward continuation
 
-Visual:
-- red marker dropped from above
-- downward strike line
-- squad leans and descends with pressure effect
+Read:
 
-Gameplay:
-- starts a pressure collapse attempt
-- creates a `Short Commitment Zone`
-- may trigger clash if defenders are present
+- downward strike
+- top-down pressure
 
-### 7.3 Hold
+### `HOLD`
 
 Meaning:
-- the player chooses not to force a thesis yet
+do not force a bad entry
 
-Visual:
-- neutral stance
-- companions spread, scan, and pulse information
+Read:
 
-Gameplay:
-- increases information quality
-- reduces immediate reward
-- improves safety and confidence recovery
+- cautious stance
+- information gathering
 
-### 7.4 Breakout Claim
+### `RUN`
 
 Meaning:
-- the player tries to convert a resistance threshold into owned territory
+close exposure and preserve survival
 
-Visual:
-- wall fracture
-- rails or shards flying upward
-- team silhouette crosses the line
+Read:
 
-Gameplay:
-- if successful, objective swing and momentum bonus
-- if failed, recoil, hesitation, and exposure
+- retreat
+- disengage
+- survival over greed
 
-### 7.5 Rejection
+## 7. Encounter Flow
 
-Meaning:
-- price touched a level but could not own it
+The default micro encounter loop is:
 
-Visual:
-- bounce spark
-- wall flash
-- body knockback
+1. show the visible candle context
+2. surface support, resistance, volume, and hazard hints
+3. let the Cogochi say one short line
+4. let the player choose `LONG`, `SHORT`, `HOLD`, or `RUN`
+5. reveal the next candle or candles
+6. apply deterministic outcome
 
-Gameplay:
-- confidence loss for the aggressor
-- counter window for the defender
+This loop should finish quickly.
+It is the normal heartbeat of play.
 
-### 7.6 Liquidation
+## 8. Outcome Rules
 
-Meaning:
-- a badly overcommitted position gets structurally punished
+The battlefield resolves into:
 
-Visual:
-- formation collapse
-- sudden downward or upward devour effect
-- companion panic or scatter animation
+- HP change
+- gold change
+- XP change
+- progress state
 
-Gameplay:
-- heavy HP and confidence damage
-- memory writeback candidate
-- strong reflection reward if survived and learned from
+Example tuning direction:
 
-## 8. Player and Companion Model
+- correct continuation or rebound yields HP and gold
+- wrong commitment damages HP
+- major traps or squeezes deal burst damage
+- `HOLD` preserves HP but may cost tempo
+- `RUN` locks in survival
 
-### 8.1 Field Composition
+The numbers are tunable.
+The rule is not.
 
-The player field presence is:
+## 9. Enemy Grammar
 
-- `Player Avatar`
-- `Companion 1`
-- `Companion 2`
-- `Companion 3`
+Common enemy patterns:
 
-The player avatar is the visible executor of commitment.
-The companions are the trainable agents.
+- `Red Candle Mob`
+- `Green Candle Mob`
+- `Whale Shadow`
 
-### 8.2 Companion Roles
+Mid-boss patterns:
 
-MVP roles:
+- `Liquidation Hunter`
+- `Trap Master`
+- `Cascade`
 
-- `Scout`
-  - discovers candidate zones
-  - extends visible battle forecast
-- `Analyst`
-  - strengthens long or short thesis confidence
-  - increases interpretation quality
-- `Risk`
-  - warns of trap, liquidation, or failed chase
-  - improves retreat timing and survival
+Boss patterns:
 
-### 8.3 Formation Rule
+- `COVID Crash`
+- `LUNA Collapse`
+- `FTX Collapse`
+- `ATH Dragon`
 
-Default field read:
+These are market behaviors expressed as enemies.
+They are not arbitrary fantasy mobs.
 
-- player avatar stays at the center of the micro formation
-- companions occupy stable follow offsets
-- during commitment, one or more companions break formation briefly to express role contribution
+## 10. Boss Battles
 
-Example:
+Bosses may shift into a dedicated cut-in route.
 
-- Scout dashes ahead to mark a breakout gate
-- Analyst projects a thesis line onto a resistance wall
-- Risk drops a warning dome over a liquidation trap
+Boss battle rules:
 
-Companions should not constantly run independently in MVP.
-They should mostly read as "decision satellites" attached to the player.
+- stronger scripting
+- multi-turn structure
+- explicit boss HP
+- phase changes
+- higher-stakes clear or fail outcome
 
-## 9. Movement Model
+Boss battles still use the same four command verbs.
+The cut-in presentation changes, not the core judgment grammar.
 
-### 9.1 Traversal States
+## 11. Readability Rules
 
-- `Traverse`
-  - moving across chart terrain
-  - no precise combat overlay
-- `Aim`
-  - choosing a position to commit
-  - tactical overlay appears
-- `Clash`
-  - battle logic active
-  - high readability, short duration
-- `Resolve`
-  - outcome display
-  - damage, objective shift, memory candidate display
-- `Retreat`
-  - fallback or reset motion
+The player must be able to tell:
 
-### 9.2 Vertical Movement
+- where the current candle footing is
+- where support and resistance sit
+- where the next danger zone lies
+- which direction their current commitment wants to travel
+- whether a boss is entering a new phase
 
-Units may:
+If the player cannot point to the turning point on the chart, the battlefield has failed.
 
-- stand directly on a candle close line
-- hover slightly above structure lines
-- drop below the close line when losing ground
-- leap between support footholds
+## 12. Non-Goals
 
-This means the field is not a strict platformer surface.
-It is a readable tactical motion layer derived from price structure.
+- a generic fantasy overworld with chart wallpaper
+- live-trading UI
+- random outcome-driven combat
+- hidden AI autoplay
+- excessive side-panel explanation that smothers the stage
 
-### 9.3 Tactical Lock
+## 13. Acceptance Criteria
 
-Inspired by tactical RPG readability, the active battle slice may enter `Tactical Lock`.
+This spec is successful when:
 
-In this mode:
-
-- a soft grid overlays the active chart zone
-- movement is shown in discrete local tiles
-- the full chart remains visible underneath
-- AP, action ranges, and hazard zones become explicit
-
-Use this mode only when:
-
-- the player is selecting commit direction
-- a clash is about to begin
-- a special skill requires precise local placement
-
-Do not keep the grid on permanently.
-The chart must remain the primary visual identity.
-
-## 10. Battle Trigger Rules
-
-Battle does not happen on every candle.
-Battle starts when a decision is contested or risky enough to matter.
-
-### 10.1 Trigger Families
-
-- `Contested Commitment`
-  - player long or short overlaps rival ownership
-- `Breakout Attempt`
-  - player challenges a resistance or support threshold
-- `Trap Activation`
-  - commitment intersects liquidation zone or false move zone
-- `Volatility Event`
-  - scripted movement spike destabilizes local terrain
-- `Opportunity Clash`
-  - a rare high-value zone appears and both sides converge
-
-### 10.2 Non-Battle Moments
-
-These should remain exploration or scouting:
-
-- low-signal noise regions
-- flat range zones with no commitment
-- post-result cooldown movement
-
-This prevents the game from turning every movement beat into meaningless combat.
-
-## 11. Match State Machine
-
-Recommended player-facing phase order:
-
-1. `Survey`
-   - read chart and visible structures
-2. `Mark`
-   - Scout and Analyst identify candidate commitment zones
-3. `Commit`
-   - player chooses long, short, or hold
-4. `Clash`
-   - local battle resolves against opposing pressure
-5. `Resolve`
-   - objective, HP, confidence, and zone ownership update
-6. `Reflect`
-   - lesson cards and companion growth are awarded
-
-Internal system alignment can still map these onto:
-
-- OBSERVE
-- RETRIEVE
-- REASON
-- DECIDE
-- RESOLVE
-- REFLECT
-
-## 12. Objective and Failure Model
-
-### 12.1 What Victory Means
-
-Victory is not "made money."
-Victory means:
-
-- committed in a structurally valid place
-- survived the risk profile
-- correctly captured or defended territory
-- coordinated the squad well
-- extracted useful learning
-
-### 12.2 What Score Should Measure
-
-- structural correctness of entry
-- thesis quality
-- timing quality
-- risk discipline
-- survival
-- companion coordination
-- memory value generated
-
-### 12.3 Failure States
-
-- `Bad Thesis`
-  - entered against obvious structure
-- `Late Chase`
-  - entered too late into exhaustion
-- `Trap Death`
-  - ignored warning signs
-- `Panic Exit`
-  - abandoned good structure too early
-- `Coordination Failure`
-  - companions were trained badly or brought the wrong composition
-
-Failure must still reward understanding, if the player extracted a useful lesson.
-
-## 13. Reward Model
-
-The game rewards learning and team building.
-
-### 13.1 Persistent Rewards
-
-- `Agent XP`
-- `Bond`
-- `Confidence ceiling`
-- `Memory Cards`
-- `Doctrine unlock progress`
-- `Artifact drops`
-- `Scenario mastery`
-
-### 13.2 Memory Card Types
-
-- `Support Respect`
-- `Failed Breakout`
-- `Trap Avoidance`
-- `Late Entry Punishment`
-- `Momentum Confirmation`
-- `Range Patience`
-
-These are not lore collectibles.
-They are training assets that affect future matches.
-
-## 14. UI and UX Contract
-
-### 14.1 Required Battlefield UI
-
-- chart background with visible historical structure
-- active battle slice emphasis
-- player avatar and 3 companions
-- current commitment marker
-- rival pressure indicator
-- objective meter
-- HP and confidence displays
-- companion role indicators
-- event log
-- reflection summary after match
-
-### 14.2 Layout Rule
-
-- the chart must remain readable as a chart first
-- combat overlays must feel like tactical instrumentation on top of the chart
-- old commitment markers should fade, not disappear
-- the player should see both present tension and historical context at once
-
-### 14.3 Visual Priority
-
-Priority from highest to lowest:
-
-1. current commitment and danger
-2. player avatar and companions
-3. active structures in the battle slice
-4. objective and health feedback
-5. historical background chart
-6. secondary particles and decorative effects
-
-## 15. MVP Definition
-
-MVP battlefield should support:
-
-- one coin chart at a time
-- visible historical chart backdrop
-- active combat slice on top of it
-- player avatar plus 3 companions
-- long, short, and hold
-- support, resistance, breakout, and liquidation zone types
-- one short clash loop
-- one reflection and memory reward loop
-
-MVP does not need:
-
-- live market sync
-- full open-world exploration
-- fully autonomous companions
-- dozens of companion classes
-- deep economy or gacha systems
-
-## 16. Acceptance Criteria
-
-This rulebook is correctly implemented when a new player can look at a battle scene and immediately understand:
-
-- which part of the chart is the current combat zone
-- whether a long or short was just committed
-- whether the team is attacking upward or being forced downward
-- what each of the 3 companions is helping with
-- whether the result was a good read, bad read, trap, or breakthrough
-
-If the player only sees "RPG units over a finance background," the implementation has failed.
+- the player can walk on chart structure and understand why the ground looks that way
+- `LONG`, `SHORT`, `HOLD`, and `RUN` read as game verbs
+- the next hidden candle feels like incoming danger or reward
+- historical crash events feel like bosses, not slides in a lesson deck

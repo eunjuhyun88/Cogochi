@@ -1223,8 +1223,8 @@
   "retrieval": {
     "enabled": true,
     "indexPath": "docs/generated/contextual-retrieval-index.json",
-    "chunkCount": 1380,
-    "sourceCount": 77,
+    "chunkCount": 1356,
+    "sourceCount": 81,
     "sources": [
       {
         "path": "AGENTS.md",
@@ -1284,6 +1284,21 @@
       {
         "path": "docs/CONTEXT_PLATFORM.md",
         "role": "context-platform",
+        "authority": "canonical"
+      },
+      {
+        "path": "docs/CONTEXTUAL_RETRIEVAL.md",
+        "role": "contextual-retrieval",
+        "authority": "canonical"
+      },
+      {
+        "path": "docs/design-docs/atlas-judgment-evolution.md",
+        "role": "design-doc",
+        "authority": "canonical"
+      },
+      {
+        "path": "docs/design-docs/chartfield-fullgame-direction.md",
+        "role": "design-doc",
         "authority": "canonical"
       }
     ]

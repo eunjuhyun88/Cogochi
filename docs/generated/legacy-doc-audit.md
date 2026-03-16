@@ -15,12 +15,19 @@ docs/
 
 src/
   routes/                    프론트엔드 페이지 (` | fail |
+| `docs/AGENT_SYSTEM_DESIGN.md` | broken-ref | `src/routes/boss/[bossId]/+page.svelte` | fail |
+| `docs/AGENT_SYSTEM_DESIGN.md` | broken-ref | `src/routes/camp/+page.svelte` | fail |
+| `docs/AGENT_SYSTEM_DESIGN.md` | broken-ref | `src/routes/cogochi/[id]/+page.svelte` | fail |
+| `docs/AGENT_SYSTEM_DESIGN.md` | broken-ref | `src/routes/zone/[zoneId]/+page.svelte` | fail |
 | `docs/AGENT_WATCH_LOG.md:1002` | absolute-local-path | `/Users/ej/Downloads/files` | tracked |
+| `docs/AGENT_WATCH_LOG.md:2664` | absolute-local-path | `/Users/ej/Desktop/스크린샷` | tracked |
 | `docs/CHART_BATTLEFIELD_RULEBOOK_v1.md:5` | absolute-local-path | `/Users/ej/Downloads/프로젝트/Cogochi_v1/docs/BATTLEFIELD_DESIGN.md` | tracked |
 | `docs/CONTEXT_ENGINEERING.md` | broken-ref | `docs/generated/agent-catalog.{md,json}` | fail |
 | `docs/CONTEXT_ENGINEERING.md` | broken-ref | `docs/generated/context-registry.{md,json}` | fail |
 | `docs/CONTEXT_ENGINEERING.md` | broken-ref | `docs/generated/{route-map,store-authority-map,api-group-map}.md` | fail |
 | `docs/CONTEXT_ENGINEERING.md` | broken-ref | `docs/{DESIGN,ENGINEERING,PLANS,PRODUCT_SENSE,QUALITY_SCORE,RELIABILITY,SECURITY,HARNESS}.md` | fail |
+| `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md` | broken-ref | `src/routes/boss/[bossId]/+page.svelte` | fail |
+| `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md` | broken-ref | `src/routes/zone/[zoneId]/+page.svelte` | fail |
 | `docs/design-docs/COGOCHI_zip_review_20260315.md:7` | absolute-local-path | `/Users/ej/Downloads/files` | tracked |
 | `docs/design-docs/cozy-chart-feel-spec.md:5` | absolute-local-path | `/Users/ej/Downloads/프로젝트/Cogochi_v1/docs/VISUAL_WORLD_DESIGN.md` | tracked |
 | `docs/references/imported/Cogochi_Dev_Prompt_20260308 (2).md` | broken-ref | `src/

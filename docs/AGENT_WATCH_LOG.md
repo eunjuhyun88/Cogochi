@@ -1606,6 +1606,85 @@ Use this file as an evidence log for task start/end, not as the main design auth
 
 ### START
 
+- Work ID: `field-camera-composition`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the new field route read better overall, but the party silhouette still disappeared too easily on first load because the camera and HUD were competing for the same space
+- Task summary: improve first-load field spawn and camera composition so the party and route read clearly in-world
+- Owned files:
+  - `src/components/shared/FieldScene.svelte`
+  - `src/lib/stores/fieldStore.ts`
+  - `src/routes/field/+page.svelte`
+  - `progress.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/field-camera-composition.md`
+  - `.agent-context/coordination/claims/field-camera-composition.json`
+
+### FINISH
+
+- Work ID: `field-camera-composition`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - Playwright screenshot in `output/web-game/field-camera-composition-1/`
+- Push/Merge status: not pushed, not merged
+- Final working tree: the field camera now places the starting party lower in the viewport so camp and the opening route read inside the world on first load, with gentler movement look-ahead to stay closer to explore-mode camera rules
+
+### START
+
+- Work ID: `battle-encounter-feel`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: no active coordination claims were present; recent parallel work on this branch had focused on the home hub and git bootstrap, so the safe next slice stayed inside `/battle` and shared battlefield presentation
+- Task summary: deepen battle game feel after the coordination check by making the encounter stage itself read more like a live clash, without touching the home route
+- Owned files:
+  - `src/components/shared/ChartBattlefield.svelte`
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-encounter-feel.md`
+  - `.agent-context/coordination/claims/battle-encounter-feel.json`
+
+### FINISH
+
+- Work ID: `battle-encounter-feel`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright screenshot in `output/web-game/battle-encounter-feel/`
+- Push/Merge status: not pushed, not merged
+- Final working tree: the battle stage now carries an encounter-style duel strip, a centered turn banner, rival-presence framing, and an in-stage command plaque so the fight reads more like a playable clash before the lower command panel is even touched
+
+### START
+
+- Work ID: `battle-enemy-silhouettes`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: an active `hub-home-actions` claim now owns the home route and several shared state/data paths, so the next safe slice had to stay outside those boundaries
+- Task summary: add visible enemy silhouettes inside the battle stage without touching any paths owned by the active home claim
+- Owned files:
+  - `src/components/shared/ChartBattlefield.svelte`
+  - `progress.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-enemy-silhouettes.md`
+
+### FINISH
+
+- Work ID: `battle-enemy-silhouettes`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright screenshot in `output/web-game/battle-enemy-silhouettes/`
+- Push/Merge status: not pushed, not merged
+- Final working tree: the battle stage now includes reusable rival silhouettes (`Warden`, `Lancer`, `Seer`) so the opposing side reads as visible enemy units inside the clash while respecting the active home-claim path boundary
+
+### START
+
 - Work ID: `hub-character-spec`
 - Branch: `codex/pixel-raising-spec`
 - Base: `main`
@@ -1633,6 +1712,36 @@ Use this file as an evidence log for task start/end, not as the main design auth
 
 ### START
 
+- Work ID: `hub-home-implementation`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: trainer-hub docs are in place; implementing the actual `/` route so the home surface matches the center-character layout instead of the old dashboard hero
+- Task summary: replace the home route with a center-character trainer hub that has a left-side state rail, right-side action rail, active companions, quick dock, and route recommendations
+- Owned files:
+  - `src/routes/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/hub-character-agent-loop.md`
+  - `.agent-context/coordination/claims/hub-home-implementation.json`
+
+### FINISH
+
+- Work ID: `hub-home-implementation`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - `npm run preview -- --host 127.0.0.1 --port 4173`
+  - Playwright screenshot and state capture in `output/web-game/hub-home/`
+  - Full-page screenshot in `output/web-game/hub-home/full-page.png`
+  - Interaction screenshot in `output/web-game/hub-home/interaction-check.png`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/` now renders a center-character trainer hub with state and action rails, companion selection, quick dock actions, and recommended route panels; `progress.md` and the watch log were updated for handoff
+
+### START
+
 - Work ID: `git-state-audit-20260315`
 - Branch: `codex/pixel-raising-spec`
 - Base: `main`
@@ -1656,3 +1765,941 @@ Use this file as an evidence log for task start/end, not as the main design auth
   - `git add -n .`
 - Push/Merge status: not pushed, not merged
 - Final working tree: Git was confirmed installed and the repo was confirmed initialized; `.gitignore` now excludes local OS noise, Svelte/Node build artifacts, and the nested Claude worktree path so the first commit candidate contains only intended project files
+
+### START
+
+- Work ID: `hub-home-persistence`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the new trainer hub layout exists on `/`, but its panel and preview state still lives in route-local state and does not yet express a dedicated client-store contract
+- Task summary: add a dedicated hub store, persist home-hub panel and preview choices, and expose richer home text state for browser automation and handoff clarity
+- Owned files:
+  - `src/lib/stores/hubStore.ts`
+  - `src/routes/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/hub-home-persistence.md`
+  - `.agent-context/coordination/claims/hub-home-persistence.json`
+
+### FINISH
+
+- Work ID: `hub-home-persistence`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client capture in `output/web-game/hub-home-persistence/`
+  - Playwright reload persistence check with screenshot in `output/web-game/hub-home-persistence/reload-check.png`
+- Push/Merge status: not pushed, not merged
+- Final working tree: added `hubStore` for persisted home-hub state, rewired `/` to use store-owned panel and preview actions, enriched the home text-state payload for automation, and updated handoff logs
+
+### START
+
+- Work ID: `hub-home-actions`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: `/` already had the trainer-hub layout and persisted UI panel memory, but `Style` and `Care` interactions still behaved like preview-only controls with no durable agent writeback
+- Task summary: connect home hub style and care actions to real roster progression state, keep the gameplay impact bounded, and revalidate persistence through browser automation
+- Owned files:
+  - `src/lib/types.ts`
+  - `src/lib/data/seed.ts`
+  - `src/lib/stores/hubStore.ts`
+  - `src/lib/stores/rosterStore.ts`
+  - `src/routes/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/hub-home-actions.md`
+  - `.agent-context/coordination/claims/hub-home-actions.json`
+
+### FINISH
+
+- Work ID: `hub-home-actions`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client capture in `output/web-game/hub-home-actions/client-care/`
+  - Custom Playwright persistence/state verification in `output/web-game/hub-home-actions/`
+  - Visual review of `output/web-game/hub-home-actions/final-state.png`
+- Push/Merge status: not pushed, not merged
+- Final working tree: home-hub style choices now persist per agent, care actions now write back into roster state with bounded stat effects and targeted care-state repair, `/` now surfaces the saved home-care result, and browser validation confirmed care/style persistence plus clean console output
+
+### START
+
+- Work ID: `hub-style-overlays`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: home-hub style choices already persisted per agent, but changing `field/archive/proof` only altered stage framing and chips; the creature body itself still looked the same
+- Task summary: make saved home styles visibly alter the trainer-hub character presentation while keeping the effect scoped away from battle/field runtime sprites
+- Owned files:
+  - `src/components/shared/PixelSprite.svelte`
+  - `src/routes/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/hub-style-overlays.md`
+  - `.agent-context/coordination/claims/hub-style-overlays.json`
+
+### FINISH
+
+- Work ID: `hub-style-overlays`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client smoke capture in `output/web-game/hub-style-overlays/client-smoke-final2/`
+  - Full-page browser captures in:
+    - `output/web-game/hub-style-overlays/final/proof-full.png`
+    - `output/web-game/hub-style-overlays/final/field-full.png`
+    - `output/web-game/hub-style-overlays/final/states.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `PixelSprite` now supports hub-only home-style adornments, the trainer hub feeds saved style into featured/companion/squad sprite instances, and the style toggle now visibly changes the creature body instead of only the room around it
+
+### START
+
+- Work ID: `style-presence-secondary`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: home style already changed the featured body on `/`, but agent detail and journal still dropped that identity back to generic sprites once the player left the hub
+- Task summary: extend saved home-style presence into `/agent/[id]` and `/journal` with a softer presentation mode and matching text summary
+- Owned files:
+  - `src/components/shared/PixelSprite.svelte`
+  - `src/components/shared/AgentSpriteCard.svelte`
+  - `src/routes/agent/[id]/+page.svelte`
+  - `src/routes/journal/+page.svelte`
+  - `src/lib/data/seed.ts`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/style-presence-secondary.md`
+
+### FINISH
+
+- Work ID: `style-presence-secondary`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client smoke in `output/web-game/style-presence-secondary/agent-smoke/`
+  - Visual/state captures in:
+    - `output/web-game/style-presence-secondary/agent-doux.png`
+    - `output/web-game/style-presence-secondary/journal.png`
+    - `output/web-game/style-presence-secondary/states.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: saved home style now carries into agent detail cards, `/agent/[id]`, and `/journal` through a softer `detail` sprite presentation plus matching `Saved presence` text cues
+
+### START
+
+- Work ID: `home-style-actions`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: home hub already persisted style/care state and lower surfaces already reflected saved style, but the quick dock still mostly behaved like a navigation strip instead of a live care shortcut
+- Task summary: turn the home quick dock into real one-click care actions and add a visible action receipt so the trainer hub feels alive
+- Owned files:
+  - `src/lib/stores/rosterStore.ts`
+  - `src/routes/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/home-style-actions.md`
+  - `.agent-context/coordination/claims/home-style-actions.json`
+
+### FINISH
+
+- Work ID: `home-style-actions`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client smoke in `output/web-game/home-style-actions/smoke/`
+  - Visual/state captures in:
+    - `output/web-game/home-style-actions/home-after-gift.png`
+    - `output/web-game/home-style-actions/home-after-memory.png`
+    - `output/web-game/home-style-actions/agent-doux.png`
+  - `output/web-game/home-style-actions/journal.png`
+  - `output/web-game/home-style-actions/states.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: dock `Gift` and `Memory` now apply real care writeback immediately, `/` shows a persistent care receipt after each action, and the home text-state payload now includes receipt metadata for automation
+
+### START
+
+- Work ID: `hub-gamefeel-overhaul`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the trainer hub had the right information architecture, but the page still read too much like a dashboard/product surface instead of a playable game room
+- Task summary: overhaul the `/` trainer hub so the page feels substantially more like a game hub with a stronger fantasy/competence read
+- Owned files:
+  - `src/routes/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/hub-gamefeel-overhaul.md`
+  - `.agent-context/coordination/claims/hub-gamefeel-overhaul.json`
+
+### FINISH
+
+- Work ID: `hub-gamefeel-overhaul`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client smoke in `output/web-game/hub-gamefeel-overhaul/smoke/`
+  - visual/state captures in:
+    - `output/web-game/hub-gamefeel-overhaul/hub-home.png`
+    - `output/web-game/hub-gamefeel-overhaul/hub-home-care.png`
+    - `output/web-game/hub-gamefeel-overhaul/state-summary.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/` now presents as a game-style trainer war room with a briefing split, darker stage world, stronger command strip, and game-native copy instead of dashboard-like surface language
+
+### START
+
+- Work ID: `battle-hit-resolve-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: battle route already read more clearly in the first viewport, but the clash itself still felt too static once the stage was visible
+- Task summary: add hit/resolve motion cues inside the battle stage without reopening unrelated hub or journal work
+- Owned files:
+  - `src/components/shared/ChartBattlefield.svelte`
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-hit-resolve-pass.md`
+  - `.agent-context/coordination/claims/battle-hit-resolve-pass.json`
+
+### FINISH
+
+- Work ID: `battle-hit-resolve-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Visual capture in:
+    - `output/web-game/battle-hit-resolve-pass/shot-0.png`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `ChartBattlefield` now shows ally/rival engagement lanes converging on the clash focus, a floating resolve pill near the gate, and motion cues on impact/rival/ally elements so `/battle` reads more like an active encounter
+
+### START
+
+- Work ID: `battle-bottom-menu-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: battle stage was stronger, but the command deck still lived in a detached panel and did not read like a battle menu
+- Task summary: attach the command deck to the stage as a Pokemon-like bottom battle menu and keep aftermath choices separate
+- Owned files:
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-bottom-menu-pass.md`
+  - `.agent-context/coordination/claims/battle-bottom-menu-pass.json`
+
+### FINISH
+
+- Work ID: `battle-bottom-menu-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Visual capture in:
+  - `output/web-game/battle-bottom-menu-pass-3/shot-0.png`
+- Push/Merge status: not pushed, not merged
+- Final working tree: the ongoing battle UI now uses a stage-attached bottom menu with a dialogue pane plus a compact 2x2 command pad, while verdict/writeback panels only appear after the clash resolves
+
+### START
+
+- Work ID: `battle-verb-menu-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the bottom menu was attached to the stage, but the first viewport still showed too much battle chrome and the four verbs did not read quickly enough
+- Task summary: compress the battle hero and battlefield chrome so the Pokemon-like bottom menu starts reading in the first viewport and the four command verbs feel primary
+- Owned files:
+  - `src/routes/battle/+page.svelte`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-verb-menu-pass.md`
+
+### FINISH
+
+- Work ID: `battle-verb-menu-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Visual captures in:
+    - `output/web-game/battle-verb-menu-pass-4/shot-0.png`
+  - `output/web-game/battle-verb-menu-pass-5/shot-0.png`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/battle` now uses shorter four-verb command copy, a quieter utility strip, tighter route-level controls, and hidden duplicate battlefield chrome so the bottom battle menu begins reading higher in the first viewport
+
+### START
+
+- Work ID: `battle-gamefeel-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: `/battle` still read more like a product console than the trainer hub, and runtime/dev wording inside the rail was breaking the game illusion
+- Task summary: restyle the battle page as an in-world command theater, keep the deterministic clash loop intact, and translate runtime cues into player-facing battle language
+- Owned files:
+  - `src/routes/battle/+page.svelte`
+  - `src/components/shared/ChartBattlefield.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-gamefeel-pass.md`
+  - `.agent-context/coordination/claims/battle-gamefeel-pass.json`
+
+### FINISH
+
+- Work ID: `battle-gamefeel-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright action/state capture:
+    - `output/web-game/battle-gamefeel-pass/dev-client/shot-0.png`
+    - `output/web-game/battle-gamefeel-pass/dev-client/state-0.json`
+  - Full-page captures:
+    - `output/web-game/battle-gamefeel-pass/dev-full/battle.png`
+    - `output/web-game/battle-gamefeel-pass/dev-full/field.png`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/battle` now reads like a darker command theater with a stage-first shell, JRPG-like command deck, in-world dossier rail, and player-facing memory/proof language instead of product-console phrasing
+
+### START
+
+- Work ID: `battle-compact-shell-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the battle bottom menu read better, but the shared shell and top battle chrome were still taking too much vertical space for shorter laptop heights
+- Task summary: compact the shared shell for battle only and reclaim enough vertical space that more of the bottom command deck appears in the first viewport
+- Owned files:
+  - `src/components/shared/PageShell.svelte`
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-compact-shell-pass.md`
+  - `.agent-context/coordination/claims/battle-compact-shell-pass.json`
+
+### FINISH
+
+- Work ID: `battle-compact-shell-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Visual capture in:
+  - `output/web-game/battle-compact-shell-pass/shot-0.png`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/battle` now opts into a compact shared shell, the shared shell no longer emits the deprecated slot warning, and the clash header/stage controls are tighter so more of the bottom menu starts inside the first viewport
+
+### START
+
+- Work ID: `battle-rail-tabs-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the battle shell was tighter, but the stacked right rail still made the screen feel dense and the command deck still wanted more first-viewport space
+- Task summary: collapse the battle right rail into a single tabbed dossier and rebalance the layout so the battlefield can shrink slightly without losing clarity
+- Owned files:
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-rail-tabs-pass.md`
+  - `.agent-context/coordination/claims/battle-rail-tabs-pass.json`
+
+### FINISH
+
+- Work ID: `battle-rail-tabs-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Visual capture in:
+    - `output/web-game/battle-rail-tabs-pass/final/shot-0.png`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/battle` now uses one tabbed right-side dossier instead of four stacked rail cards, the stage column is slightly narrower and shorter, and more of the bottom battle menu appears in the first viewport without reverting to dashboard-like chrome
+- Residual note:
+  - automated Playwright tab clicking located the rail tab buttons but timed out before completing the click, so default-tab visuals are verified and tab switching still deserves one direct browser interaction check
+
+### START
+
+- Work ID: `field-gamefeel-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the field route already had decent spatial layout, but the cue card, route labels, and runtime copy still read like a product/runtime panel instead of an in-world route screen
+- Task summary: rewrite `/field` copy and top overlay chrome so the page reads like a trail/beacon surface that matches the hub and battle tone without changing navigation or return-flow behavior
+- Owned files:
+  - `src/routes/field/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/field-gamefeel-pass.md`
+  - `.agent-context/coordination/claims/field-gamefeel-pass.json`
+
+### FINISH
+
+- Work ID: `field-gamefeel-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server capture:
+    - `output/web-game/field-gamefeel-pass/field.png`
+    - `output/web-game/field-gamefeel-pass/state.json`
+    - `output/web-game/field-gamefeel-pass/console.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/field` now presents a `Trail Board` and `Scout Beacon`, translates runtime-heavy cue text into field-side route language, exposes a player-facing trail rule instead of raw distill goals, and uses more journal-note-like chrome so the route surface feels closer to a game screen than a diagnostics panel
+- Residual note:
+  - the strongest remaining non-game chrome in the capture is the shared top `PageShell` header, so that shell is now the next highest-value surface if we keep pushing the whole app away from product UI.
+
+### START
+
+- Work ID: `shell-gamefeel-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: after the field pass, the biggest remaining non-game chrome was the shared `PageShell` header and nav that still opened multiple surfaces with product-like dashboard framing
+- Task summary: restyle the shared shell so the app opens with a world-atlas / sortie-board header, while preserving the existing route structure and compact battle behavior
+- Owned files:
+  - `src/components/shared/PageShell.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/shell-gamefeel-pass.md`
+  - `.agent-context/coordination/claims/shell-gamefeel-pass.json`
+
+### FINISH
+
+- Work ID: `shell-gamefeel-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server captures:
+    - `output/web-game/shell-gamefeel-pass/home.png`
+    - `output/web-game/shell-gamefeel-pass/field.png`
+    - `output/web-game/shell-gamefeel-pass/battle.png`
+    - `output/web-game/shell-gamefeel-pass/home.json`
+    - `output/web-game/shell-gamefeel-pass/field.json`
+    - `output/web-game/shell-gamefeel-pass/battle.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: the shared shell now opens as a darker world-atlas board with per-surface world-state pills, crest-marked nav tabs, and more game-like zone naming, so `/`, `/field`, and `/battle` all inherit a stronger in-world frame before the local surface content begins
+- Residual note:
+  - the shared shell is now tonally aligned, but it still consumes visible vertical space; if the app needs more first-viewport room, the next pass should introduce a second route-aware condensed atlas mode rather than compressing the gameplay panels further.
+
+### START
+
+- Work ID: `condensed-atlas-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: after the shell gamefeel pass, the atlas header was tonally correct but still used too much vertical space above `/field` and `/battle`
+- Task summary: add a condensed `PageShell` atlas mode for travel and clash surfaces so they reclaim more first-viewport space without losing the darker world-atlas framing
+- Owned files:
+  - `src/components/shared/PageShell.svelte`
+  - `src/routes/field/+page.svelte`
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/condensed-atlas-pass.md`
+  - `.agent-context/coordination/claims/condensed-atlas-pass.json`
+
+### FINISH
+
+- Work ID: `condensed-atlas-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server captures:
+    - `output/web-game/condensed-atlas-pass/field.png`
+    - `output/web-game/condensed-atlas-pass/battle.png`
+    - `output/web-game/condensed-atlas-pass/field.json`
+    - `output/web-game/condensed-atlas-pass/battle.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `PageShell` now supports a condensed atlas mode that flattens the shared world header into a tighter single-band board, and `/field` plus `/battle` both opt into it so the actual game stages begin higher in the viewport
+- Residual note:
+  - the next spacing wins should come from route-local hero/header tightening inside `/battle` or `/field`, not another global shell reduction.
+
+### START
+
+- Work ID: `battle-hero-condense-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: after the condensed atlas shell pass, the remaining first-viewport cost on `/battle` was the route-local `Command Theater` hero and selector band above the battlefield
+- Task summary: tighten the battle route-local hero, chip row, and selector cards so the command deck begins higher without changing the overall battle structure
+- Owned files:
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-hero-condense-pass.md`
+  - `.agent-context/coordination/claims/battle-hero-condense-pass.json`
+
+### FINISH
+
+- Work ID: `battle-hero-condense-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server capture:
+    - `output/web-game/battle-hero-condense-pass/battle.png`
+    - `output/web-game/battle-hero-condense-pass/battle.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/battle` now uses a slimmer route-local hero with fewer chips, shorter selector labels, smaller selector cards, tighter title/summary spacing, and a slightly lower stage minimum height so the command grid starts higher in the viewport
+- Residual note:
+  - the main remaining height cost is now the left dialog block inside the bottom menu shell, so the next clean viewport pass should compress that panel instead of shrinking the stage again.
+
+### START
+
+- Work ID: `battle-screen-doc-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: battle implementation had been improving in small visual passes, but the route still lacked one stable document that fixed the actual canonical battle-screen silhouette and information hierarchy
+- Task summary: write a stable battle-screen layout doc that defines the default `/battle` posture, command deck contract, dossier behavior, and verdict replacement rules
+- Owned files:
+  - `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md`
+  - `docs/design-docs/index.md`
+  - `docs/generated/`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-screen-doc-pass.md`
+  - `.agent-context/coordination/claims/battle-screen-doc-pass.json`
+
+### FINISH
+
+- Work ID: `battle-screen-doc-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run docs:refresh`
+  - `npm run docs:check`
+- Push/Merge status: not pushed, not merged
+- Final working tree: Cogochi now has a stable battle-screen design doc that fixes the intended default posture as `thin clash strip -> dominant chart stage -> pinned bottom command dock -> optional dossier overlay -> verdict sheet`, and the design-doc index now points at it
+- Residual note:
+  - the next major `/battle` implementation pass should follow this document directly and remove the remaining default route-hero / permanent-rail posture instead of continuing spacing-only polish.
+
+### START
+
+- Work ID: `battle-toolbar-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: `/battle` already had the new stage-attached bottom menu, but the first viewport still spent too much height on stacked action rows and dialog chrome before the command pad fully read
+- Task summary: compress the `/battle` action area into a slimmer single-row toolbar and reclaim more first-viewport space for the command deck without touching the shared shell
+- Coordination note:
+  - `npm run coord:list` showed an active `shell-gamefeel-pass` claim on `src/components/shared/PageShell.svelte`, so this pass was constrained to the battle route plus log files
+- Owned files:
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-toolbar-pass.md`
+
+### FINISH
+
+- Work ID: `battle-toolbar-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server captures:
+    - `output/web-game/battle-toolbar-pass/shot-0.png`
+    - `output/web-game/battle-toolbar-pass/state-0.json`
+    - `output/web-game/battle-toolbar-pass-final/shot-0.png`
+    - `output/web-game/battle-toolbar-pass-final/state-0.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/battle` now uses a one-row bottom toolbar with inline hotkey pills, shorter utility labels, smaller dialog chrome, and tighter stage/card sizing so the encounter menu reads more like a handheld JRPG battle screen and exposes slightly more of the command deck above the fold
+- Residual note:
+  - the toolbar is no longer the main height offender; the next viewport win should come from collapsing the left dialog block into a thinner encounter strip rather than squeezing the chart stage further.
+
+### START
+
+- Work ID: `battle-hero-condense-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: `/battle` already had a slimmer bottom toolbar, but the top hero/title/selectors still cost too much vertical space before the encounter stage and command deck fully read
+- Task summary: condense the battle route-local hero and selector band so the command deck starts higher in the viewport, while avoiding the shared shell
+- Coordination note:
+  - found an expired active claim for the same work ID on `src/routes/battle/+page.svelte`
+  - released that stale lease as `abandoned`, re-created the semantic checkpoint, and re-claimed the path before editing
+- Owned files:
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-hero-condense-pass.md`
+
+### FINISH
+
+- Work ID: `battle-hero-condense-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server capture:
+    - `output/web-game/battle-hero-condense-pass/shot-0.png`
+    - `output/web-game/battle-hero-condense-pass/state-0.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/battle` now presents a thinner encounter strip with a compact eyebrow, one-line title treatment, and horizontal `Lead` / `Slice` selector pills so the stage and top row of the command deck become visible sooner without touching `PageShell`
+- Residual note:
+  - the next safe viewport win is inside the bottom-left command dialog width; the shared shell stayed out of scope for this pass.
+
+### START
+
+- Work ID: `battle-structural-redesign-pass`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the user called out that the recent battle changes were still reading as “almost unchanged,” which was accurate because the layout had only been locally compressed instead of structurally redesigned
+- Task summary: restructure the battle shell and route layout so the screen reads like a game surface instead of a panel dashboard
+- Coordination note:
+  - no active claims at start
+  - claimed both `src/routes/battle/+page.svelte` and `src/components/shared/PageShell.svelte` because the remaining non-game chrome sat across both surfaces
+- Owned files:
+  - `src/routes/battle/+page.svelte`
+  - `src/components/shared/PageShell.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-structural-redesign-pass.md`
+
+### FINISH
+
+- Work ID: `battle-structural-redesign-pass`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright dev-server capture:
+    - `output/web-game/battle-structural-redesign-pass/shot-0.png`
+    - `output/web-game/battle-structural-redesign-pass/state-0.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `/battle` now uses a minimal one-line atlas shell, a wider full-stage layout, and a floating dossier HUD instead of the old always-wide right rail, which creates the first clearly visible shift from dashboard framing toward a stage-first game screen
+- Residual note:
+  - the floating dossier is now the remaining tradeoff; if the chart needs more unobstructed space, the next pass should collapse it behind an explicit toggle instead of leaving it permanently open.
+
+### START
+
+- Work ID: `gameplay-redesign-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: battle/journal/field/runtime work already exists, but the product loop still reads more like connected surfaces than a tightly designed game session
+- Task summary: redesign Cogochi from the actual minute-to-minute player loop outward so the game answers what the player does, why it is fun, and how field, battle, journal, care, and lab should connect
+- Owned files:
+  - `docs/design-docs/COGOCHI_gameplay_first_loop_redesign_20260316.md`
+  - `docs/design-docs/index.md`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/gameplay-redesign-20260316.md`
+
+### FINISH
+
+- Work ID: `gameplay-redesign-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run docs:check`
+- Push/Merge status: not pushed, not merged
+- Final working tree: added a gameplay-first redesign doc that reframes Cogochi around `travel -> read -> commit -> survive consequence -> care -> go again`, explicitly demotes lab from the default heartbeat, and redefines `/field`, `/battle`, `/journal`, and `/` around navigation, thesis choice, and care
+- Residual note:
+  - the redesign is intentionally additive for now; `docs/MASTER_GAME_SPEC.md` and the surface specs still need a later canonical rewrite if this direction is accepted
+
+### START
+
+- Work ID: `canonical-gameplay-rewrite-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the gameplay-first loop direction had been written as an additive design note, but the canonical product and surface specs still preserved the older trainer-first, battle-centric language
+- Task summary: rewrite the master spec and core field battle journal surface specs so the canonical docs now describe the actual intended game loop from play outward
+- Owned files:
+  - `docs/MASTER_GAME_SPEC.md`
+  - `docs/product-specs/core.md`
+  - `docs/product-specs/field.md`
+  - `docs/product-specs/battle.md`
+  - `docs/product-specs/journal.md`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/canonical-gameplay-rewrite-20260316.md`
+
+### FINISH
+
+- Work ID: `canonical-gameplay-rewrite-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run docs:refresh`
+  - `npm run docs:check`
+  - `npm run ctx:check -- --strict`
+- Push/Merge status: not pushed, not merged
+- Final working tree: `docs/MASTER_GAME_SPEC.md` and the `core`, `field`, `battle`, and `journal` surface specs now all align around the same gameplay-first heartbeat, with `/` reframed as a return hub, `/field` as the main playable heartbeat, `/battle` as a short thesis-first clash, and `/journal` as a consequence-and-care return point
+- Residual note:
+  - the remaining gap is no longer in the design docs; it is in product implementation, where the actual route flows and UI still need to be brought up to the new canonical loop
+
+### START
+
+- Work ID: `chart-world-reset-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the earlier gameplay-first rewrite still assumed a split route structure around `/field`, `/battle`, `/journal`, and `/lab`, but the new direction explicitly discards that shape in favor of a BTC chart-world JRPG
+- Task summary: replace the old split tamagotchi and trainer framing with a canonical chart-world design where BTC history is the overworld, zones are traversable candle regions, camp handles care, and bosses are historical market events
+- Coordination note:
+  - created semantic checkpoint `chart-world-reset-20260316`
+  - claimed the canonical design-doc, product-spec, and log paths under the `core` surface because the reset changes the whole IA and product read
+- Owned files:
+  - `docs/MASTER_GAME_SPEC.md`
+  - `docs/AGENT_SYSTEM_DESIGN.md`
+  - `docs/BATTLEFIELD_DESIGN.md`
+  - `docs/VISUAL_WORLD_DESIGN.md`
+  - `docs/product-specs/`
+  - `docs/design-docs/`
+  - `docs/exec-plans/active/`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/chart-world-reset-20260316.md`
+
+### FINISH
+
+- Work ID: `chart-world-reset-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run docs:refresh`
+  - `npm run docs:check`
+  - `npm run ctx:check -- --strict`
+- Push/Merge status: not pushed, not merged
+- Final working tree: added a detailed chart-world reset doc and a phased execution plan, then rewrote the master spec, agent-system design, battlefield design, visual-world design, and the short surface specs so the repo now canonically describes a BTC-history world map RPG with `/`, `/zone/[zoneId]`, `/boss/[bossId]`, `/camp`, and `/cogochi/[id]` as the target route structure
+- Residual note:
+  - this is still a design and planning reset; the current runtime code remains on the old route tree and now needs phased migration into the new world-map architecture
+
+### START
+
+- Work ID: `chart-world-battle-screen-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the canonical reset docs already moved Cogochi to a chart-world JRPG, but the dedicated battle-screen layout doc still described an older `/battle`-first, command-deck-and-dossier silhouette
+- Task summary: rewrite the battle-screen design doc so it matches the new route model, with normal combat living inside `/zone/[zoneId]` micro traversal and boss encounters escalating into `/boss/[bossId]`
+- Coordination note:
+  - created semantic checkpoint `chart-world-pivot-doc`
+  - reused the existing active claim `chart-world-reset-20260316` because it already owns `docs/design-docs/`, `progress.md`, and `docs/AGENT_WATCH_LOG.md`
+- Owned files:
+  - `docs/design-docs/COGOCHI_battle_screen_layout_20260316.md`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/chart-world-pivot-doc.md`
+
+### FINISH
+
+- Work ID: `chart-world-battle-screen-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run docs:refresh`
+  - `npm run docs:check`
+- Push/Merge status: not pushed, not merged
+- Final working tree: rewrote the battle-screen design doc so the canonical battle surface is now `zone micro traversal -> one-line bark -> LONG/SHORT/HOLD/RUN dock -> result posture`, with only named historical bosses escalating into a dedicated cut-in route
+- Residual note:
+  - the runtime Svelte routes still need to be migrated from the old `/battle` implementation to the new `/zone/[zoneId]` and `/boss/[bossId]` presentation model
+
+### START
+
+- Work ID: `pdf-driven-ui-reset-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: canonical docs already described a dark chart-world game shell, but the actual home route still read like a bright multi-panel SaaS dashboard and the provided PDF reference pointed toward a tighter dark command-screen composition
+- Task summary: inspect the provided PDF screenshot and use it to improve the live shell and `/` route so the app reads more like an embedded market-world command screen and less like a trainer dashboard
+- Coordination note:
+  - created semantic checkpoint `pdf-driven-ui-reset-20260316`
+  - created a fresh claim for `src/components/shared`, `src/routes/+page.svelte`, and `src/app.css` under the `core` surface before editing
+- Owned files:
+  - `src/components/shared/PageShell.svelte`
+  - `src/routes/+page.svelte`
+  - `src/app.css`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/pdf-driven-ui-reset-20260316.md`
+
+### FINISH
+
+- Work ID: `pdf-driven-ui-reset-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - rebuilt `PageShell` into a compact dark command bar
+  - rewrote `/` into a single dominant stage with chart-world screen, terminal overlay, bark strip, and tighter right rail
+  - neutralized the global shell styling in `src/app.css` so the new component-level shell can own the visual treatment cleanly
+  - captured updated UI evidence at `output/web-game/pdf-home-refresh-3/shot-0.png`
+- Residual note:
+  - the entry screen now reads closer to the provided reference, but the old overlay-heavy `/field` and `/battle` routes still need the same structural simplification
+
+### START
+
+- Work ID: `field-screen-reset-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the home route had been reset, but `/field` still read like a bright chart infographic with several cream cards covering the world view
+- Task summary: simplify `/field` into a world-first traversal screen with a compact HUD, a lighter dossier, and a darker chart-world palette that better matches the PDF-driven command-screen direction
+- Coordination note:
+  - created semantic checkpoint `field-screen-reset-20260316`
+  - claimed `src/routes/field/+page.svelte`, `src/components/shared/FieldScene.svelte`, `progress.md`, and `docs/AGENT_WATCH_LOG.md` under the `field` surface
+- Owned files:
+  - `src/routes/field/+page.svelte`
+  - `src/components/shared/FieldScene.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/field-screen-reset-20260316.md`
+
+### FINISH
+
+- Work ID: `field-screen-reset-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - replaced the stacked overlay cards in `/field` with a smaller top HUD, a compact right dossier, and a single bottom dock
+  - darkened the `FieldScene` palette so the route reads more like a chart-world night traversal than a pastel dashboard
+  - captured updated field evidence at `output/web-game/field-after-reset/shot-0.png`
+- Residual note:
+  - the field route is cleaner now, but the actual command grammar still lives elsewhere; the canonical `/zone/[zoneId]` loop still needs real runtime migration work
+
+### START
+
+- Work ID: `battle-screen-reset-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: `/battle` was still too heavy above the stage, with contract cards and phase ribbon spending too much vertical space before the actual confrontation
+- Task summary: simplify `/battle` into a darker stage-first command scene by reducing the top preamble and giving more weight to the battlefield itself
+- Coordination note:
+  - created semantic checkpoint `battle-screen-reset-20260316`
+  - claimed `src/routes/battle/+page.svelte`, `progress.md`, and `docs/AGENT_WATCH_LOG.md` under the `battle` surface after releasing the field claim
+- Owned files:
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-screen-reset-20260316.md`
+
+### FINISH
+
+- Work ID: `battle-screen-reset-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - removed the heavy contract-card and phase-ribbon stack from `/battle`
+  - replaced it with a thinner brief strip
+  - increased battlefield height and darkened the battlefield rendering slightly so the confrontation reads earlier
+  - captured updated battle evidence at `output/web-game/battle-after-reset/shot-0.png`
+- Residual note:
+  - `/battle` still runs on legacy command labels rather than the canonical `LONG/SHORT/HOLD/RUN` grammar, so this pass improves presentation but does not complete the design migration
+
+### START
+
+- Work ID: `stage-density-reduction-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: the PDF-driven reset improved `/`, `/field`, and `/battle`, but dense routes still had too much chrome and the reference language had shifted toward a larger playable stage with less surrounding panel weight
+- Task summary: reduce shell density further, darken the battlefield component itself, and translate the new reference PDF into a more explicit `world + companion console` layout
+- Coordination note:
+  - created semantic checkpoints `stage-density-reduction-20260316` and `pancake-town-field-reference-20260317`
+  - claimed `src/components/shared/PageShell.svelte`, `src/routes/field/+page.svelte`, `src/routes/battle/+page.svelte`, and `src/components/shared/FieldScene.svelte` under the `core` surface
+- Owned files:
+  - `src/components/shared/PageShell.svelte`
+  - `src/routes/field/+page.svelte`
+  - `src/routes/battle/+page.svelte`
+  - `src/components/shared/FieldScene.svelte`
+  - `src/components/shared/ChartBattlefield.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/stage-density-reduction-20260316.md`
+  - `.agent-context/checkpoints/pancake-town-field-reference-20260317.md`
+
+### FINISH
+
+- Work ID: `stage-density-reduction-20260316`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - compressed `PageShell` further on dense routes with an ultra-compact mode for `/field` and `/battle`
+  - reduced `/field` overlay density, widened the visible world, and then restructured the route into a left world stage plus right companion console inspired by `/Users/ej/Desktop/스크린샷 2026-03-16 오후 11.31.07.pdf`
+  - darkened `ChartBattlefield.svelte` so the battle base, fighter cards, callouts, and chart sky stop reading like light paper cards
+  - captured fresh evidence at `output/web-game/field-reference-pass-2/shot-0.png` and `output/web-game/battle-reference-pass-2/shot-0.png`
+- Residual note:
+  - the field structure is now much closer to the reference, but the macro `/` route still needs the same grammar and `/battle` still needs its interaction model migrated to canonical `LONG / SHORT / HOLD / RUN`
+
+### START
+
+- Work ID: `immersive-field-vibe-pass-20260317`
+- Branch: `codex/pixel-raising-spec`
+- Base: `main`
+- Working tree: `/field` already had the broad left-world/right-console split, but the stage still read like chart overlays and the console still felt like a status panel rather than the reference's live companion chat rail
+- Task summary: push `/field` closer to the attached Pancake Town reference by making the stage more immersive, the chrome thinner, the side rail more conversational, and the world more place-like
+- Coordination note:
+  - created semantic checkpoint `immersive-field-vibe-pass-20260317`
+  - claimed `src/routes/field/+page.svelte`, `src/components/shared/PageShell.svelte`, `src/components/shared/FieldScene.svelte`, `progress.md`, and `docs/AGENT_WATCH_LOG.md`
+- Owned files:
+  - `src/routes/field/+page.svelte`
+  - `src/components/shared/PageShell.svelte`
+  - `src/components/shared/FieldScene.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/immersive-field-vibe-pass-20260317.md`
+
+### FINISH
+
+- Work ID: `immersive-field-vibe-pass-20260317`
+- Branch: `codex/pixel-raising-spec`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - `bash scripts/dev/run-browser-context-harness.sh --run-id immersive-field-vibe-pass-20260317-v5 --base-url http://127.0.0.1:4198 --page /field`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - added `immersive` shell mode in `PageShell.svelte` so dense world routes can hide the top nav entirely
+  - rebuilt `/field` around a map-first stage with one small plaque and a right-side trail console that now reads as a conversation rail instead of a utility card stack
+  - brightened `FieldScene.svelte`, widened the playable read, and added landmark silhouettes near core nodes so the route feels more like a towned overworld
+  - captured fresh evidence at `.agent-context/harness/immersive-field-vibe-pass-20260317-v5/browser/screenshots/page_field.png`
+- Residual note:
+  - the route now matches the target screen grammar much better, but the underlying world renderer is still chart-derived; a full chart-world reset still needs dedicated tile/zone art and route-specific landmark logic rather than CSS silhouettes alone

@@ -73,7 +73,7 @@ function phaseForTurn(turn: number, outcome: BattleOutcome): BattlePhaseId {
   return 'RESOLVE';
 }
 
-function recommendCommand(session: BattleSession, agent: OwnedAgent): BattleCommandId {
+export function recommendBattleCommand(session: BattleSession, agent: OwnedAgent): BattleCommandId {
   if (session.trapRisk >= 64 || session.supportIntegrity <= 42) {
     return 'RISK_VETO';
   }
@@ -169,7 +169,7 @@ export function createBattleSession(
 
   return {
     ...initial,
-    selectedCommandId: recommendCommand(initial, agent),
+    selectedCommandId: recommendBattleCommand(initial, agent),
   };
 }
 
@@ -334,6 +334,6 @@ export function executeBattleCommand(session: BattleSession, agent: OwnedAgent):
 
   return {
     ...nextSession,
-    selectedCommandId: outcome === 'ONGOING' ? recommendCommand(nextSession, agent) : nextSession.selectedCommandId,
+    selectedCommandId: outcome === 'ONGOING' ? recommendBattleCommand(nextSession, agent) : nextSession.selectedCommandId,
   };
 }

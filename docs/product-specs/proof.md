@@ -1,181 +1,46 @@
 # Surface Spec: proof
 
-- Status: active
-- Canonical route entry: `/proof`
+- Status: deprecated target
+- Canonical route entry: absorbed into `/zone/[zoneId]`, `/boss/[bossId]`, and `/passport/[id]`
 - Surface ID: `proof`
 
 ## Purpose
 
-`proof` is the player-facing historical validation surface.
+In the chart-world reset, `proof` is no longer a standalone player-facing route.
 
-It is Cogochi's game-native version of a backtest:
+The proof concept is absorbed into:
 
-- fixed historical frame packs
-- one mutation candidate
-- deterministic scoring
-- one verdict recommendation
+- zone clears
+- boss clears
+- milestone history
+- passport records
 
-The player should feel:
-
-- "I am proving this creature"
-
-Not:
-
-- "I am staring at a quant report"
+If a future internal proof tool exists, it is a developer or balancing aid, not a primary player surface.
 
 ## One-Line Definition
 
-`proof` is the bridge between raising and battle where one candidate build is bound to a fixed historical pack before the player enters a live chart clash.
-
-## Core Outcome
-
-After one short proof session, the player should be able to say:
-
-- which pack was used
-- what that pack was trying to validate
-- whether the mutation deserves keep, quarantine, or revert
-- why the next clash matters
-
-## Battle Versus Proof
-
-### `battle`
-
-- one readable clash
-- one frame at a time
-- moment-to-moment command play
-
-### `proof`
-
-- one validation bundle
-- several fixed historical frames
-- deterministic score priorities
-- decision preparation before and after battle
-
-Player-facing rule:
-
-`battle is the fight`
-
-`proof is the validation contract around the fight`
+`proof` is now a behind-the-scenes validation concept rather than a front-door route.
 
 ## Must Have
 
-- visible proof pack selection
-- named historical frames
-- clear mode distinction:
-  - `SPAR`
-  - `PROOF`
-  - `GAUNTLET`
-- current mutation candidate surfaced
-- current weak link surfaced
-- proof metric weights surfaced
-- direct launch into the first clash
-- clear statement that live market state does not affect proof truth
-
-## Proof Modes
-
-### `SPAR`
-
-- 1 to 2 cases
-- low pressure rehearsal
-- used to stabilize a draft before committing to harder proof
-
-### `PROOF`
-
-- 3 to 5 cases
-- standard mutation validation
-- authoritative enough for keep / quarantine / revert
-
-### `GAUNTLET`
-
-- 5 or more cases
-- broader historical validation
-- prepares a creature for public credibility or future market-facing surfaces
-
-## Primary Metrics
-
-Proof should score judgment quality first:
-
-- `READ_ACCURACY`
-- `RISK_DISCIPLINE`
-- `TRAP_AVOIDANCE`
-- `RETRIEVAL_QUALITY`
-- `EXPLANATION_CONSISTENCY`
-- `SQUAD_COORDINATION`
-
-Optional secondary metric:
-
-- `SHADOW_RETURN`
-
-`SHADOW_RETURN` is supporting evidence only.
-It must never become the sole authority over mutation truth.
-
-## User Flow
-
-1. The player enters `/proof` from `/lab`, `/field`, or `/agent/[id]`.
-2. If `/lab` handed off a doctrine session, the page keeps that `agent + session + pack` context intact.
-3. The page shows the active agent, current weak link, active draft, and handed-off doctrine candidate.
-4. The player chooses one proof pack.
-5. The page explains what that pack is validating.
-6. The player launches into the first clash.
-7. The battle result returns into verdict and journal flow.
-8. The pack remains the stable reference for the mutation story.
-
-## Frontend Responsibilities
-
-Frontend owns:
-
-- pack browsing
-- candidate readability
-- doctrine-session readability
-- metric readability
-- route handoff into battle
-- proof narrative
-
-Frontend must not own:
-
-- signal generation
-- metric calculation
-- pack scoring rules
-- writeback policy
-
-## Shared Deterministic Domain
-
-Shared domain owns:
-
-- proof pack definitions
-- frame-to-scenario mapping
-- metric weights
-- mutation verdict inputs
-- compare contracts
-
-## Backend Responsibilities
-
-Backend owns:
-
-- runtime artifacts
-- future SignalSnapshot generation
-- retrieval freeze for historical frames
-- proof artifact packaging
-- future public passport export
+- boss and zone outcomes produce durable records
+- passport can surface those records later
+- no detached proof workstation should interrupt the core world-play loop
 
 ## Context Contracts
 
-## Routes
+### Routes
 
-- `/proof`
-- `/battle`
-- `/journal`
+- no primary player route in the target IA
 
-## Stores
+### Stores
 
-- `rosterStore`
-- `labStore`
+- `passportStore`
 - `battleStore`
-- `proofStore`
+- `bossStore`
 
 ## Deep Links
 
-- `docs/product-specs/battle.md`
-- `docs/product-specs/evolution.md`
-- `docs/design-docs/COGOCHI_hybrid_game_market_20260315.md`
+- `docs/MASTER_GAME_SPEC.md`
 - `docs/AGENT_SYSTEM_DESIGN.md`
+- `docs/design-docs/COGOCHI_chart_world_jrpg_reset_20260316.md`
