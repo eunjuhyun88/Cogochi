@@ -14,6 +14,17 @@
   type RuntimeEntry = { heading: string; preview: string };
   type RuntimeHighlightedRail = { tier: MemoryTier; entries: RuntimeEntry[] };
 
+  function buildRouteHref(pathname: '/field' | '/lab', entries: Array<[string, string | null | undefined]>): string {
+    const params = new URLSearchParams();
+    for (const [key, value] of entries) {
+      if (value) {
+        params.set(key, value);
+      }
+    }
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }
+
   function sanitizeRuntimeFocusCheck(text: string): string | null {
     const cleaned = text.replace(/`/g, '').replace(/\s+/g, ' ').trim();
     if (!cleaned) {
@@ -58,6 +69,10 @@
     }
     return labStore.getDoctrineSession(agentId, doctrineSessionId);
   });
+  const selectedDoctrineSessionId = $derived.by(
+    () => selectedProofArtifact?.doctrineSessionId ?? data.returnContext.doctrineSessionId ?? selectedDoctrineSession?.id ?? null,
+  );
+  const selectedProofPackId = $derived.by(() => selectedProofArtifact?.proofPackId ?? data.returnContext.proofPackId ?? null);
   const latestEntries = $derived.by(() =>
     agents
       .map((agent) => ({
@@ -167,6 +182,66 @@
   const visualChangeLabel = $derived.by(
     () => selectedProofArtifact?.visibleEffect ?? selectedAgent?.recentTrainingFocus ?? 'No visible change recorded yet.',
   );
+  const returnFieldHref = $derived.by(() =>
+    buildRouteHref('/field', [
+      ['agent', selectedAgent?.id ?? null],
+      ['session', selectedDoctrineSessionId],
+      ['pack', selectedProofPackId],
+      ['artifact', selectedProofArtifact?.id ?? null],
+      ['return', selectedProofArtifact ? null : data.returnContext.outcome],
+      ['verdict', selectedProofArtifact ? null : data.returnContext.verdict],
+      ['gate', selectedProofArtifact ? null : data.returnContext.gate],
+      ['frame', selectedProofArtifact ? null : data.returnContext.frameId],
+    ]),
+  );
+  const returnLabHref = $derived.by(() =>
+    buildRouteHref('/lab', [
+      ['agent', selectedAgent?.id ?? null],
+      ['session', selectedDoctrineSessionId],
+      ['pack', selectedProofPackId],
+      ['artifact', selectedProofArtifact?.id ?? null],
+      ['return', selectedProofArtifact ? null : data.returnContext.outcome],
+      ['verdict', selectedProofArtifact ? null : data.returnContext.verdict],
+      ['gate', selectedProofArtifact ? null : data.returnContext.gate],
+      ['frame', selectedProofArtifact ? null : data.returnContext.frameId],
+    ]),
+  );
+  const returnTrailTitle = $derived.by(() => {
+    if (!selectedAgent) {
+      return 'Carry one correction back into the trail.';
+    }
+    if (selectedAgent.careState === 'DOCTRINE_BLUR') {
+      return 'Tune the doctrine line once, then step straight back into the field.';
+    }
+    if (selectedAgent.careState === 'CONFIDENCE_SHAKE') {
+      return 'Take the safer gate back out and rebuild the squad read.';
+    }
+    if (selectedAgent.careState === 'MEMORY_DRIFT') {
+      return 'Leave the chamber with one lesson pinned, not the whole archive.';
+    }
+    return 'The return room is done. Move the squad back onto the trail.';
+  });
+  const returnTrailDetail = $derived.by(() => {
+    if (!selectedAgent) {
+      return 'The field loop should stay one click away from this room.';
+    }
+    const doctrineLead = selectedDoctrineSession ? `Bound doctrine: ${selectedDoctrineSession.title}. ` : '';
+    const distillLead = runtimeFocusCheck ? ` Distill cue: ${runtimeFocusCheck}` : '';
+    return `${doctrineLead}${selectedAgent.nextCareAction}${distillLead}`;
+  });
+
+  $effect(() => {
+    if (!browser || !selectedAgent) {
+      return;
+    }
+
+    rosterStore.selectAgent(selectedAgent.id);
+    labStore.setActiveAgent(selectedAgent.id);
+    labStore.ensureDraft(selectedAgent.id);
+    if (selectedDoctrineSessionId && selectedDoctrineSession) {
+      labStore.setActiveDoctrineSession(selectedAgent.id, selectedDoctrineSessionId);
+    }
+  });
 
   $effect(() => {
     if (!browser || !selectedAgent) {
@@ -183,6 +258,9 @@
       returnFrame: returnSummary?.frameTitle ?? null,
       verdict: returnSummary?.verdictLabel ?? null,
       artifact: selectedProofArtifact?.id ?? null,
+      doctrineSessionId: selectedDoctrineSessionId,
+      returnFieldHref,
+      returnLabHref,
       runtimeGoal: data.runtime.distill.goal,
       runtimeFocusCheck,
       focusTier,
@@ -241,6 +319,26 @@
                   <p>{selectedAgent.recentLesson}</p>
                 </div>
 
+                <div class="journal-return-strip">
+                  <small>Recommended next move</small>
+                  <strong>{returnTrailTitle}</strong>
+                  <p>{returnTrailDetail}</p>
+                  <div class="chip-row">
+                    <span class="chip">{selectedAgent.name}</span>
+                    {#if returnSummary}
+                      <span class="chip chip--quiet">{returnSummary.gateLabel}</span>
+                    {/if}
+                    {#if selectedDoctrineSession}
+                      <span class="chip chip--quiet">{selectedDoctrineSession.title}</span>
+                    {/if}
+                  </div>
+                  <div class="journal-return-strip__actions">
+                    <a class="link-button" href={returnFieldHref}>Resume field loop</a>
+                    <a class="link-button secondary" href={returnLabHref}>Open lab</a>
+                    <a class="link-button ghost" href={`/agent/${selectedAgent.id}`}>Inspect agent</a>
+                  </div>
+                </div>
+
                 <div class="journal-highlight-grid">
                   <div class="journal-ticket journal-ticket--verdict">
                     <small>Latest mutation</small>
@@ -278,25 +376,6 @@
                     </div>
                   </div>
                 {/if}
-
-                <div class="journal-next-step">
-                  <small>Next room action</small>
-                  <strong>{selectedAgent.nextCareAction}</strong>
-                  {#if runtimeFocusCheck}
-                    <p>Campfire distill note: {runtimeFocusCheck}</p>
-                  {/if}
-                </div>
-
-                <div class="chip-row">
-                  <a class="link-button" href="/field">Return to field</a>
-                  <a class="link-button secondary" href={`/agent/${selectedAgent.id}`}>Inspect agent</a>
-                  <a
-                    class="link-button secondary"
-                    href={`/lab?agent=${selectedAgent.id}${selectedProofArtifact?.doctrineSessionId || selectedDoctrineSession ? `&session=${selectedProofArtifact?.doctrineSessionId ?? selectedDoctrineSession?.id}` : ''}`}
-                  >
-                    Open lab
-                  </a>
-                </div>
               </div>
             </div>
           {/if}
@@ -358,12 +437,12 @@
       </div>
     </section>
 
-    <section class="journal-ledgers">
-      <article class="panel journal-shelf">
+    <section class="journal-summary-grid">
+      <article class="panel journal-summary-card">
         <div class="stack">
           <div>
             <p class="section-kicker">Keepsake Desk</p>
-            <h2 class="section-title">What this creature is carrying back into the room.</h2>
+            <h2 class="section-title">What returns with the creature.</h2>
           </div>
 
           <div class="journal-keepsakes">
@@ -388,7 +467,7 @@
         </div>
       </article>
 
-      <article class="panel journal-book">
+      <article class="panel journal-summary-card">
         <div class="stack">
           <div>
             <p class="section-kicker">Field Notebook</p>
@@ -400,6 +479,13 @@
               {#each focusedTierRail.entries as entry}
                 <p><strong>{entry.heading}</strong> · {entry.preview}</p>
               {/each}
+            </div>
+          {/if}
+
+          {#if runtimeFocusCheck}
+            <div class="journal-summary-note">
+              <small>Distill cue</small>
+              <strong>{runtimeFocusCheck}</strong>
             </div>
           {/if}
 
@@ -415,24 +501,26 @@
           {/if}
         </div>
       </article>
-    </section>
 
-    <section class="journal-history">
-      <div class="journal-history__header">
-        <p class="section-kicker">Squad Shelf</p>
-        <h2 class="section-title">Recent mutation keepsakes across the squad.</h2>
-      </div>
+      <article class="panel journal-summary-card">
+        <div class="stack">
+          <div>
+            <p class="section-kicker">Squad Shelf</p>
+            <h2 class="section-title">Recent mutation consequences.</h2>
+          </div>
 
-      <div class="journal-history__grid">
-        {#each latestEntries as entry}
-          <article class={`panel journal-proof-card journal-proof-card--${entry.mutation?.decision.toLowerCase()}`}>
-            <small>{entry.agent.name} / {entry.mutation?.decision}</small>
-            <strong>{entry.mutation?.title}</strong>
-            <p>{entry.mutation?.reason}</p>
-            <p class="journal-proof-card__frame">{entry.frame?.title ?? 'No proven frame yet'}</p>
-          </article>
-        {/each}
-      </div>
+          <div class="journal-history__grid">
+            {#each latestEntries.slice(0, 3) as entry}
+              <article class={`journal-proof-card journal-proof-card--${entry.mutation?.decision.toLowerCase()}`}>
+                <small>{entry.agent.name} / {entry.mutation?.decision}</small>
+                <strong>{entry.mutation?.title}</strong>
+                <p>{entry.mutation?.reason}</p>
+                <p class="journal-proof-card__frame">{entry.frame?.title ?? 'No proven frame yet'}</p>
+              </article>
+            {/each}
+          </div>
+        </div>
+      </article>
     </section>
   </div>
 </PageShell>
@@ -486,8 +574,7 @@
     pointer-events: none;
   }
 
-  .journal-stage__header,
-  .journal-history__header {
+  .journal-stage__header {
     position: relative;
     z-index: 1;
     display: grid;
@@ -509,16 +596,11 @@
   }
 
   .journal-stage__layout,
-  .journal-ledgers {
+  .journal-summary-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.8fr);
     gap: 18px;
     align-items: start;
-  }
-
-  .journal-ledgers,
-  .journal-history {
-    margin-top: 0;
   }
 
   .journal-board {
@@ -530,8 +612,8 @@
 
   .journal-note {
     display: grid;
-    grid-template-columns: 220px minmax(0, 1fr);
-    gap: 18px;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 16px;
   }
 
   .journal-note__portrait,
@@ -544,8 +626,8 @@
   .journal-polaroid {
     display: grid;
     place-items: center;
-    min-height: 182px;
-    border-radius: 28px;
+    min-height: 156px;
+    border-radius: 24px;
     border: 1px solid rgba(74, 84, 66, 0.12);
     background:
       linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(243, 239, 230, 0.94));
@@ -557,10 +639,10 @@
   .journal-note__story,
   .journal-ticket,
   .journal-torn-note,
-  .journal-next-step,
   .journal-care-card,
   .journal-memory-tab,
-  .journal-doctrine-card {
+  .journal-doctrine-card,
+  .journal-summary-note {
     display: grid;
     gap: 8px;
   }
@@ -568,10 +650,10 @@
   .journal-note__story strong,
   .journal-ticket strong,
   .journal-torn-note strong,
-  .journal-next-step strong,
   .journal-care-card strong,
   .journal-memory-tab strong,
   .journal-doctrine-card strong,
+  .journal-summary-note strong,
   .journal-proof-card strong {
     font-size: 1.08rem;
     color: #24352d;
@@ -580,7 +662,6 @@
   .journal-note__story p,
   .journal-ticket p,
   .journal-torn-note p,
-  .journal-next-step p,
   .journal-care-card p,
   .journal-memory-tab p,
   .journal-proof-card p,
@@ -592,18 +673,18 @@
 
   .journal-highlight-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
   }
 
   .journal-ticket,
-  .journal-next-step,
   .journal-care-card,
   .journal-memory-tab,
   .journal-doctrine-card,
+  .journal-summary-note,
   .journal-proof-card {
-    padding: 16px;
-    border-radius: 22px;
+    padding: 14px;
+    border-radius: 20px;
     border: 1px solid rgba(74, 84, 66, 0.14);
     background: rgba(255, 252, 245, 0.82);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
@@ -616,10 +697,10 @@
 
   .journal-ticket small,
   .journal-torn-note small,
-  .journal-next-step small,
   .journal-care-card small,
   .journal-memory-tab small,
   .journal-doctrine-card small,
+  .journal-summary-note small,
   .journal-proof-card small {
     color: var(--text-soft);
     letter-spacing: 0.08em;
@@ -639,9 +720,40 @@
     background: rgba(247, 242, 228, 0.84);
   }
 
-  .journal-next-step {
-    border-color: rgba(47, 108, 88, 0.2);
-    background: rgba(248, 252, 245, 0.9);
+  .journal-return-strip {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid rgba(47, 108, 88, 0.22);
+    background:
+      linear-gradient(180deg, rgba(241, 249, 241, 0.96), rgba(252, 249, 239, 0.92));
+    box-shadow:
+      0 12px 24px rgba(85, 88, 62, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  }
+
+  .journal-return-strip strong {
+    font-size: 1.04rem;
+    color: #20332a;
+  }
+
+  .journal-return-strip p {
+    margin: 0;
+    color: var(--text-soft);
+    line-height: 1.5;
+  }
+
+  .journal-return-strip small {
+    color: var(--text-soft);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .journal-return-strip__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .journal-care-rail {
@@ -671,17 +783,24 @@
     color: #34433a;
   }
 
+  .journal-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .journal-summary-card {
+    padding: 22px;
+  }
+
+  .journal-summary-note {
+    border-color: rgba(47, 108, 88, 0.2);
+    background: rgba(248, 252, 245, 0.9);
+  }
+
   .journal-keepsakes,
   .journal-memory-tabs,
   .journal-history__grid {
     display: grid;
     gap: 12px;
-  }
-
-  .journal-shelf,
-  .journal-book,
-  .journal-proof-card {
-    padding: 22px;
   }
 
   .journal-keepsakes {
@@ -722,7 +841,7 @@
 
   @media (max-width: 1100px) {
     .journal-stage__layout,
-    .journal-ledgers {
+    .journal-summary-grid {
       grid-template-columns: 1fr;
     }
   }
@@ -731,6 +850,10 @@
     .journal-note,
     .journal-highlight-grid {
       grid-template-columns: 1fr;
+    }
+
+    .journal-return-strip__actions {
+      flex-direction: column;
     }
   }
 </style>

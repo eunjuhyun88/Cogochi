@@ -20,7 +20,7 @@ export type InstinctState = 'TRUSTED' | 'WATCH' | 'WEAK';
 export type BattleTone = 'good' | 'info' | 'warn' | 'danger';
 export type BattlePhaseId = 'APPROACH' | 'LOCK' | 'COMMIT' | 'RESOLVE';
 export type BattleOutcome = 'ONGOING' | 'WIN' | 'LOSS';
-export type BattleCommandId = 'FOCUS_TAP' | 'MEMORY_PULSE' | 'RISK_VETO' | 'RETARGET';
+export type BattleCommandId = 'LONG' | 'SHORT' | 'HOLD' | 'RUN';
 export type BattleEntryGate = 'DIRECT' | 'SPAR' | 'PROOF';
 export type ProofMode = 'SPAR' | 'PROOF' | 'GAUNTLET';
 export type ProofMetricId =
@@ -33,6 +33,8 @@ export type ProofMetricId =
   | 'SHADOW_RETURN';
 export type FieldNodeKind = 'CAMP' | 'LAB' | 'ARCHIVE' | 'JOURNAL' | 'BATTLE_GATE';
 export type FieldFacing = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
+export type FieldCommandId = 'LONG' | 'SHORT' | 'HOLD' | 'RUN';
+export type FieldEncounterOutcome = 'ADVANTAGE' | 'SAFE' | 'PUNISHED' | 'ESCAPE';
 export type DoctrinePatternId = 'OI_SPIKE' | 'CVD_DIVERGENCE' | 'FUNDING_HEAT' | 'DISTRIBUTION_ZONE' | 'CUSTOM';
 export type OverlayLayerKind = 'BADGE' | 'ZONE' | 'MARKER' | 'BAND';
 export type OverlayTone = 'BULL' | 'BEAR' | 'WARN' | 'INFO' | 'NEUTRAL';
@@ -447,6 +449,51 @@ export interface FieldPartyMemberState {
   isLeader: boolean;
 }
 
+export interface FieldRunStats {
+  hp: number;
+  gold: number;
+  xp: number;
+  clearedFrameIds: string[];
+  failedFrameIds: string[];
+  resolvedTurns: number;
+  currentStreak: number;
+}
+
+export interface FieldEncounterTurn {
+  id: string;
+  turn: number;
+  commandId: FieldCommandId;
+  recommendedCommandId: FieldCommandId;
+  revealedCandleIndex: number;
+  outcome: FieldEncounterOutcome;
+  hpDelta: number;
+  goldDelta: number;
+  xpDelta: number;
+  summary: string;
+}
+
+export interface FieldEncounterState {
+  frameId: string;
+  frameTitle: string;
+  frameDateLabel: string;
+  turn: number;
+  turnLimit: number;
+  visibleCount: number;
+  recommendedCommandId: FieldCommandId;
+  supportPrice: number;
+  resistancePrice: number;
+  hazardPrice: number | null;
+  hazardLabel: string | null;
+  bark: string;
+  clue: string;
+  lastCommandId: FieldCommandId | null;
+  lastOutcome: FieldEncounterOutcome | null;
+  lastSummary: string | null;
+  cleared: boolean;
+  failed: boolean;
+  turns: FieldEncounterTurn[];
+}
+
 export interface FieldState {
   width: number;
   height: number;
@@ -457,4 +504,6 @@ export interface FieldState {
   lastEvent: string;
   canInteract: boolean;
   tick: number;
+  run: FieldRunStats;
+  encounter: FieldEncounterState | null;
 }

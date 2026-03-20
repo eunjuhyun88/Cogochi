@@ -22,21 +22,21 @@
   type BattleRailTabId = 'captain' | 'comms' | 'stakes' | 'memory';
 
   const battleMenuCopy: Record<BattleCommandId, { verb: string; flavor: string }> = {
-    FOCUS_TAP: {
-      verb: 'Push',
-      flavor: 'Drive the lane forward.',
+    LONG: {
+      verb: 'Climb',
+      flavor: 'Commit to the upward line.',
     },
-    MEMORY_PULSE: {
-      verb: 'Read',
-      flavor: 'Check the replay first.',
+    SHORT: {
+      verb: 'Break',
+      flavor: 'Commit to the downward line.',
     },
-    RISK_VETO: {
-      verb: 'Guard',
-      flavor: 'Block the bad line.',
+    HOLD: {
+      verb: 'Wait',
+      flavor: 'Pause for the cleaner read.',
     },
-    RETARGET: {
-      verb: 'Shift',
-      flavor: 'Move to the live gate.',
+    RUN: {
+      verb: 'Escape',
+      flavor: 'Disengage and preserve the squad.',
     },
   };
 
@@ -241,7 +241,7 @@
     if (session?.outcome === 'LOSS') {
       return 'Field line collapsed';
     }
-    return selectedCommandCard ? `${selectedCommandCard.battleVerb} ready` : 'Choose a command';
+    return selectedCommandCard ? `${selectedCommandCard.label} ready` : 'Choose a command';
   });
   const battleMenuPrompt = $derived.by(() => {
     if (session?.outcome === 'WIN') {
@@ -554,7 +554,7 @@
   });
 </script>
 
-<PageShell compact condensed minimal>
+<PageShell compact condensed minimal immersive>
   <div class="battle-page">
     {#if battleView && session}
       <section class="battle-hero">
@@ -563,7 +563,7 @@
           <div class="battle-toolbar__top battle-stage-shell__hero">
             <div class="battle-toolbar__title battle-toolbar__title--contract">
               <div class="battle-toolbar__eyebrow">
-                <p class="section-kicker">Turn Contract</p>
+                <p class="section-kicker">Current Turn</p>
                 <div class="chip-row battle-toolbar__chips">
                   <span class="chip chip--gate">{gateLabel}</span>
                   <span class="chip">{battleView.stageFrame.title}</span>
@@ -576,8 +576,12 @@
 
             <div class="battle-toolbar__controls battle-toolbar__controls--compact">
               <label class="field">
-                <span>Lead</span>
-                <select value={activeAgentId} onchange={(event) => syncContext((event.currentTarget as HTMLSelectElement).value, stageScenarioId)}>
+                <span>Companion</span>
+                <select
+                  aria-label="Select battle companion"
+                  value={activeAgentId}
+                  onchange={(event) => syncContext((event.currentTarget as HTMLSelectElement).value, stageScenarioId)}
+                >
                   {#each agents as agent}
                     <option value={agent.id}>{agent.name}</option>
                   {/each}
@@ -585,8 +589,12 @@
               </label>
 
               <label class="field">
-                <span>Slice</span>
-                <select value={stageScenarioId} onchange={(event) => syncContext(activeAgentId, (event.currentTarget as HTMLSelectElement).value, null)}>
+                <span>Chart</span>
+                <select
+                  aria-label="Select battle chart slice"
+                  value={stageScenarioId}
+                  onchange={(event) => syncContext(activeAgentId, (event.currentTarget as HTMLSelectElement).value, null)}
+                >
                   {#each evalScenarios as scenario}
                     <option value={scenario.id}>{scenario.label}</option>
                   {/each}
@@ -599,24 +607,20 @@
                 onclick={() => (dossierOpen = !dossierOpen)}
                 type="button"
               >
-                {dossierOpen ? 'Hide dossier' : 'Dossier'}
+                {dossierOpen ? 'Hide guide' : 'Guide'}
               </button>
             </div>
           </div>
 
           <div class="battle-brief-strip" aria-label="Encounter summary">
-            <article class="battle-brief-pill battle-brief-pill--success">
-              <small>Win line</small>
-              <strong>{battleContract?.successLine ?? battleView.verdictLabel}</strong>
-            </article>
-
-            <article class="battle-brief-pill battle-brief-pill--failure">
-              <small>Risk line</small>
-              <strong>{battleContract?.failureLine ?? battleView.pressureLabel}</strong>
-            </article>
-
             <article class="battle-brief-pill battle-brief-pill--guide">
-              <small>Best now</small>
+              <small>Chart read</small>
+              <strong>{battleContract?.successLine ?? battleView.verdictLabel}</strong>
+              <span>{battleContract?.failureLine ? `Avoid ${battleContract.failureLine}` : battleView.pressureLabel}</span>
+            </article>
+
+            <article class="battle-brief-pill battle-brief-pill--success">
+              <small>Best answer</small>
               <strong>{battleRecommendedVerb ?? selectedCommandCard?.battleVerb ?? 'Choose'} / {battleContract?.recommendedCommandLabel ?? selectedCommandCard?.label ?? 'Command'}</strong>
               <span>{battleContract?.recommendedReason ?? battleMenuPrompt}</span>
             </article>
@@ -892,8 +896,31 @@
 
 <style>
   .battle-page {
+    position: relative;
+    isolation: isolate;
     display: grid;
-    gap: 8px;
+    gap: 12px;
+    --battle-gold: rgba(239, 190, 108, 0.82);
+    --battle-gold-soft: rgba(239, 190, 108, 0.18);
+    --battle-mint: rgba(122, 216, 180, 0.8);
+    --battle-mint-soft: rgba(122, 216, 180, 0.16);
+    --battle-line: rgba(255, 243, 217, 0.12);
+    --battle-panel-bg: rgba(16, 24, 28, 0.78);
+    --battle-panel-strong: rgba(12, 19, 23, 0.9);
+    --battle-shadow: 0 24px 58px rgba(5, 10, 11, 0.26);
+    padding: 10px 0 20px;
+  }
+
+  .battle-page::before {
+    content: '';
+    position: absolute;
+    inset: -12px 0 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at top left, rgba(255, 225, 154, 0.12), transparent 24%),
+      radial-gradient(circle at 78% 12%, rgba(103, 169, 138, 0.12), transparent 20%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 24%);
   }
 
   .battle-hero {
@@ -909,8 +936,8 @@
 
   .battle-hero__rail {
     position: absolute;
-    top: 164px;
-    right: 14px;
+    top: 154px;
+    right: 18px;
     width: min(320px, calc(100% - 28px));
     max-height: calc(100vh - 190px);
     z-index: 5;
@@ -920,31 +947,34 @@
   .battle-panel,
   .battle-command-panel,
   .battle-stage-shell {
-    padding: 16px;
+    padding: 18px;
   }
 
   .battle-toolbar,
   .battle-panel,
   .battle-command-panel {
     background:
-      linear-gradient(180deg, rgba(252, 248, 240, 0.95), rgba(244, 237, 223, 0.92));
-    border-color: rgba(146, 139, 110, 0.14);
+      linear-gradient(180deg, rgba(251, 247, 239, 0.94), rgba(244, 236, 221, 0.88));
+    border-color: rgba(155, 145, 112, 0.16);
+    box-shadow: 0 20px 44px rgba(80, 72, 48, 0.08);
   }
 
   .battle-stage-shell {
     position: relative;
     overflow: hidden;
     display: grid;
-    gap: 6px;
-    padding: 10px 10px 8px;
+    gap: 10px;
+    padding: 12px 12px 10px;
     background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent 26%),
       radial-gradient(circle at top left, rgba(255, 213, 118, 0.24), transparent 28%),
       radial-gradient(circle at 86% 14%, rgba(103, 169, 138, 0.18), transparent 22%),
-      linear-gradient(180deg, rgba(41, 56, 52, 0.96), rgba(23, 34, 31, 0.98));
-    border-color: rgba(116, 140, 126, 0.26);
+      linear-gradient(180deg, rgba(37, 52, 49, 0.96), rgba(18, 29, 27, 0.98));
+    border-color: rgba(126, 150, 136, 0.3);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 22px 48px rgba(16, 24, 22, 0.22);
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 18px 30px rgba(255, 255, 255, 0.03),
+      0 26px 58px rgba(16, 24, 22, 0.26);
   }
 
   .battle-stage-shell::before {
@@ -957,7 +987,18 @@
       linear-gradient(90deg, rgba(202, 224, 204, 0.05) 1px, transparent 1px),
       linear-gradient(140deg, rgba(255, 229, 158, 0.08), transparent 48%);
     background-size: 30px 30px, 30px 30px, auto;
-    opacity: 0.72;
+    opacity: 0.62;
+  }
+
+  .battle-stage-shell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 20%),
+      radial-gradient(circle at 50% 0, rgba(255, 245, 219, 0.08), transparent 24%);
+    opacity: 0.8;
   }
 
   .battle-stage-shell > * {
@@ -968,10 +1009,10 @@
   .battle-toolbar__top {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 6px;
+    gap: 10px;
     align-items: center;
-    padding-bottom: 2px;
-    border-bottom: 1px solid rgba(228, 220, 188, 0.12);
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(239, 228, 193, 0.12);
   }
 
   .battle-toolbar__title {
@@ -1005,29 +1046,31 @@
 
   .battle-contract__question {
     max-width: 58ch;
-    color: rgba(241, 235, 219, 0.92);
-    line-height: 1.18;
-    font-size: 0.84rem;
+    color: rgba(245, 239, 223, 0.9);
+    line-height: 1.28;
+    font-size: 0.88rem;
     display: -webkit-box;
-    line-clamp: 1;
-    -webkit-line-clamp: 1;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
   .battle-brief-strip {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .battle-brief-pill {
     display: grid;
-    gap: 3px;
-    padding: 8px 10px;
-    border-radius: 14px;
-    border: 1px solid rgba(226, 215, 182, 0.12);
-    background: rgba(8, 16, 14, 0.2);
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(226, 215, 182, 0.14);
+    background:
+      linear-gradient(180deg, rgba(14, 23, 20, 0.3), rgba(9, 16, 14, 0.18));
+    backdrop-filter: blur(12px);
   }
 
   .battle-brief-pill small {
@@ -1039,14 +1082,14 @@
 
   .battle-brief-pill strong {
     color: #f7f0db;
-    font-size: 0.78rem;
+    font-size: 0.84rem;
     line-height: 1.24;
   }
 
   .battle-brief-pill span {
     color: rgba(215, 223, 209, 0.72);
-    font-size: 0.67rem;
-    line-height: 1.18;
+    font-size: 0.69rem;
+    line-height: 1.24;
     display: -webkit-box;
     line-clamp: 1;
     -webkit-line-clamp: 1;
@@ -1059,14 +1102,9 @@
     background: rgba(24, 58, 44, 0.28);
   }
 
-  .battle-brief-pill--failure {
-    border-color: rgba(196, 108, 88, 0.2);
-    background: rgba(66, 34, 31, 0.26);
-  }
-
   .battle-brief-pill--guide {
-    border-color: rgba(241, 180, 98, 0.2);
-    background: rgba(72, 51, 24, 0.24);
+    border-color: rgba(154, 206, 221, 0.22);
+    background: rgba(18, 46, 58, 0.28);
   }
 
   .battle-stage-shell__summary {
@@ -1089,8 +1127,8 @@
 
   .battle-stage-shell .section-title {
     color: #fbf3dd;
-    font-size: clamp(1rem, 1.28vw, 1.28rem);
-    line-height: 1;
+    font-size: clamp(1.06rem, 1.3vw, 1.34rem);
+    line-height: 1.02;
     display: -webkit-box;
     line-clamp: 1;
     -webkit-line-clamp: 1;
@@ -1105,16 +1143,16 @@
   }
 
   .battle-stage-shell .chip {
-    background: rgba(247, 240, 225, 0.12);
-    border-color: rgba(223, 214, 180, 0.16);
-    color: rgba(244, 235, 215, 0.86);
-    padding: 3px 7px;
+    background: rgba(247, 240, 225, 0.14);
+    border-color: rgba(223, 214, 180, 0.18);
+    color: rgba(246, 238, 219, 0.9);
+    padding: 4px 8px;
     font-size: 0.64rem;
   }
 
   .battle-toolbar__controls {
     display: flex;
-    gap: 5px;
+    gap: 8px;
     align-items: center;
     justify-content: flex-end;
     flex-wrap: wrap;
@@ -1138,13 +1176,14 @@
   }
 
   .field {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 7px;
-    border-radius: 12px;
-    border: 1px solid rgba(223, 214, 180, 0.14);
-    background: rgba(12, 24, 21, 0.16);
+    display: grid;
+    gap: 4px;
+    min-width: 128px;
+    padding: 7px 9px;
+    border-radius: 14px;
+    border: 1px solid rgba(223, 214, 180, 0.16);
+    background: rgba(12, 24, 21, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .field span {
@@ -1158,13 +1197,17 @@
   .field select {
     min-width: 0;
     width: 100%;
-    padding: 5px 7px;
-    border-radius: 9px;
-    border: 1px solid rgba(225, 215, 184, 0.14);
-    background: rgba(253, 248, 236, 0.92);
-    color: #1d2b24;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(225, 215, 184, 0.16);
+    background:
+      linear-gradient(180deg, rgba(250, 246, 235, 0.98), rgba(236, 227, 206, 0.94));
+    color: #1e2a25;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.34),
+      0 6px 12px rgba(14, 20, 18, 0.12);
     font-size: 0.76rem;
+    font-weight: 600;
   }
 
   .battle-stage-shell__frame {
@@ -1179,12 +1222,12 @@
   }
 
   .battle-stage-shell__frame :global(.battlefield__stage) {
-    aspect-ratio: 16 / 5.2;
-    min-height: 430px;
+    aspect-ratio: 16 / 4.2;
+    min-height: 250px;
   }
 
   .battle-stage-shell__frame :global(.battlefield__svg) {
-    filter: brightness(0.74) saturate(0.86) contrast(1.03);
+    filter: brightness(0.84) saturate(0.94) contrast(1.04);
   }
 
   .battle-stage-shell__frame :global(.battlefield__duel-strip) {
@@ -1226,34 +1269,36 @@
 
   .battle-bottom-menu-shell {
     display: grid;
-    gap: 6px;
+    gap: 8px;
     margin-top: 0;
-    padding: 6px;
-    border-radius: 22px;
-    border: 1px solid rgba(112, 130, 115, 0.28);
+    padding: 8px;
+    border-radius: 24px;
+    border: 1px solid rgba(128, 148, 132, 0.3);
     background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent 26%),
       radial-gradient(circle at top right, rgba(255, 212, 118, 0.12), transparent 24%),
-      linear-gradient(180deg, rgba(24, 35, 32, 0.95), rgba(12, 20, 18, 0.98));
+      linear-gradient(180deg, rgba(25, 37, 34, 0.95), rgba(12, 20, 18, 0.98));
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 16px 32px rgba(7, 14, 13, 0.24);
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 18px 36px rgba(7, 14, 13, 0.26);
   }
 
   .battle-bottom-menu {
     display: grid;
-    grid-template-columns: minmax(0, 0.48fr) minmax(0, 1fr);
-    gap: 6px;
+    grid-template-columns: minmax(0, 0.46fr) minmax(0, 1fr);
+    gap: 8px;
     align-items: start;
   }
 
   .battle-bottom-menu__dialog {
     display: grid;
-    gap: 5px;
-    padding: 8px 10px;
-    border-radius: 16px;
-    border: 1px solid rgba(112, 130, 115, 0.26);
+    gap: 7px;
+    padding: 10px 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(128, 148, 132, 0.28);
     background:
-      linear-gradient(180deg, rgba(40, 57, 52, 0.94), rgba(24, 35, 32, 0.94));
+      linear-gradient(180deg, rgba(43, 61, 56, 0.96), rgba(23, 34, 31, 0.96));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .battle-bottom-menu__meta {
@@ -1275,27 +1320,27 @@
   }
 
   .battle-bottom-menu__tag {
-    background: rgba(72, 143, 107, 0.22);
-    border: 1px solid rgba(114, 190, 150, 0.16);
-    color: #d4ebd8;
+    background: rgba(72, 143, 107, 0.24);
+    border: 1px solid rgba(114, 190, 150, 0.2);
+    color: #ddf1df;
   }
 
   .battle-bottom-menu__slot {
-    background: rgba(232, 192, 97, 0.18);
-    border: 1px solid rgba(232, 192, 97, 0.18);
-    color: #f2d38a;
+    background: rgba(232, 192, 97, 0.2);
+    border: 1px solid rgba(232, 192, 97, 0.22);
+    color: #f7dda0;
   }
 
   .battle-bottom-menu__dialog strong {
-    font-size: 0.94rem;
+    font-size: 1.02rem;
     color: #f6efda;
-    line-height: 1.1;
+    line-height: 1.14;
   }
 
   .battle-bottom-menu__dialog p {
-    color: rgba(215, 223, 209, 0.74);
-    line-height: 1.24;
-    font-size: 0.8rem;
+    color: rgba(221, 228, 215, 0.76);
+    line-height: 1.32;
+    font-size: 0.82rem;
     display: -webkit-box;
     line-clamp: 2;
     -webkit-line-clamp: 2;
@@ -1306,11 +1351,11 @@
   .battle-bottom-menu__footnote {
     display: flex;
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: 10px;
     overflow: hidden;
-    font-size: 0.64rem;
+    font-size: 0.66rem;
     white-space: nowrap;
-    color: rgba(204, 214, 198, 0.66);
+    color: rgba(211, 220, 205, 0.68);
   }
 
   .battle-bottom-menu__footnote span {
@@ -1341,31 +1386,35 @@
     min-height: 154px;
     padding: 16px;
     border-radius: 22px;
-    border: 1px solid rgba(104, 127, 112, 0.28);
+    border: 1px solid rgba(125, 146, 131, 0.28);
     background:
-      linear-gradient(180deg, rgba(33, 47, 42, 0.96), rgba(20, 31, 28, 0.94));
+      linear-gradient(180deg, rgba(37, 52, 47, 0.98), rgba(19, 29, 27, 0.96));
+    color: #f4edd8;
     cursor: pointer;
     transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
   }
 
   .battle-command-grid--menu .battle-command {
-    min-height: 62px;
-    padding: 7px 8px;
-    border-radius: 16px;
-    align-content: space-between;
+    min-height: 76px;
+    padding: 10px;
+    border-radius: 18px;
+    align-content: start;
+    gap: 6px;
   }
 
   .battle-command-grid--menu .battle-command strong {
-    font-size: 0.82rem;
+    font-size: 0.98rem;
+    color: #f7f1de;
   }
 
   .battle-command-grid--menu .battle-command span:last-child {
-    font-size: 0.66rem;
-    line-height: 1.12;
+    color: rgba(222, 230, 217, 0.78);
+    font-size: 0.72rem;
+    line-height: 1.22;
   }
 
   .battle-command-grid--menu .battle-command small {
-    color: rgba(215, 221, 209, 0.5);
+    color: rgba(237, 226, 197, 0.62);
     font-size: 0.62rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -1380,7 +1429,7 @@
   .battle-command.selected {
     border-color: rgba(92, 179, 133, 0.44);
     background:
-      linear-gradient(180deg, rgba(42, 74, 61, 0.98), rgba(28, 53, 45, 0.96));
+      linear-gradient(180deg, rgba(46, 81, 67, 0.98), rgba(27, 51, 43, 0.96));
   }
 
   .battle-command.recommended:not(.selected) {
@@ -1404,11 +1453,27 @@
   }
 
   .battle-command--danger {
-    border-color: rgba(170, 93, 72, 0.34);
+    border-color: rgba(184, 101, 79, 0.38);
+    background:
+      linear-gradient(180deg, rgba(56, 36, 33, 0.98), rgba(31, 21, 20, 0.96));
   }
 
   .battle-command--secondary {
-    border-color: rgba(88, 123, 167, 0.34);
+    border-color: rgba(101, 132, 178, 0.38);
+    background:
+      linear-gradient(180deg, rgba(31, 44, 58, 0.98), rgba(20, 30, 41, 0.96));
+  }
+
+  .battle-command--good {
+    border-color: rgba(104, 177, 138, 0.38);
+    background:
+      linear-gradient(180deg, rgba(31, 55, 46, 0.98), rgba(20, 34, 29, 0.96));
+  }
+
+  .battle-command--info {
+    border-color: rgba(201, 158, 85, 0.34);
+    background:
+      linear-gradient(180deg, rgba(58, 47, 27, 0.98), rgba(34, 28, 18, 0.96));
   }
 
   .battle-command__meta {
@@ -1427,22 +1492,22 @@
   }
 
   .battle-command__hotkey {
-    background: rgba(236, 198, 105, 0.18);
-    color: #f2d38a;
+    background: rgba(236, 198, 105, 0.22);
+    color: #f7dc9d;
   }
 
   .battle-command__state {
-    background: rgba(89, 169, 127, 0.18);
-    color: #d4ebd8;
+    background: rgba(89, 169, 127, 0.22);
+    color: #dbf0de;
   }
 
   .battle-command strong {
     font-size: 1rem;
-    color: #f6efda;
+    color: #f7f0db;
   }
 
   .battle-command span:last-child {
-    color: rgba(217, 224, 212, 0.72);
+    color: rgba(222, 230, 217, 0.76);
     line-height: 1.45;
   }
 
@@ -1456,10 +1521,10 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    padding: 7px 8px;
-    border-radius: 16px;
-    border: 1px solid rgba(112, 130, 115, 0.26);
-    background: rgba(255, 248, 235, 0.06);
+    padding: 8px 10px;
+    border-radius: 18px;
+    border: 1px solid rgba(128, 148, 132, 0.24);
+    background: rgba(255, 248, 235, 0.08);
   }
 
   .battle-bottom-menu__toolbar-main,
@@ -1492,8 +1557,8 @@
   .battle-bottom-menu__hint strong {
     padding: 3px 7px;
     border-radius: 999px;
-    background: rgba(247, 240, 225, 0.1);
-    border: 1px solid rgba(226, 215, 182, 0.12);
+    background: rgba(247, 240, 225, 0.12);
+    border: 1px solid rgba(226, 215, 182, 0.14);
     color: #f3e7c6;
     font-size: 0.68rem;
     letter-spacing: 0.08em;
@@ -1508,7 +1573,7 @@
 
   .battle-bottom-menu__actions .action-button {
     border-color: rgba(229, 216, 182, 0.14);
-    padding: 9px 12px;
+    padding: 10px 13px;
     min-height: 0;
     font-size: 0.8rem;
   }
@@ -1521,8 +1586,8 @@
 
   .battle-bottom-menu__actions .action-button.secondary,
   .battle-bottom-menu__actions .action-button.tertiary {
-    background: rgba(247, 240, 225, 0.08);
-    color: #f4ecd6;
+    background: rgba(247, 240, 225, 0.1);
+    color: #f6eed8;
   }
 
   .battle-command-panel {

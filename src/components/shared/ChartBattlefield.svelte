@@ -198,11 +198,10 @@
     if (view.session.outcome === 'LOSS') {
       return objectiveZone ? 'Push Rejected' : 'Line Broken';
     }
-    const selected = selectedCommandCard?.label.toLowerCase() ?? '';
-    if (selected.includes('memory')) return 'Recall Spike';
-    if (selected.includes('risk')) return 'Brace Window';
-    if (selected.includes('retarget')) return 'Angle Shift';
-    return view.report.action === 'LONG' ? 'Upward Commit' : 'Downward Commit';
+    if (selectedCommandCard?.id === 'HOLD') return 'Read Window';
+    if (selectedCommandCard?.id === 'RUN') return 'Escape Line';
+    if (selectedCommandCard?.id === 'SHORT') return 'Break Commit';
+    return 'Climb Commit';
   });
   const resolveTone = $derived.by(() => {
     if (view.session.outcome === 'WIN') return 'good';
@@ -682,13 +681,15 @@
     padding: 18px;
     border-radius: 28px;
     background:
-      radial-gradient(circle at top right, rgba(255, 211, 109, 0.1), transparent 24%),
-      radial-gradient(circle at bottom left, rgba(103, 169, 138, 0.1), transparent 22%),
-      linear-gradient(180deg, rgba(17, 24, 29, 0.98), rgba(12, 18, 22, 0.98));
-    border: 1px solid rgba(111, 127, 119, 0.24);
+      linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 26%),
+      radial-gradient(circle at top right, rgba(255, 211, 109, 0.12), transparent 24%),
+      radial-gradient(circle at bottom left, rgba(103, 169, 138, 0.12), transparent 22%),
+      linear-gradient(180deg, rgba(18, 28, 34, 0.98), rgba(9, 15, 20, 0.98));
+    border: 1px solid rgba(137, 154, 145, 0.24);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 26px 60px rgba(7, 12, 14, 0.32);
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 18px 32px rgba(255, 255, 255, 0.03),
+      0 28px 68px rgba(7, 12, 14, 0.34);
     color: #edf1e8;
   }
 
@@ -698,11 +699,11 @@
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(rgba(168, 156, 110, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(168, 156, 110, 0.04) 1px, transparent 1px),
+      linear-gradient(rgba(181, 168, 122, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(181, 168, 122, 0.045) 1px, transparent 1px),
       radial-gradient(circle at center, transparent 48%, rgba(46, 55, 42, 0.08) 100%);
     background-size: 28px 28px, 28px 28px, auto;
-    opacity: 0.72;
+    opacity: 0.68;
   }
 
   .battlefield > * {
@@ -714,6 +715,8 @@
     position: relative;
     aspect-ratio: 16 / 8.4;
     min-height: 300px;
+    overflow: hidden;
+    border-radius: 24px;
   }
 
   .battlefield__duel-strip {
@@ -730,9 +733,9 @@
   .battlefield__fighter-card,
   .battlefield__turn-banner,
   .battlefield__command-plaque {
-    border: 1px solid rgba(127, 131, 109, 0.24);
-    box-shadow: 0 12px 22px rgba(83, 72, 43, 0.18);
-    backdrop-filter: blur(10px);
+    border: 1px solid rgba(157, 168, 144, 0.22);
+    box-shadow: 0 16px 30px rgba(18, 18, 12, 0.22);
+    backdrop-filter: blur(14px);
   }
 
   .battlefield__fighter-card {
@@ -741,12 +744,14 @@
     gap: 10px;
     padding: 8px 10px;
     border-radius: 18px;
-    background: rgba(15, 24, 28, 0.78);
+    background:
+      linear-gradient(180deg, rgba(17, 28, 33, 0.84), rgba(12, 20, 25, 0.78));
   }
 
   .battlefield__fighter-card--rival {
     justify-self: end;
-    background: rgba(30, 18, 20, 0.74);
+    background:
+      linear-gradient(180deg, rgba(38, 20, 22, 0.82), rgba(27, 14, 16, 0.76));
   }
 
   .battlefield__fighter-avatar {
@@ -759,11 +764,11 @@
   }
 
   .battlefield__fighter-avatar--player {
-    background: linear-gradient(180deg, rgba(36, 72, 63, 0.96), rgba(24, 49, 43, 0.92));
+    background: linear-gradient(180deg, rgba(39, 86, 73, 0.96), rgba(20, 48, 42, 0.94));
   }
 
   .battlefield__fighter-avatar--rival {
-    background: linear-gradient(180deg, rgba(84, 44, 40, 0.96), rgba(53, 28, 27, 0.92));
+    background: linear-gradient(180deg, rgba(96, 48, 44, 0.96), rgba(54, 27, 26, 0.94));
   }
 
   .battlefield__rival-emblem {
@@ -807,7 +812,8 @@
     gap: 2px;
     padding: 8px 14px;
     border-radius: 18px;
-    background: rgba(36, 52, 48, 0.84);
+    background:
+      linear-gradient(180deg, rgba(46, 65, 58, 0.88), rgba(24, 39, 35, 0.84));
     text-align: center;
   }
 
@@ -818,7 +824,7 @@
   }
 
   .battlefield__turn-banner strong {
-    color: #f1cf88;
+    color: #f6d998;
     font-size: 1rem;
   }
 
@@ -827,9 +833,10 @@
     height: 100%;
     display: block;
     border-radius: 24px;
-    border: 1px solid rgba(111, 127, 119, 0.18);
+    border: 1px solid rgba(140, 154, 146, 0.18);
     box-shadow:
       inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+      inset 0 18px 30px rgba(255, 255, 255, 0.03),
       0 14px 26px rgba(8, 13, 15, 0.24);
   }
 
@@ -863,7 +870,7 @@
 
   .battlefield__engagement-line--ally {
     stroke: rgba(86, 177, 118, 0.84);
-    filter: drop-shadow(0 0 8px rgba(137, 219, 166, 0.22));
+    filter: drop-shadow(0 0 10px rgba(137, 219, 166, 0.24));
   }
 
   .battlefield__engagement-line--ally.boost {
@@ -872,7 +879,7 @@
 
   .battlefield__engagement-line--rival {
     stroke: rgba(213, 110, 94, 0.82);
-    filter: drop-shadow(0 0 8px rgba(224, 151, 138, 0.18));
+    filter: drop-shadow(0 0 10px rgba(224, 151, 138, 0.2));
     animation-direction: reverse;
   }
 
@@ -972,9 +979,9 @@
     max-width: 138px;
     padding: 5px 9px;
     border-radius: 999px;
-    background: rgba(255, 248, 234, 0.94);
+    background: rgba(255, 248, 234, 0.96);
     border: 1px solid rgba(151, 143, 111, 0.18);
-    box-shadow: 0 10px 18px rgba(117, 104, 69, 0.12);
+    box-shadow: 0 12px 20px rgba(117, 104, 69, 0.16);
     color: rgba(86, 80, 58, 0.94);
     font-size: 0.64rem;
     font-weight: 700;
@@ -1035,9 +1042,10 @@
     min-width: 124px;
     padding: 8px 10px;
     border-radius: 16px;
-    border: 1px solid rgba(114, 127, 119, 0.22);
-    background: rgba(18, 28, 32, 0.9);
-    box-shadow: 0 14px 26px rgba(8, 13, 15, 0.2);
+    border: 1px solid rgba(145, 159, 150, 0.22);
+    background:
+      linear-gradient(180deg, rgba(22, 33, 38, 0.92), rgba(15, 23, 27, 0.9));
+    box-shadow: 0 16px 28px rgba(8, 13, 15, 0.24);
     transform: translate(-50%, -50%);
     text-align: center;
     animation: battlefield-resolve-bob 1500ms ease-in-out infinite;
@@ -1093,7 +1101,7 @@
     border-radius: 16px;
     background: linear-gradient(180deg, rgba(68, 37, 33, 0.96), rgba(44, 23, 22, 0.92));
     border: 1px solid rgba(173, 112, 100, 0.14);
-    box-shadow: 0 8px 18px rgba(17, 10, 10, 0.22);
+    box-shadow: 0 10px 20px rgba(17, 10, 10, 0.24);
     animation: battlefield-rival-hover 1750ms ease-in-out infinite;
   }
 
@@ -1182,20 +1190,21 @@
   .battlefield__companion-body {
     padding: 6px;
     border-radius: 18px;
-    background: rgba(19, 32, 34, 0.74);
-    border: 1px solid rgba(128, 145, 138, 0.12);
-    box-shadow: 0 8px 18px rgba(7, 12, 14, 0.2);
+    background:
+      linear-gradient(180deg, rgba(21, 36, 39, 0.82), rgba(16, 28, 31, 0.76));
+    border: 1px solid rgba(148, 165, 158, 0.12);
+    box-shadow: 0 10px 20px rgba(7, 12, 14, 0.22);
     animation: battlefield-ally-bob 1900ms ease-in-out infinite;
   }
 
   .battlefield__role-tag {
     padding: 4px 9px;
     border-radius: 999px;
-    background: rgba(18, 30, 33, 0.88);
-    border: 1px solid rgba(128, 145, 138, 0.14);
+    background: rgba(16, 28, 31, 0.9);
+    border: 1px solid rgba(148, 165, 158, 0.14);
     font-size: 0.66rem;
     letter-spacing: 0.08em;
-    color: rgba(216, 226, 220, 0.88);
+    color: rgba(227, 234, 229, 0.9);
   }
 
   .battlefield__callout {
@@ -1204,9 +1213,11 @@
     gap: 4px;
     padding: 10px 12px;
     border-radius: 16px;
-    background: rgba(17, 28, 32, 0.84);
-    border: 1px solid rgba(128, 145, 138, 0.18);
-    box-shadow: 0 18px 32px rgba(7, 12, 14, 0.22);
+    background:
+      linear-gradient(180deg, rgba(19, 31, 36, 0.88), rgba(13, 22, 27, 0.82));
+    border: 1px solid rgba(148, 165, 158, 0.18);
+    box-shadow: 0 20px 34px rgba(7, 12, 14, 0.24);
+    backdrop-filter: blur(12px);
   }
 
   .battlefield__callout strong {
@@ -1246,7 +1257,8 @@
     gap: 4px;
     padding: 10px 12px;
     border-radius: 18px;
-    background: rgba(33, 49, 45, 0.84);
+    background:
+      linear-gradient(180deg, rgba(35, 55, 50, 0.88), rgba(25, 39, 36, 0.84));
   }
 
   .battlefield__command-plaque small {

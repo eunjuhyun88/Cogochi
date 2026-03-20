@@ -1,5 +1,11 @@
 import { get, writable } from 'svelte/store';
-import type { FieldFacing, FieldNode, FieldPartyMemberState, FieldState, OwnedAgent } from '$lib/types';
+import {
+  createInitialFieldRunStats,
+  executeFieldCommand,
+  restFieldRun,
+  syncFieldEncounter,
+} from '$lib/engine/field-encounter';
+import type { FieldCommandId, FieldFacing, FieldNode, FieldPartyMemberState, FieldState, OwnedAgent } from '$lib/types';
 
 const FIELD_WIDTH = 2736;
 const FIELD_HEIGHT = 1620;
@@ -103,6 +109,8 @@ const initialState: FieldState = {
   lastEvent: 'Lead the dino squad toward the next gate.',
   canInteract: false,
   tick: 0,
+  run: createInitialFieldRunStats(),
+  encounter: null,
 };
 
 const spawnPoints = [
@@ -210,14 +218,24 @@ function createFieldStore() {
           members,
           nearbyNodeId: nearbyNode?.id ?? null,
           canInteract: Boolean(nearbyNode),
-          lastEvent: state.lastEvent,
-          objectiveNodeId: state.objectiveNodeId,
-          tick: state.tick,
         };
       });
     },
     setInput(next: Partial<InputState>) {
       Object.assign(inputState, next);
+    },
+    setActiveFrame(frameId: string | null) {
+      update((state) => {
+        const encounter = syncFieldEncounter(state.encounter, state.run, frameId);
+        if (encounter === state.encounter) {
+          return state;
+        }
+        return {
+          ...state,
+          encounter,
+          lastEvent: encounter?.lastSummary ?? encounter?.bark ?? state.lastEvent,
+        };
+      });
     },
     step(deltaMs: number) {
       update((state) => {
@@ -307,6 +325,30 @@ function createFieldStore() {
         ...state,
         lastEvent,
         objectiveNodeId: objectiveNodeId ?? state.objectiveNodeId,
+      }));
+    },
+    executeCommand(commandId: FieldCommandId) {
+      update((state) => {
+        if (!state.encounter) {
+          return state;
+        }
+
+        const result = executeFieldCommand(state.encounter, state.run, commandId);
+        return {
+          ...state,
+          encounter: result.encounter,
+          run: result.run,
+          lastEvent: result.eventText,
+        };
+      });
+      return get(store).encounter;
+    },
+    restAtCamp() {
+      update((state) => ({
+        ...state,
+        run: restFieldRun(state.run),
+        encounter: state.encounter?.failed ? null : state.encounter,
+        lastEvent: 'Camp restored the squad. HP climbed and the next route is safe to read again.',
       }));
     },
   };

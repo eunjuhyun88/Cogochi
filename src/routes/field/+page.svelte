@@ -8,22 +8,45 @@
   import PageShell from '$components/shared/PageShell.svelte';
   import { careStateLabels } from '$lib/data/seed';
   import { getScenarioForHistoricalFrame, resolveHistoricalFieldFrame } from '$lib/engine/chart-frame-model';
+  import { fieldCommandDefinitions } from '$lib/engine/field-encounter';
   import { fieldNodes, fieldStore } from '$lib/stores/fieldStore';
   import { labStore } from '$lib/stores/labStore';
   import { proofStore } from '$lib/stores/proofStore';
   import { rosterStore } from '$lib/stores/rosterStore';
-  import type { CareState, ProofArtifact } from '$lib/types';
+  import type { CareState, FieldCommandId, ProofArtifact } from '$lib/types';
 
   let { data }: { data: PageData } = $props();
   let fieldStage: HTMLElement | null = null;
+  let selectedFieldCommandId = $state('LONG' as FieldCommandId);
 
   type FieldReturnContext = PageData['returnContext'];
+  type ContextualFieldRoute = '/field' | '/battle' | '/journal' | '/lab';
   type FieldConsoleEntry = {
     label: string;
     text: string;
     tone: 'accent' | 'info' | 'quiet';
     speaker: 'agent' | 'system';
   };
+
+  function buildRouteHref(pathname: ContextualFieldRoute, entries: Array<[string, string | null | undefined]>): string {
+    const params = new URLSearchParams();
+    for (const [key, value] of entries) {
+      if (value) {
+        params.set(key, value);
+      }
+    }
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }
+
+  function formatFieldPrice(value: number | null): string {
+    if (value === null) {
+      return 'None';
+    }
+    return value.toLocaleString('en-US', {
+      maximumFractionDigits: 2,
+    });
+  }
 
   function artifactGateQuery(gate: ProofArtifact['entryGate']): FieldReturnContext['gate'] {
     if (gate === 'PROOF') {
@@ -197,28 +220,6 @@
     return 'Carry only the clue that helps the next gate.';
   }
 
-  function toolLabelForContext(careState: CareState | null, returnContext: FieldReturnContext): string {
-    if (returnContext.verdict === 'QUARANTINED') {
-      return 'Shard Quarantine';
-    }
-    if (returnContext.verdict === 'REVERTED') {
-      return 'Reset Bench';
-    }
-    if (careState === 'MEMORY_DRIFT') {
-      return 'Memory Anchor';
-    }
-    if (careState === 'DOCTRINE_BLUR') {
-      return 'Doctrine Tuner';
-    }
-    if (careState === 'SQUAD_FRICTION') {
-      return 'Party Relay';
-    }
-    if (careState === 'CONFIDENCE_SHAKE') {
-      return 'Risk Reader';
-    }
-    return 'Trail Reader';
-  }
-
   function cueTextForContext(
     returnContext: FieldReturnContext,
     careState: CareState | null,
@@ -328,25 +329,42 @@
     }
     return proofStore.getArtifact(data.returnContext.artifactId);
   });
+  const contextAgentId = $derived.by(() => {
+    const requestedAgentId = selectedProofArtifact?.agentId ?? data.selectedAgentId ?? $rosterStore.selectedAgentId;
+    return $rosterStore.agents.find((agent) => agent.id === requestedAgentId)?.id ?? $rosterStore.agents[0]?.id ?? null;
+  });
+  const activeDoctrineSessionId = $derived.by(() => selectedProofArtifact?.doctrineSessionId ?? data.selectedDoctrineSessionId ?? null);
+  const activeProofPackId = $derived.by(() => selectedProofArtifact?.proofPackId ?? data.selectedProofPackId ?? null);
   const effectiveReturnContext = $derived.by<FieldReturnContext>(() =>
     selectedProofArtifact ? returnContextFromArtifact(selectedProofArtifact) : data.returnContext,
   );
-  const state = $derived($fieldStore);
-  const objectiveNode = $derived(fieldNodes.find((node) => node.id === state.objectiveNodeId) ?? null);
-  const nearbyNode = $derived(fieldNodes.find((node) => node.id === state.nearbyNodeId) ?? null);
-  const leader = $derived(fallbackParty[0] ?? null);
+  const fieldStateView = $derived($fieldStore);
+  const runStats = $derived(fieldStateView.run);
+  const encounter = $derived(fieldStateView.encounter);
+  const objectiveNode = $derived(fieldNodes.find((node) => node.id === fieldStateView.objectiveNodeId) ?? null);
+  const nearbyNode = $derived(fieldNodes.find((node) => node.id === fieldStateView.nearbyNodeId) ?? null);
+  const fieldParty = $derived.by(() => {
+    const lead = $rosterStore.agents.find((agent) => agent.id === contextAgentId) ?? null;
+    if (!lead) {
+      return fallbackParty;
+    }
+    const sameFamily = $rosterStore.agents.filter((agent) => agent.id !== lead.id && agent.family === lead.family);
+    const others = $rosterStore.agents.filter((agent) => agent.id !== lead.id && agent.family !== lead.family);
+    return [lead, ...sameFamily, ...others].slice(0, 4);
+  });
+  const leader = $derived(fieldParty[0] ?? null);
   const activeHistoricalFrame = $derived.by(() => {
-    const currentLeader = state.members[0];
+    const currentLeader = fieldStateView.members[0];
     if (!currentLeader) {
       return null;
     }
-    return resolveHistoricalFieldFrame(currentLeader.x, state.width);
+    return resolveHistoricalFieldFrame(currentLeader.x, fieldStateView.width);
   });
   const activeScenarioId = $derived(
     activeHistoricalFrame ? getScenarioForHistoricalFrame(activeHistoricalFrame.id) : $labStore.activeScenarioId,
   );
   const runtimeCueNodeId = $derived(
-    targetNodeIdForCue(effectiveReturnContext, leader?.careState ?? null, state.objectiveNodeId),
+    targetNodeIdForCue(effectiveReturnContext, leader?.careState ?? null, fieldStateView.objectiveNodeId),
   );
   const runtimeCueNode = $derived(fieldNodes.find((node) => node.id === runtimeCueNodeId) ?? null);
   const runtimeFocusCheck = $derived.by(() => {
@@ -358,41 +376,133 @@
   const runtimeCueVerb = $derived(cueVerbForContext(effectiveReturnContext, leader?.careState ?? null));
   const returnSummary = $derived(returnSummaryForContext(effectiveReturnContext));
   const trailRule = $derived(trailRuleForContext(effectiveReturnContext, leader?.careState ?? null));
+  const fieldShellHref = $derived.by(() =>
+    buildRouteHref('/field', [
+      ['agent', contextAgentId],
+      ['session', activeDoctrineSessionId],
+      ['pack', activeProofPackId],
+      ['artifact', selectedProofArtifact?.id ?? null],
+    ]),
+  );
+  const journalHref = $derived.by(() =>
+    buildRouteHref('/journal', [
+      ['agent', contextAgentId],
+      ['session', activeDoctrineSessionId],
+      ['pack', activeProofPackId],
+      ['artifact', selectedProofArtifact?.id ?? null],
+      ['return', selectedProofArtifact ? null : effectiveReturnContext.outcome],
+      ['verdict', selectedProofArtifact ? null : effectiveReturnContext.verdict],
+      ['gate', selectedProofArtifact ? null : effectiveReturnContext.gate],
+      ['frame', selectedProofArtifact ? null : effectiveReturnContext.frameId],
+    ]),
+  );
+  const labHref = $derived.by(() =>
+    buildRouteHref('/lab', [
+      ['agent', contextAgentId],
+      ['session', activeDoctrineSessionId],
+      ['pack', activeProofPackId],
+      ['artifact', selectedProofArtifact?.id ?? null],
+      ['return', selectedProofArtifact ? null : effectiveReturnContext.outcome],
+      ['verdict', selectedProofArtifact ? null : effectiveReturnContext.verdict],
+      ['gate', selectedProofArtifact ? null : effectiveReturnContext.gate],
+      ['frame', selectedProofArtifact ? null : effectiveReturnContext.frameId],
+    ]),
+  );
+  const encounterRecommendation = $derived(
+    encounter ? fieldCommandDefinitions.find((command) => command.id === encounter.recommendedCommandId) ?? null : null,
+  );
+  const selectedFieldCommand = $derived(
+    fieldCommandDefinitions.find((command) => command.id === selectedFieldCommandId) ?? fieldCommandDefinitions[0],
+  );
+  const canResolveEncounter = $derived(Boolean(encounter && !encounter.cleared && !encounter.failed));
+  const canTravelToNearbyNode = $derived(Boolean(nearbyNode) && !canResolveEncounter);
+  const fieldPlaqueTitle = $derived.by(() => {
+    if (canResolveEncounter && encounter) {
+      return 'Hold the squad on this slice.';
+    }
+    return activeHistoricalFrame?.title ?? runtimeCueNode?.label ?? objectiveNode?.label ?? 'Gate';
+  });
+  const fieldPlaqueDetail = $derived.by(() => {
+    if (canResolveEncounter && encounter) {
+      return 'Resolve the dock first. Once this read is clear, the trail opens again.';
+    }
+    return runtimeCueText;
+  });
   const fieldConsoleFeed = $derived.by<FieldConsoleEntry[]>(() =>
     [
-      { label: leader?.name ?? 'Companion read', text: runtimeCueText, tone: 'accent', speaker: 'agent' },
+      encounter
+        ? { label: encounter.frameTitle, text: encounter.bark, tone: 'accent' as const, speaker: 'agent' }
+        : { label: leader?.name ?? 'Companion read', text: runtimeCueText, tone: 'accent' as const, speaker: 'agent' },
+      encounter?.clue ? { label: 'Chart read', text: encounter.clue, tone: 'info' as const, speaker: 'agent' } : null,
+      encounter?.lastSummary
+        ? { label: encounter.failed ? 'Retreat' : encounter.cleared ? 'Clear' : 'Last reveal', text: encounter.lastSummary, tone: 'info' as const, speaker: 'agent' }
+        : null,
       runtimeFocusCheck
         ? { label: 'Scout check', text: runtimeFocusCheck, tone: 'info' as const, speaker: 'agent' }
         : null,
       { label: 'Trail rule', text: trailRule, tone: 'quiet', speaker: 'system' },
       returnSummary ? { label: 'Return mark', text: returnSummary, tone: 'quiet' as const, speaker: 'system' } : null,
-    ].filter((entry): entry is FieldConsoleEntry => Boolean(entry)),
+    ]
+      .filter((entry): entry is FieldConsoleEntry => Boolean(entry))
+      .slice(0, 3),
   );
-  const fieldConsolePrompt = $derived(
-    nearbyNode
-      ? `cross into ${nearbyNode.label.toLowerCase()}`
-      : `guide the squad toward ${(runtimeCueNode?.label ?? objectiveNode?.label ?? 'the next gate').toLowerCase()}`,
-  );
-  const fieldConsoleTool = $derived(toolLabelForContext(leader?.careState ?? null, effectiveReturnContext));
+  const fieldConsolePrompt = $derived.by(() => {
+    if (canResolveEncounter && encounterRecommendation && encounter) {
+      return `resolve ${encounter.frameTitle.toLowerCase()} with ${encounterRecommendation.label.toLowerCase()}`;
+    }
+    if (nearbyNode) {
+      return `cross into ${nearbyNode.label.toLowerCase()}`;
+    }
+    return `guide the squad toward ${(runtimeCueNode?.label ?? objectiveNode?.label ?? 'the next gate').toLowerCase()}`;
+  });
   const fieldConsoleStatus = $derived(
-    nearbyNode
-      ? `Holding at ${nearbyNode.label}`
-      : activeHistoricalFrame?.title ?? runtimeCueNode?.label ?? objectiveNode?.label ?? 'Chart trail live',
+    encounter
+      ? encounter.cleared
+        ? `${encounter.frameTitle} cleared`
+        : encounter.failed
+          ? `${encounter.frameTitle} collapsed`
+          : `${encounter.frameTitle} · turn ${Math.min(encounter.turn, encounter.turnLimit)}/${encounter.turnLimit}`
+      : nearbyNode
+        ? `Holding at ${nearbyNode.label}`
+        : activeHistoricalFrame?.title ?? runtimeCueNode?.label ?? objectiveNode?.label ?? 'Chart trail live',
+  );
+  const fieldConsoleHint = $derived(
+    canResolveEncounter && encounter
+      ? 'Resolve this slice first. The dock is the only decision layer that matters right now.'
+      : trailRule,
+  );
+  const fieldKeyline = $derived.by(() =>
+    canResolveEncounter ? ['Choose 1-4', 'Aim arrows', 'Confirm Enter'] : ['Move WASD', 'Run Shift', 'Act E'],
   );
 
   function triggerInteract() {
+    if (canResolveEncounter && encounter) {
+      fieldStore.setFieldStatus('Resolve the current chart slice before marching to the next node.', nearbyNode?.id ?? runtimeCueNodeId ?? undefined);
+      return;
+    }
+
     const node = fieldStore.interact();
     if (!node) {
       return;
     }
 
     const mappedScenarioId = activeHistoricalFrame ? getScenarioForHistoricalFrame(activeHistoricalFrame.id) : $labStore.activeScenarioId;
-    const targetAgent = fallbackParty[0];
+    const targetAgent = fieldParty[0];
     if (targetAgent) {
       rosterStore.selectAgent(targetAgent.id);
       labStore.setActiveAgent(targetAgent.id);
+      labStore.ensureDraft(targetAgent.id);
+      if (activeDoctrineSessionId && labStore.getDoctrineSession(targetAgent.id, activeDoctrineSessionId)) {
+        labStore.setActiveDoctrineSession(targetAgent.id, activeDoctrineSessionId);
+      }
     }
     labStore.setActiveScenario(mappedScenarioId);
+
+    if (node.kind === 'CAMP') {
+      fieldStore.restAtCamp();
+      fieldStore.setFieldStatus('Camp steadied the squad. HP is restored enough to read the next slice.', 'spar-gate');
+      return;
+    }
 
     if (node.kind === 'ARCHIVE') {
       fieldStore.setFieldStatus('Archive well opened. Read the squad, then drift back toward the spar gate.', 'spar-gate');
@@ -403,20 +513,62 @@
     }
 
     if (node.kind === 'BATTLE_GATE' && activeHistoricalFrame) {
+      if (encounter && !encounter.cleared) {
+        fieldStore.setFieldStatus('Clear the current chart slice before stepping through the gate.', node.id);
+        return;
+      }
       const gate = node.id === 'spar-gate' ? 'spar' : 'proof';
-      goto(`/battle?entry=field&frame=${activeHistoricalFrame.id}&gate=${gate}`);
+      goto(
+        buildRouteHref('/battle', [
+          ['agent', contextAgentId],
+          ['session', activeDoctrineSessionId],
+          ['pack', activeProofPackId],
+          ['entry', 'field'],
+          ['frame', activeHistoricalFrame.id],
+          ['gate', gate],
+        ]),
+      );
       return;
     }
 
     if (node.kind === 'JOURNAL') {
       fieldStore.setFieldStatus('Journal board checked. Pick the next gate and move the squad back onto the trail.', 'spar-gate');
-    } else if (node.kind === 'LAB') {
+      goto(journalHref);
+      return;
+    }
+
+    if (node.kind === 'LAB') {
       fieldStore.setFieldStatus('Bench tuning held. Head for the spar gate and test the rewrite.', 'spar-gate');
+      goto(labHref);
+      return;
     }
 
     if (node.href) {
       goto(node.href);
     }
+  }
+
+  function triggerFieldCommand(commandId: FieldCommandId) {
+    selectedFieldCommandId = commandId;
+    fieldStore.executeCommand(commandId);
+    focusFieldStage();
+  }
+
+  function moveFieldCommandSelection(direction: 'left' | 'right' | 'up' | 'down') {
+    const commands = fieldCommandDefinitions.map((command) => command.id);
+    const index = commands.indexOf(selectedFieldCommandId);
+    const safeIndex = index === -1 ? 0 : index;
+    let nextIndex = safeIndex;
+
+    if (direction === 'left' || direction === 'right') {
+      nextIndex = safeIndex % 2 === 0 ? safeIndex + 1 : safeIndex - 1;
+    }
+    if (direction === 'up' || direction === 'down') {
+      nextIndex = safeIndex < 2 ? safeIndex + 2 : safeIndex - 2;
+    }
+
+    nextIndex = Math.max(0, Math.min(commands.length - 1, nextIndex));
+    selectedFieldCommandId = commands[nextIndex] ?? selectedFieldCommandId;
   }
 
   function focusFieldStage() {
@@ -431,30 +583,59 @@
     let lastTick = performance.now();
     let rafId = 0;
 
+    if (contextAgentId) {
+      rosterStore.selectAgent(contextAgentId);
+      labStore.setActiveAgent(contextAgentId);
+      labStore.ensureDraft(contextAgentId);
+      if (activeDoctrineSessionId && labStore.getDoctrineSession(contextAgentId, activeDoctrineSessionId)) {
+        labStore.setActiveDoctrineSession(contextAgentId, activeDoctrineSessionId);
+      }
+    }
+
     const returnMessage = fieldReturnMessage(effectiveReturnContext);
     if (returnMessage) {
       fieldStore.setFieldStatus(returnMessage, runtimeCueNodeId);
-      window.history.replaceState({}, '', '/field');
+      window.history.replaceState({}, '', fieldShellHref);
     }
 
     const handleKey = (event: KeyboardEvent, pressed: boolean) => {
       const key = event.key.toLowerCase();
-      if (['arrowup', 'w'].includes(key)) {
+      if (pressed && canResolveEncounter && key === 'arrowup') {
+        event.preventDefault();
+        moveFieldCommandSelection('up');
+        return;
+      }
+      if (pressed && canResolveEncounter && key === 'arrowdown') {
+        event.preventDefault();
+        moveFieldCommandSelection('down');
+        return;
+      }
+      if (pressed && canResolveEncounter && key === 'arrowleft') {
+        event.preventDefault();
+        moveFieldCommandSelection('left');
+        return;
+      }
+      if (pressed && canResolveEncounter && key === 'arrowright') {
+        event.preventDefault();
+        moveFieldCommandSelection('right');
+        return;
+      }
+      if (key === 'w') {
         event.preventDefault();
         fieldStore.setInput({ up: pressed });
         return;
       }
-      if (['arrowdown', 's'].includes(key)) {
+      if (key === 's') {
         event.preventDefault();
         fieldStore.setInput({ down: pressed });
         return;
       }
-      if (['arrowleft', 'a'].includes(key)) {
+      if (key === 'a') {
         event.preventDefault();
         fieldStore.setInput({ left: pressed });
         return;
       }
-      if (['arrowright', 'd'].includes(key)) {
+      if (key === 'd') {
         event.preventDefault();
         fieldStore.setInput({ right: pressed });
         return;
@@ -463,7 +644,20 @@
         fieldStore.setInput({ run: pressed });
         return;
       }
-      if (pressed && (key === 'e' || key === 'enter' || key === ' ')) {
+      if (pressed) {
+        const command = fieldCommandDefinitions.find((entry) => entry.hotkey === key);
+        if (command) {
+          event.preventDefault();
+          triggerFieldCommand(command.id);
+          return;
+        }
+      }
+      if (pressed && key === 'enter' && canResolveEncounter) {
+        event.preventDefault();
+        triggerFieldCommand(selectedFieldCommandId);
+        return;
+      }
+      if (pressed && (key === 'e' || key === ' ')) {
         event.preventDefault();
         triggerInteract();
       }
@@ -485,7 +679,12 @@
 
     window.__cogochi_text_state = () => ({
       mode: 'field',
-      leader: fallbackParty[0]?.name ?? null,
+      leader: leader?.name ?? null,
+      contextAgentId,
+      doctrineSessionId: activeDoctrineSessionId,
+      fieldHref: fieldShellHref,
+      journalHref,
+      labHref,
       objective: objectiveNode?.label ?? null,
       runtimeCueNode: runtimeCueNode?.label ?? null,
       runtimeCueVerb,
@@ -496,11 +695,44 @@
       activeFrame: activeHistoricalFrame?.title ?? null,
       activeScenarioId,
       nearbyNode: nearbyNode?.label ?? null,
-      canInteract: state.canInteract,
-      lastEvent: state.lastEvent,
+      canInteract: fieldStateView.canInteract,
+      run: {
+        hp: runStats.hp,
+        gold: runStats.gold,
+        xp: runStats.xp,
+        clearedFrames: runStats.clearedFrameIds.length,
+        currentStreak: runStats.currentStreak,
+      },
+      encounter: encounter
+        ? {
+            frameId: encounter.frameId,
+            frameTitle: encounter.frameTitle,
+            turn: encounter.turn,
+            turnLimit: encounter.turnLimit,
+            visibleCount: encounter.visibleCount,
+            recommendedCommandId: encounter.recommendedCommandId,
+            supportPrice: encounter.supportPrice,
+            resistancePrice: encounter.resistancePrice,
+            hazardPrice: encounter.hazardPrice,
+            hazardLabel: encounter.hazardLabel,
+            bark: encounter.bark,
+            clue: encounter.clue,
+            cleared: encounter.cleared,
+            failed: encounter.failed,
+            lastSummary: encounter.lastSummary,
+          }
+        : null,
+      commands: fieldCommandDefinitions.map((command) => ({
+        id: command.id,
+        hotkey: command.hotkey,
+        recommended: encounter?.recommendedCommandId === command.id,
+        selected: selectedFieldCommandId === command.id,
+        disabled: !canResolveEncounter,
+      })),
+      lastEvent: fieldStateView.lastEvent,
       returnSummary,
       artifact: selectedProofArtifact?.id ?? null,
-      members: state.members.map((member) => ({
+      members: fieldStateView.members.map((member) => ({
         agentId: member.agentId,
         x: Math.round(member.x),
         y: Math.round(member.y),
@@ -528,16 +760,26 @@
   });
 
   $effect(() => {
-    if (fallbackParty.length) {
-      fieldStore.setParty(fallbackParty);
+    if (fieldParty.length) {
+      fieldStore.setParty(fieldParty);
     }
   });
 
   $effect(() => {
-    if (!browser || !runtimeCueNodeId || runtimeCueNodeId === state.objectiveNodeId) {
+    fieldStore.setActiveFrame(activeHistoricalFrame?.id ?? null);
+  });
+
+  $effect(() => {
+    if (encounterRecommendation) {
+      selectedFieldCommandId = encounterRecommendation.id;
+    }
+  });
+
+  $effect(() => {
+    if (!browser || !runtimeCueNodeId || runtimeCueNodeId === fieldStateView.objectiveNodeId) {
       return;
     }
-    fieldStore.setFieldStatus(state.lastEvent, runtimeCueNodeId);
+    fieldStore.setFieldStatus(fieldStateView.lastEvent, runtimeCueNodeId);
   });
 </script>
 
@@ -553,16 +795,26 @@
       tabindex="0"
     >
       <div class="field-stage__viewport">
-        <FieldScene {state} agents={fallbackParty} runtimeCueNodeId={runtimeCueNodeId} runtimeCueVerb={runtimeCueVerb} />
+        <FieldScene
+          state={fieldStateView}
+          agents={fieldParty}
+          {encounter}
+          runtimeCueNodeId={runtimeCueNodeId}
+          runtimeCueVerb={runtimeCueVerb}
+        />
 
         <div class="field-plaque">
           <div class="field-plaque__board">
-            <span class="field-plaque__kicker">Zone Traverse</span>
-            <strong>{activeHistoricalFrame?.title ?? runtimeCueNode?.label ?? objectiveNode?.label ?? 'Gate'}</strong>
-            <p>{runtimeCueText}</p>
+            <span class="field-plaque__kicker">{encounter ? 'Micro Encounter' : 'Zone Traverse'}</span>
+            <strong>{fieldPlaqueTitle}</strong>
+            <p>{fieldPlaqueDetail}</p>
             <div class="field-plaque__route">
               {#if activeHistoricalFrame}
                 <span class="field-route-chip field-route-chip--frame">{activeHistoricalFrame.shortLabel}</span>
+              {/if}
+              {#if encounter}
+                <span class="field-route-chip field-route-chip--turn">Turn {Math.min(encounter.turn, encounter.turnLimit)}/{encounter.turnLimit}</span>
+                <span class="field-route-chip field-route-chip--call">{encounter.recommendedCommandId}</span>
               {/if}
               <span class="field-route-chip runtimeCue">{runtimeCueNode?.label ?? objectiveNode?.label ?? 'Next gate'}</span>
               {#if nearbyNode}
@@ -572,10 +824,68 @@
           </div>
         </div>
 
+        {#if encounter}
+          <div class="field-command-dock">
+            <div class="field-command-dock__masthead">
+              <div>
+                <span class="field-command-dock__kicker">Command Dock</span>
+                <strong>{encounter.frameTitle}</strong>
+                <p>{encounter.clue}</p>
+              </div>
+              <div class="field-command-dock__scoreline">
+                <span>HP {runStats.hp}/18</span>
+                <span>Gold {runStats.gold}</span>
+                <span>XP {runStats.xp}</span>
+              </div>
+            </div>
+
+            <div class="field-command-dock__reads">
+              <span>Support {formatFieldPrice(encounter.supportPrice)}</span>
+              <span>Resistance {formatFieldPrice(encounter.resistancePrice)}</span>
+              <span>{encounter.hazardLabel ? `${encounter.hazardLabel} ${encounter.hazardPrice ? formatFieldPrice(encounter.hazardPrice) : ''}`.trim() : 'No hazard call'}</span>
+            </div>
+
+            <div class="field-command-dock__actions">
+              {#each fieldCommandDefinitions as command}
+                <button
+                  class:recommended={encounter.recommendedCommandId === command.id}
+                  class:selected={selectedFieldCommandId === command.id}
+                  class="field-command-dock__button"
+                  disabled={!canResolveEncounter}
+                  onclick={() => triggerFieldCommand(command.id)}
+                >
+                  <small>{command.hotkey}</small>
+                  <strong>{command.label}</strong>
+                  <span>{command.shortLabel}</span>
+                </button>
+              {/each}
+            </div>
+
+            <div
+              class:fail={encounter.failed}
+              class:success={encounter.cleared}
+              class="field-command-dock__result"
+            >
+              {#if encounter.failed}
+                <strong>Frame broke the squad.</strong>
+                <p>Walk back to Camp and restore HP before re-reading this zone.</p>
+              {:else if encounter.cleared}
+                <strong>Frame cleared.</strong>
+                <p>Rewards locked in. March to the next frame or enter the next gate.</p>
+              {:else if encounter.lastSummary}
+                <strong>Last reveal</strong>
+                <p>{encounter.lastSummary}</p>
+              {:else}
+                <strong>Selected call: {selectedFieldCommand.label}</strong>
+                <p>Use arrow keys plus Enter, `1-4`, or click the dock. The next candle will resolve immediately.</p>
+              {/if}
+            </div>
+          </div>
+        {/if}
+
         <div class="field-stage__footer">
-          <span>Party {fallbackParty.length}/4</span>
-          <span>{leader ? careStateLabels[leader.careState] : 'Route ready'}</span>
-          <span>{nearbyNode ? `Press E at ${nearbyNode.label}` : 'WASD / Shift / E'}</span>
+          <span>Frames cleared {runStats.clearedFrameIds.length}</span>
+          <span>{canResolveEncounter ? 'Resolve the dock to march again' : nearbyNode ? `Press E at ${nearbyNode.label}` : 'Move through the trail'}</span>
         </div>
       </div>
     </div>
@@ -594,19 +904,11 @@
         {/if}
       </div>
 
-      <div class="field-console__topics">
-        <span class="field-console__topic">route</span>
-        <span class="field-console__topic">risk</span>
-        <span class="field-console__topic">camp</span>
-      </div>
-
       <div class="field-console__stream">
         <article class="field-console__bubble field-console__bubble--user">
-          <small>You</small>
+          <small>Next move</small>
           <p>{fieldConsolePrompt}</p>
         </article>
-
-        <div class="field-console__tool">Using: {fieldConsoleTool}</div>
 
         {#each fieldConsoleFeed as entry}
           <article
@@ -619,9 +921,13 @@
       </div>
 
       <div class="field-console__cta">
-        {#if nearbyNode}
+        {#if canTravelToNearbyNode && nearbyNode}
           <button class="action-button field-console__action" onclick={triggerInteract}>
             Cross into {nearbyNode.label}
+          </button>
+        {:else if nearbyNode}
+          <button class="action-button field-console__action field-console__action--quiet" disabled>
+            Resolve current slice
           </button>
         {:else}
           <button class="action-button field-console__action field-console__action--quiet" disabled>
@@ -629,15 +935,17 @@
           </button>
         {/if}
 
+        <p class="field-console__hint">{fieldConsoleHint}</p>
+
         <div class="field-console__keyline">
-          <span>WASD</span>
-          <span>SHIFT</span>
-          <span>E</span>
+          {#each fieldKeyline as hint}
+            <span>{hint}</span>
+          {/each}
         </div>
       </div>
 
       <div class="field-console__party-strip">
-        {#each fallbackParty as agent}
+        {#each fieldParty as agent}
           <div class:leader={leader?.id === agent.id} class="field-console__member">
             <div class="field-console__member-avatar">
               <PixelSprite agent={agent} frameIndex={0} size={28} alt={agent.name} />
@@ -649,47 +957,65 @@
           </div>
         {/each}
       </div>
-
-      <div aria-hidden="true" class="field-console__composer">
-        <span>Ask about route, risk, camp...</span>
-        <button type="button">SEND</button>
-      </div>
     </aside>
   </section>
 </PageShell>
 
 <style>
   .field-layout {
+    --field-gold: rgba(239, 187, 105, 0.84);
+    --field-gold-soft: rgba(239, 187, 105, 0.16);
+    --field-mint: rgba(109, 216, 176, 0.82);
+    --field-mint-soft: rgba(109, 216, 176, 0.16);
+    --field-panel: rgba(10, 17, 24, 0.72);
+    --field-panel-strong: rgba(8, 14, 20, 0.9);
+    --field-line: rgba(255, 239, 205, 0.14);
+    --field-shadow: 0 28px 64px rgba(6, 10, 15, 0.24);
     display: grid;
     grid-template-columns: minmax(0, 1fr) 356px;
-    gap: 12px;
+    gap: 16px;
     align-items: stretch;
     min-height: 100vh;
-    padding: 12px;
+    padding: 14px;
     background:
-      radial-gradient(circle at 50% 0, rgba(115, 86, 255, 0.12), transparent 24%),
-      linear-gradient(180deg, rgba(2, 4, 8, 0.98), rgba(5, 8, 12, 1));
+      radial-gradient(circle at 16% 0, rgba(255, 218, 142, 0.16), transparent 24%),
+      radial-gradient(circle at 100% 8%, rgba(115, 206, 255, 0.12), transparent 22%),
+      linear-gradient(180deg, rgba(3, 7, 11, 0.98), rgba(5, 9, 13, 1));
   }
 
   .field-stage {
     width: 100%;
     min-width: 0;
     position: relative;
-    padding: 4px;
+    overflow: hidden;
+    padding: 5px;
     background:
-      linear-gradient(180deg, rgba(7, 8, 12, 0.98), rgba(3, 5, 9, 0.98));
-    border: 1px solid rgba(223, 167, 90, 0.28);
-    border-radius: 24px;
+      linear-gradient(145deg, rgba(255, 255, 255, 0.05), transparent 28%),
+      linear-gradient(180deg, rgba(9, 13, 18, 0.96), rgba(3, 6, 10, 0.98));
+    border: 1px solid rgba(228, 183, 109, 0.3);
+    border-radius: 28px;
     box-shadow:
-      inset 0 0 0 1px rgba(255, 219, 163, 0.08),
-      0 30px 60px rgba(0, 0, 0, 0.36);
+      inset 0 0 0 1px rgba(255, 233, 193, 0.08),
+      inset 0 18px 24px rgba(255, 255, 255, 0.03),
+      var(--field-shadow);
+  }
+
+  .field-stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 16%),
+      radial-gradient(circle at 50% 100%, rgba(255, 187, 82, 0.1), transparent 36%);
   }
 
   .field-stage__viewport {
     position: relative;
     height: calc(100vh - 32px);
     min-height: 680px;
-    border-radius: 20px;
+    border-radius: 24px;
     overflow: hidden;
   }
 
@@ -701,22 +1027,23 @@
   }
 
   .field-plaque {
-    top: 18px;
-    left: 18px;
+    top: 22px;
+    left: 22px;
     max-width: min(480px, calc(100% - 140px));
   }
 
   .field-plaque__board {
     display: grid;
-    gap: 6px;
-    padding: 12px 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(188, 137, 66, 0.34);
-    background: rgba(9, 12, 18, 0.7);
-    backdrop-filter: blur(12px);
+    gap: 8px;
+    padding: 13px 15px;
+    border-radius: 20px;
+    border: 1px solid rgba(233, 192, 123, 0.34);
+    background:
+      linear-gradient(180deg, rgba(10, 16, 23, 0.74), rgba(8, 13, 19, 0.68));
+    backdrop-filter: blur(16px);
     box-shadow:
-      0 18px 36px rgba(0, 0, 0, 0.24),
-      inset 0 1px 0 rgba(255, 239, 208, 0.06);
+      0 22px 36px rgba(0, 0, 0, 0.24),
+      inset 0 1px 0 rgba(255, 245, 219, 0.08);
   }
 
   .field-plaque__kicker,
@@ -730,7 +1057,8 @@
   .field-plaque__board strong {
     color: rgba(250, 239, 213, 0.98);
     line-height: 1.2;
-    font-size: 1.02rem;
+    font-size: 1.08rem;
+    letter-spacing: -0.01em;
   }
 
   .field-plaque__board p {
@@ -749,11 +1077,11 @@
   .field-route-chip {
     display: inline-flex;
     align-items: center;
-    min-height: 20px;
-    padding: 0 8px;
+    min-height: 24px;
+    padding: 0 10px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 225, 174, 0.16);
-    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 225, 174, 0.18);
+    background: rgba(255, 255, 255, 0.06);
     color: rgba(246, 236, 211, 0.76);
     font-size: 0.62rem;
     font-weight: 700;
@@ -762,6 +1090,18 @@
 
   .field-route-chip--frame {
     color: rgba(230, 221, 194, 0.72);
+  }
+
+  .field-route-chip--turn {
+    border-color: rgba(251, 221, 132, 0.24);
+    background: rgba(101, 72, 26, 0.34);
+    color: rgba(252, 243, 215, 0.94);
+  }
+
+  .field-route-chip--call {
+    border-color: rgba(122, 226, 169, 0.26);
+    background: rgba(30, 99, 76, 0.34);
+    color: rgba(234, 250, 241, 0.96);
   }
 
   .field-route-chip.runtimeCue {
@@ -774,8 +1114,192 @@
     box-shadow: 0 0 0 1px rgba(240, 194, 105, 0.16);
   }
 
+  .field-command-dock {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 72px;
+    z-index: 11;
+    display: grid;
+    gap: 12px;
+    padding: 16px 18px;
+    border-radius: 24px;
+    border: 1px solid rgba(242, 207, 144, 0.26);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.05), transparent 30%),
+      linear-gradient(180deg, rgba(10, 15, 21, 0.84), rgba(7, 11, 17, 0.9));
+    box-shadow:
+      0 26px 44px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 245, 219, 0.08);
+    backdrop-filter: blur(16px);
+  }
+
+  .field-command-dock__masthead {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .field-command-dock__kicker {
+    display: inline-flex;
+    margin-bottom: 4px;
+    color: rgba(218, 227, 238, 0.58);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .field-command-dock__masthead strong {
+    display: block;
+    color: rgba(249, 237, 211, 0.98);
+    font-size: 1rem;
+    line-height: 1.15;
+  }
+
+  .field-command-dock__masthead p,
+  .field-command-dock__result p {
+    margin: 4px 0 0;
+    color: rgba(228, 235, 244, 0.74);
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .field-command-dock__scoreline,
+  .field-command-dock__reads {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .field-command-dock__scoreline {
+    justify-content: flex-end;
+  }
+
+  .field-command-dock__scoreline span,
+  .field-command-dock__reads span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(246, 215, 163, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(241, 232, 214, 0.82);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .field-command-dock__actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .field-command-dock__button {
+    display: grid;
+    gap: 6px;
+    align-items: start;
+    justify-items: start;
+    min-height: 100px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(241, 207, 148, 0.18);
+    background:
+      linear-gradient(180deg, rgba(27, 40, 52, 0.98), rgba(13, 22, 31, 0.96));
+    color: rgba(245, 239, 226, 0.9);
+    cursor: pointer;
+    transition:
+      transform 120ms ease,
+      border-color 120ms ease,
+      background 120ms ease,
+      box-shadow 120ms ease;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 10px 20px rgba(5, 10, 14, 0.16);
+  }
+
+  .field-command-dock__button:hover:not(:disabled),
+  .field-command-dock__button:focus-visible:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: rgba(244, 214, 149, 0.34);
+    background:
+      linear-gradient(180deg, rgba(35, 49, 62, 0.98), rgba(17, 29, 40, 0.98));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 14px 24px rgba(5, 10, 14, 0.2);
+  }
+
+  .field-command-dock__button.recommended {
+    border-color: rgba(112, 224, 171, 0.44);
+    background:
+      linear-gradient(180deg, rgba(20, 68, 60, 0.98), rgba(10, 41, 36, 0.98));
+  }
+
+  .field-command-dock__button.selected {
+    box-shadow:
+      0 0 0 2px rgba(243, 214, 146, 0.22),
+      inset 0 1px 0 rgba(255, 247, 226, 0.08),
+      0 16px 28px rgba(5, 10, 14, 0.18);
+  }
+
+  .field-command-dock__button:disabled {
+    opacity: 0.68;
+    cursor: default;
+  }
+
+  .field-command-dock__button small {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(239, 228, 200, 0.78);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .field-command-dock__button strong {
+    font-size: 1.06rem;
+    line-height: 1.02;
+  }
+
+  .field-command-dock__button span {
+    color: rgba(223, 231, 239, 0.76);
+    font-size: 0.76rem;
+    line-height: 1.25;
+  }
+
+  .field-command-dock__result {
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(246, 215, 163, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .field-command-dock__result strong {
+    color: rgba(250, 240, 216, 0.98);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .field-command-dock__result.success {
+    border-color: rgba(118, 227, 177, 0.3);
+    background: rgba(20, 75, 63, 0.34);
+  }
+
+  .field-command-dock__result.fail {
+    border-color: rgba(227, 118, 132, 0.3);
+    background: rgba(79, 25, 31, 0.38);
+  }
+
   .field-stage__footer {
-    left: 18px;
+    left: 20px;
     bottom: 18px;
     display: flex;
     gap: 8px;
@@ -790,9 +1314,9 @@
     min-height: 26px;
     padding: 0 10px;
     border-radius: 12px;
-    border: 1px solid rgba(247, 217, 164, 0.14);
-    background: rgba(11, 15, 21, 0.68);
-    color: rgba(238, 231, 215, 0.74);
+    border: 1px solid rgba(247, 217, 164, 0.18);
+    background: rgba(11, 15, 21, 0.72);
+    color: rgba(241, 234, 218, 0.78);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-size: 0.62rem;
@@ -800,19 +1324,22 @@
 
   .field-console {
     display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
-    gap: 12px;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: 14px;
     min-height: calc(100vh - 24px);
     padding: 0;
     overflow: hidden;
-    border-radius: 22px;
-    border: 1px solid rgba(183, 134, 255, 0.24);
+    border-radius: 28px;
+    border: 1px solid rgba(232, 197, 141, 0.16);
     background:
-      radial-gradient(circle at top right, rgba(154, 91, 255, 0.18), transparent 24%),
-      linear-gradient(180deg, rgba(13, 16, 25, 0.98), rgba(8, 11, 18, 0.98));
+      linear-gradient(145deg, rgba(255, 255, 255, 0.04), transparent 26%),
+      radial-gradient(circle at top right, rgba(232, 176, 95, 0.12), transparent 24%),
+      linear-gradient(180deg, rgba(12, 16, 21, 0.98), rgba(8, 11, 16, 1));
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 28px 50px rgba(0, 0, 0, 0.34);
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 18px 26px rgba(255, 255, 255, 0.03),
+      0 28px 56px rgba(0, 0, 0, 0.24);
+    backdrop-filter: blur(16px);
   }
 
   .field-console__masthead {
@@ -820,8 +1347,19 @@
     justify-content: space-between;
     gap: 12px;
     align-items: center;
-    padding: 18px 16px 14px;
-    background: linear-gradient(90deg, rgba(140, 74, 255, 0.94), rgba(214, 161, 89, 0.84));
+    position: relative;
+    padding: 20px 18px 16px;
+    background:
+      linear-gradient(180deg, rgba(36, 44, 52, 0.98), rgba(22, 28, 34, 0.94)),
+      linear-gradient(90deg, rgba(232, 178, 96, 0.12), rgba(119, 190, 169, 0.1));
+  }
+
+  .field-console__masthead::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 42%);
   }
 
   .field-console__masthead h2,
@@ -830,9 +1368,9 @@
   }
 
   .field-console__subtitle {
-    color: rgba(247, 244, 255, 0.8);
-    font-size: 0.8rem;
-    line-height: 1.35;
+    color: rgba(223, 230, 236, 0.78);
+    font-size: 0.82rem;
+    line-height: 1.4;
   }
 
   .field-console__hero-avatar {
@@ -842,29 +1380,11 @@
     height: 72px;
     flex: 0 0 72px;
     border-radius: 18px;
-    border: 1px solid rgba(255, 240, 211, 0.18);
-    background: rgba(12, 12, 18, 0.24);
-  }
-
-  .field-console__topics {
-    display: flex;
-    gap: 8px;
-    padding: 0 16px;
-  }
-
-  .field-console__topic {
-    display: inline-flex;
-    align-items: center;
-    min-height: 28px;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(87, 214, 222, 0.28);
-    background: rgba(16, 26, 37, 0.86);
-    color: rgba(115, 233, 241, 0.88);
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    border: 1px solid rgba(255, 240, 211, 0.16);
+    background: rgba(12, 18, 24, 0.62);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 10px 18px rgba(6, 10, 14, 0.14);
   }
 
   .field-console__stream {
@@ -877,12 +1397,14 @@
 
   .field-console__bubble {
     display: grid;
-    gap: 5px;
-    padding: 12px 13px;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(19, 23, 33, 0.96);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    gap: 6px;
+    padding: 13px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(19, 23, 33, 0.92);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 12px 22px rgba(6, 8, 14, 0.12);
   }
 
   .field-console__bubble p {
@@ -895,8 +1417,8 @@
   .field-console__bubble--user {
     justify-self: end;
     width: min(100%, 260px);
-    border-color: rgba(142, 86, 236, 0.22);
-    background: linear-gradient(180deg, rgba(135, 69, 241, 0.96), rgba(96, 54, 191, 0.96));
+    border-color: rgba(238, 192, 114, 0.22);
+    background: linear-gradient(180deg, rgba(80, 61, 31, 0.98), rgba(59, 44, 23, 0.96));
   }
 
   .field-console__bubble--user small,
@@ -925,21 +1447,6 @@
     background: rgba(12, 31, 39, 0.94);
   }
 
-  .field-console__tool {
-    justify-self: start;
-    display: inline-flex;
-    align-items: center;
-    min-height: 30px;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(66, 206, 216, 0.36);
-    background: rgba(6, 30, 39, 0.84);
-    color: rgba(97, 230, 240, 0.92);
-    font-size: 0.74rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-  }
-
   .field-console__cta {
     display: grid;
     gap: 10px;
@@ -947,17 +1454,26 @@
   }
 
   .field-console__action {
-    min-height: 46px;
+    min-height: 50px;
     justify-content: center;
-    border-radius: 14px;
+    border-radius: 16px;
     background: linear-gradient(180deg, rgba(239, 192, 101, 0.98), rgba(218, 153, 70, 0.98));
     color: rgba(18, 18, 24, 0.98);
-    box-shadow: none;
+    box-shadow:
+      0 16px 26px rgba(14, 11, 6, 0.14),
+      inset 0 1px 0 rgba(255, 244, 214, 0.3);
   }
 
   .field-console__action--quiet {
     background: rgba(255, 255, 255, 0.06);
     color: rgba(223, 231, 238, 0.72);
+  }
+
+  .field-console__hint {
+    margin: 0;
+    color: rgba(205, 214, 220, 0.68);
+    font-size: 0.82rem;
+    line-height: 1.45;
   }
 
   .field-console__keyline {
@@ -969,12 +1485,12 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 30px;
-    min-width: 58px;
+    min-height: 32px;
+    min-width: 82px;
     padding: 0 10px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 239, 208, 0.08);
-    background: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 239, 208, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     color: rgba(243, 231, 204, 0.82);
     font-size: 0.72rem;
     text-transform: uppercase;
@@ -992,10 +1508,10 @@
     grid-template-columns: 40px minmax(0, 1fr);
     gap: 8px;
     align-items: center;
-    padding: 8px;
-    border-radius: 16px;
-    border: 1px solid rgba(118, 144, 138, 0.12);
-    background: rgba(255, 255, 255, 0.03);
+    padding: 9px;
+    border-radius: 18px;
+    border: 1px solid rgba(118, 144, 138, 0.14);
+    background: rgba(255, 255, 255, 0.04);
   }
 
   .field-console__member.leader {
@@ -1029,39 +1545,6 @@
     line-height: 1.3;
   }
 
-  .field-console__composer {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    padding: 14px 16px 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(10, 12, 19, 0.96);
-  }
-
-  .field-console__composer span {
-    flex: 1 1 auto;
-    min-height: 42px;
-    display: flex;
-    align-items: center;
-    padding: 0 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(146, 89, 255, 0.28);
-    background: rgba(8, 10, 18, 0.98);
-    color: rgba(146, 154, 172, 0.78);
-    font-size: 0.82rem;
-  }
-
-  .field-console__composer button {
-    min-width: 72px;
-    min-height: 42px;
-    border: 0;
-    border-radius: 12px;
-    background: linear-gradient(180deg, rgba(154, 91, 255, 0.96), rgba(109, 58, 214, 0.96));
-    color: rgba(251, 247, 255, 0.96);
-    font-weight: 800;
-    letter-spacing: 0.08em;
-  }
-
   .field-stage:focus-visible {
     outline: 2px solid rgba(104, 192, 161, 0.64);
     outline-offset: 2px;
@@ -1084,7 +1567,17 @@
     }
 
     .field-console {
-      grid-template-rows: auto auto auto auto auto auto;
+      grid-template-rows: auto auto auto auto;
+    }
+
+    .field-command-dock {
+      left: 14px;
+      right: 14px;
+      bottom: 66px;
+    }
+
+    .field-command-dock__actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -1108,6 +1601,30 @@
       bottom: 12px;
     }
 
+    .field-command-dock {
+      left: 12px;
+      right: 12px;
+      bottom: 58px;
+      padding: 12px;
+    }
+
+    .field-command-dock__masthead {
+      flex-direction: column;
+    }
+
+    .field-command-dock__scoreline {
+      justify-content: flex-start;
+    }
+
+    .field-command-dock__actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .field-command-dock__button {
+      min-height: 82px;
+    }
+
     .field-console__masthead {
       padding: 16px 14px 12px;
     }
@@ -1118,22 +1635,11 @@
       flex-basis: 60px;
     }
 
-    .field-console__topics,
     .field-console__stream,
     .field-console__cta,
-    .field-console__party-strip,
-    .field-console__composer {
+    .field-console__party-strip {
       padding-left: 14px;
       padding-right: 14px;
-    }
-
-    .field-console__composer {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .field-console__composer button {
-      width: 100%;
     }
 
     .field-console__keyline {

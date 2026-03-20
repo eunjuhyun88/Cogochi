@@ -249,16 +249,16 @@ function roleLine(role: AgentRole, session: BattleSession, report: EvalReport, s
   const latest = session.logs[0];
   const leadInstinct = report.trustedInstincts[0]?.label ?? 'trusted instinct';
   if (role === 'SCOUT') {
-    if (session.lastCommandId === 'MEMORY_PULSE') return `Lane updated from ${report.proofFrameTitle}. ${scenario.structureHint}`;
+    if (session.lastCommandId === 'HOLD') return `Lane updated from ${report.proofFrameTitle}. ${scenario.structureHint}`;
     return report.accuracyScore >= 75 ? `Lane mapped through ${leadInstinct.toLowerCase()}. ${scenario.structureHint}` : 'Lane still noisy. First touch is not enough.';
   }
   if (role === 'ANALYST') {
-    if (session.lastCommandId === 'RETARGET') return `Target locked. ${leadInstinct} is redirecting the squad into the live structure.`;
+    if (session.lastCommandId === report.action) return `Commit locked. ${leadInstinct} is carrying the squad into the live structure.`;
     return report.reasoningScore >= 75 ? `Pattern match is clean because ${leadInstinct.toLowerCase()} stayed louder than ${report.weakLink.toLowerCase()}.` : 'Story is still muddy. Structure and memory are fighting.';
   }
   if (role === 'RISK') {
     if (session.trapRisk >= 66) return 'Trap pressure is live. Veto the next bad commitment.';
-    if (session.lastCommandId === 'RISK_VETO') return 'Bad line canceled. Floor stabilized for now.';
+    if (session.lastCommandId === 'RUN') return 'The squad bailed early. Footing is stable for now.';
     return report.riskScore >= 75 ? 'Floor is defended. Trap risk is controlled.' : 'The floor is fragile. Protect it first.';
   }
   if (latest?.tone === 'good') return 'Finish window open. One more command can close the clash.';
@@ -288,10 +288,10 @@ function buildMessages(squad: OwnedAgent[], session: BattleSession, report: Eval
 }
 
 function stanceForRole(role: AgentRole, commandId: BattleCommandKey | null): BattleCompanion['stance'] {
-  if (commandId === 'RISK_VETO' && role === 'RISK') return 'brace';
-  if (commandId === 'MEMORY_PULSE' && (role === 'SCOUT' || role === 'ANALYST')) return 'signal';
-  if (commandId === 'RETARGET' && role === 'EXECUTOR') return 'finish';
-  if (commandId === 'FOCUS_TAP' && (role === 'SCOUT' || role === 'EXECUTOR')) return 'advance';
+  if (commandId === 'RUN' && role === 'RISK') return 'brace';
+  if (commandId === 'HOLD' && (role === 'SCOUT' || role === 'ANALYST')) return 'signal';
+  if ((commandId === 'LONG' || commandId === 'SHORT') && role === 'EXECUTOR') return 'finish';
+  if ((commandId === 'LONG' || commandId === 'SHORT') && (role === 'SCOUT' || role === 'ANALYST')) return 'advance';
   return role === 'RISK' ? 'brace' : role === 'EXECUTOR' ? 'finish' : 'signal';
 }
 
@@ -341,7 +341,9 @@ function buildCallouts(messages: BattleMessage[], companions: BattleCompanion[],
           : companion.agent.role === 'ANALYST'
             ? 'Pattern read'
             : companion.agent.role === 'RISK'
-              ? 'Risk veto'
+              ? session.lastCommandId === 'RUN'
+                ? 'Retreat line'
+                : 'Risk line'
               : 'Commit signal',
     detail: index === 0 && latestLog ? latestLog.summary : messages[index]?.line ?? companion.agent.recentLesson,
   }));
@@ -383,23 +385,26 @@ function buildRecommendationReason(
   report: EvalReport,
   scenario: EvalScenario,
 ): string {
-  if (commandId === 'RISK_VETO') {
+  if (commandId === 'RUN') {
     return session.trapRisk >= 64 || session.supportIntegrity <= 42
-      ? 'Trap pressure is live and the squad needs footing before it can commit.'
-      : 'The floor is too unstable to cash out aggression right now.';
+      ? 'Trap pressure is live and survival matters more than greed on this turn.'
+      : 'The floor is too unstable to force a clean commit right now.';
   }
-  if (commandId === 'MEMORY_PULSE') {
+  if (commandId === 'HOLD') {
     return session.revealLevel === 0
-      ? `The squad still needs one cleaner replay before it can trust this ${scenario.targetAction.toLowerCase()} read.`
-      : `Retrieval is still a weak link and one more replay can steady ${report.weakLink.toLowerCase()}.`;
+      ? `The squad still needs one cleaner read before it can trust this ${scenario.targetAction.toLowerCase()} line.`
+      : `One more pause can steady ${report.weakLink.toLowerCase()} before the real commit.`;
   }
-  if (commandId === 'RETARGET') {
-    return session.structureIntegrity <= 48 || session.phase === 'COMMIT'
-      ? 'The gate is vulnerable now, so redirecting pressure into the live objective is the clean finish.'
-      : 'The read is already good enough to stop drifting and hit the actual objective.';
+  if (commandId === 'LONG' || commandId === 'SHORT') {
+    if (commandId === scenario.targetAction) {
+      return session.structureIntegrity <= 48 || session.phase === 'COMMIT'
+        ? `The gate is vulnerable now, so ${commandId} is the clean finish.`
+        : `The read is clean enough to commit with ${commandId} instead of drifting.`;
+    }
+    return `${commandId} is the wrong side of this slice. The chart is asking for ${scenario.targetAction} instead.`;
   }
   return session.phase === 'APPROACH'
-    ? 'Early pressure is useful once the lane is readable and the squad can push without drifting.'
+    ? 'Early certainty matters more than heroics. Read the lane before you commit.'
     : `Your accuracy and coordination are strong enough to drive a cleaner ${scenario.targetAction.toLowerCase()} push.`;
 }
 
@@ -525,7 +530,7 @@ function buildCommandCards(session: BattleSession, recommendedCommandId: BattleC
     id: definition.id,
     label: definition.label,
     summary: definition.summary,
-    tone: definition.id === 'RISK_VETO' ? 'danger' : definition.id === 'MEMORY_PULSE' ? 'secondary' : 'primary',
+    tone: definition.id === 'RUN' ? 'danger' : definition.id === 'HOLD' ? 'secondary' : 'primary',
     hotkey: definition.hotkey,
     selected: definition.id === session.selectedCommandId,
     lastUsed: definition.id === session.lastCommandId,

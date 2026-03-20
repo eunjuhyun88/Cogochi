@@ -122,20 +122,14 @@
             <span class="shell__brand-core"></span>
           </span>
           <span class="shell__brand-copy">
-            <span class="section-kicker">Cogochi // Command World</span>
-            <strong>{routeMeta.zone}</strong>
-            <span>{routeMeta.subtitle}</span>
+            <strong>Cogochi</strong>
+            <span>{routeMeta.zone}</span>
           </span>
         </a>
 
         <div class="shell__tools">
           <div class="shell__status">
             <span class="shell__status-pill">{routeMeta.status}</span>
-            {#if !ultraCompact}
-              <span class="shell__status-pill shell__status-pill--quiet">
-                {page.url.pathname === '/' ? 'Macro map' : 'Live route'}
-              </span>
-            {/if}
           </div>
 
           <div class="shell__dock" role="list">
@@ -144,7 +138,6 @@
                 <span class="shell-link__crest" aria-hidden="true">{link.crest}</span>
                 <span class="shell-link__copy">
                   <strong>{link.label}</strong>
-                  <small>{link.note}</small>
                 </span>
               </a>
             {/each}
@@ -163,7 +156,34 @@
   .shell {
     position: relative;
     min-height: 100vh;
+    isolation: isolate;
+    --shell-gold: rgba(232, 183, 109, 0.3);
+    --shell-gold-strong: rgba(244, 202, 133, 0.74);
+    --shell-mint: rgba(106, 199, 170, 0.3);
+    --shell-mint-strong: rgba(155, 230, 206, 0.84);
+    --shell-glass: rgba(18, 25, 31, 0.74);
+    --shell-glass-strong: rgba(13, 19, 24, 0.92);
+    --shell-line: rgba(255, 239, 207, 0.08);
+    --shell-shadow: 0 28px 70px rgba(4, 7, 9, 0.34);
     color: #edf1eb;
+    background:
+      radial-gradient(circle at top left, rgba(42, 77, 70, 0.14), transparent 22%),
+      radial-gradient(circle at top right, rgba(199, 146, 77, 0.12), transparent 18%),
+      linear-gradient(180deg, rgba(6, 10, 14, 0.98), rgba(4, 8, 11, 1));
+  }
+
+  .shell::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+      radial-gradient(circle at 50% 0, rgba(255, 248, 223, 0.05), transparent 30%);
+    background-size: 48px 48px, 48px 48px, auto;
+    opacity: 0.42;
   }
 
   .shell.immersive {
@@ -175,198 +195,218 @@
     inset: auto;
     z-index: -1;
     pointer-events: none;
-    filter: blur(28px);
-    opacity: 0.5;
+    filter: blur(44px);
+    opacity: 0.68;
   }
 
   .shell__aura--left {
-    top: 42px;
-    left: -80px;
-    width: 320px;
-    height: 320px;
+    top: 30px;
+    left: -120px;
+    width: 420px;
+    height: 420px;
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(62, 102, 96, 0.46), transparent 72%);
+    background: radial-gradient(circle, rgba(72, 126, 117, 0.44), transparent 72%);
   }
 
   .shell__aura--right {
-    top: 120px;
-    right: -70px;
-    width: 360px;
-    height: 360px;
+    top: 96px;
+    right: -90px;
+    width: 430px;
+    height: 430px;
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(208, 141, 76, 0.22), transparent 72%);
+    background: radial-gradient(circle, rgba(214, 152, 88, 0.26), transparent 72%);
+  }
+
+  .shell__inner {
+    max-width: 1540px;
+    margin: 0 auto;
+    padding: 18px 18px 22px;
+  }
+
+  .shell__inner.wide {
+    max-width: 1640px;
   }
 
   .shell__nav {
-    display: grid;
-    gap: 16px;
-    padding: 18px 22px;
-    margin-bottom: 18px;
-    border-radius: 28px;
-    border: 1px solid rgba(112, 139, 132, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    border-radius: 24px;
+    border: 1px solid rgba(150, 174, 166, 0.12);
     background:
-      radial-gradient(circle at 12% 18%, rgba(76, 128, 118, 0.22), transparent 24%),
-      radial-gradient(circle at 84% 22%, rgba(214, 142, 72, 0.12), transparent 18%),
-      linear-gradient(180deg, rgba(15, 20, 24, 0.94), rgba(20, 29, 34, 0.96));
+      linear-gradient(140deg, rgba(255, 255, 255, 0.05), transparent 34%),
+      radial-gradient(circle at 12% 18%, rgba(76, 128, 118, 0.16), transparent 22%),
+      radial-gradient(circle at 84% 22%, rgba(214, 142, 72, 0.1), transparent 16%),
+      linear-gradient(180deg, rgba(17, 24, 29, 0.88), rgba(11, 17, 22, 0.94));
     box-shadow:
-      0 24px 44px rgba(7, 10, 12, 0.36),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 18px 36px rgba(4, 7, 9, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(14px);
   }
 
   .shell__brand {
     display: flex;
-    gap: 14px;
-    align-items: flex-start;
+    gap: 12px;
+    align-items: center;
     min-width: 0;
   }
 
   .shell__brand-mark {
-    width: 46px;
-    height: 46px;
+    width: 38px;
+    height: 38px;
     display: grid;
     place-items: center;
-    border-radius: 16px;
-    border: 1px solid rgba(120, 151, 143, 0.2);
+    border-radius: 14px;
+    border: 1px solid rgba(154, 180, 171, 0.16);
     background:
-      linear-gradient(180deg, rgba(27, 39, 42, 0.98), rgba(17, 25, 29, 0.98));
+      linear-gradient(180deg, rgba(33, 46, 52, 0.98), rgba(16, 24, 29, 0.98));
     box-shadow:
-      0 12px 22px rgba(0, 0, 0, 0.24),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 10px 20px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02);
   }
 
   .shell__brand-core {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: 999px;
     background:
       radial-gradient(circle at 34% 34%, #f8f2cb 0 24%, transparent 25%),
-      linear-gradient(180deg, #69c3a1, #214d43);
+      linear-gradient(180deg, #74d0ae, #244e45);
     box-shadow:
-      0 0 0 7px rgba(96, 198, 162, 0.08),
-      0 4px 16px rgba(27, 68, 59, 0.5);
+      0 0 0 8px rgba(110, 212, 179, 0.08),
+      0 6px 18px rgba(27, 68, 59, 0.46);
   }
 
   .shell__brand-copy {
     display: grid;
-    gap: 3px;
+    gap: 1px;
     min-width: 0;
   }
 
   .shell__brand-copy strong {
-    font-size: 1.18rem;
-    color: rgba(247, 244, 235, 0.96);
+    font-size: 1rem;
+    color: rgba(248, 245, 236, 0.98);
     font-family: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    letter-spacing: -0.01em;
   }
 
   .shell__brand-copy > span:last-child {
-    color: rgba(198, 212, 205, 0.74);
-    line-height: 1.45;
-    max-width: 58ch;
+    color: rgba(198, 211, 205, 0.66);
+    font-size: 0.74rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
   .shell__tools {
-    display: grid;
-    gap: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
   }
 
   .shell__status {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-end;
+    flex: 0 0 auto;
   }
 
   .shell__status-pill {
     display: inline-flex;
     align-items: center;
-    padding: 7px 11px;
+    padding: 6px 10px;
     border-radius: 999px;
-    border: 1px solid rgba(123, 146, 140, 0.18);
+    border: 1px solid rgba(145, 170, 160, 0.14);
     background: rgba(255, 255, 255, 0.04);
-    color: rgba(232, 228, 213, 0.82);
-    font-size: 0.72rem;
+    color: rgba(231, 227, 214, 0.84);
+    font-size: 0.66rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
-
-  .shell__status-pill--quiet {
-    color: rgba(182, 196, 191, 0.7);
-    background: rgba(87, 104, 112, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .shell__dock {
-    display: grid;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    display: flex;
     gap: 8px;
+    min-width: 0;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .shell__dock::-webkit-scrollbar {
+    display: none;
   }
 
   .shell-link {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
     min-width: 0;
-    padding: 10px 12px;
-    border-radius: 18px;
-    border: 1px solid rgba(113, 139, 133, 0.12);
-    background: rgba(255, 255, 255, 0.03);
-    color: rgba(209, 219, 213, 0.8);
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(131, 155, 149, 0.1);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.022));
+    color: rgba(216, 224, 219, 0.82);
+    white-space: nowrap;
     transition:
       border-color 140ms ease,
       background 140ms ease,
-      transform 140ms ease;
+      transform 140ms ease,
+      box-shadow 140ms ease;
   }
 
   .shell-link:hover {
-    border-color: rgba(150, 174, 166, 0.28);
-    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(168, 191, 182, 0.28);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.058), rgba(255, 255, 255, 0.036));
     transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12);
   }
 
   .shell-link.active {
-    border-color: rgba(222, 154, 79, 0.28);
+    border-color: rgba(230, 175, 96, 0.36);
     background:
-      linear-gradient(180deg, rgba(71, 86, 92, 0.46), rgba(44, 57, 62, 0.72)),
-      linear-gradient(90deg, rgba(227, 157, 84, 0.08), rgba(83, 176, 151, 0.06));
-    color: rgba(247, 242, 227, 0.94);
+      linear-gradient(180deg, rgba(86, 96, 94, 0.32), rgba(41, 51, 52, 0.58)),
+      linear-gradient(90deg, rgba(227, 157, 84, 0.12), rgba(83, 176, 151, 0.1));
+    color: rgba(249, 245, 231, 0.96);
     box-shadow:
-      0 12px 20px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 12px 20px rgba(0, 0, 0, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .shell-link__crest {
     flex: 0 0 auto;
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
     display: grid;
     place-items: center;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(124, 144, 138, 0.12);
-    font-size: 0.78rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(138, 160, 153, 0.14);
+    font-size: 0.64rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .shell-link.active .shell-link__crest {
-    background: rgba(226, 154, 80, 0.12);
-    border-color: rgba(226, 154, 80, 0.18);
+    background: rgba(226, 154, 80, 0.16);
+    border-color: rgba(226, 154, 80, 0.24);
   }
 
   .shell-link__copy {
-    display: grid;
+    display: flex;
     min-width: 0;
   }
 
   .shell-link__copy strong {
-    font-size: 0.9rem;
-    font-weight: 700;
-  }
-
-  .shell-link__copy small {
-    color: rgba(164, 182, 175, 0.72);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.63rem;
+    font-size: 0.82rem;
+    font-weight: 650;
   }
 
   .shell__content {
@@ -375,25 +415,21 @@
 
   .shell.compact .shell__nav,
   .shell.condensed .shell__nav {
-    padding: 16px 18px;
+    padding: 12px 16px;
+  }
+
+  .shell.minimal .shell__status {
+    display: none;
   }
 
   .shell.minimal .shell__brand-copy > span:last-child,
   .shell.compact .shell__brand-copy > span:last-child {
-    max-width: 40ch;
-  }
-
-  .shell.minimal .shell__status {
-    justify-content: flex-start;
-  }
-
-  .shell.minimal .shell__dock {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: none;
   }
 
   .shell.ultraCompact .shell__nav {
     gap: 10px;
-    padding: 12px 14px;
+    padding: 10px 12px;
     margin-bottom: 12px;
     border-radius: 22px;
   }
@@ -419,7 +455,7 @@
   }
 
   .shell.ultraCompact .shell__brand-copy strong {
-    font-size: 1rem;
+    font-size: 0.92rem;
   }
 
   .shell.ultraCompact .shell__brand-copy > span:last-child {
@@ -427,11 +463,7 @@
   }
 
   .shell.ultraCompact .shell__tools {
-    gap: 8px;
-  }
-
-  .shell.ultraCompact .shell__status {
-    justify-content: flex-start;
+    gap: 6px;
   }
 
   .shell.ultraCompact .shell__status-pill {
@@ -439,58 +471,57 @@
     font-size: 0.64rem;
   }
 
-  .shell.ultraCompact .shell__dock {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: 6px;
-  }
-
   .shell.ultraCompact .shell-link {
     gap: 7px;
-    padding: 7px 8px;
-    border-radius: 14px;
+    padding: 7px 10px;
   }
 
   .shell.ultraCompact .shell-link__crest {
-    width: 24px;
-    height: 24px;
-    border-radius: 10px;
+    width: 22px;
+    height: 22px;
     font-size: 0.66rem;
   }
 
   .shell.ultraCompact .shell-link__copy strong {
-    font-size: 0.78rem;
-  }
-
-  .shell.ultraCompact .shell-link__copy small {
-    display: none;
+    font-size: 0.76rem;
   }
 
   @media (max-width: 1100px) {
+    .shell__nav {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .shell__tools {
+      width: 100%;
+      justify-content: space-between;
+    }
+
     .shell__dock {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      flex: 1 1 auto;
     }
   }
 
   @media (max-width: 720px) {
+    .shell__inner {
+      padding: 12px 10px 18px;
+    }
+
     .shell__nav {
-      padding: 15px;
-      border-radius: 24px;
+      padding: 12px;
+      border-radius: 20px;
     }
 
     .shell__brand {
-      gap: 12px;
+      gap: 10px;
     }
 
     .shell__brand-copy strong {
-      font-size: 1.05rem;
+      font-size: 0.96rem;
     }
 
     .shell__brand-copy > span:last-child {
-      font-size: 0.92rem;
-    }
-
-    .shell__dock {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      font-size: 0.68rem;
     }
   }
 </style>

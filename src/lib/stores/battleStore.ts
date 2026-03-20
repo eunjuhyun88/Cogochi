@@ -13,7 +13,7 @@ const initialState: BattleState = {
 };
 
 function createBattleStore() {
-  const store = persistedWritable<BattleState>('cogochi.battle.v3', initialState);
+  const store = persistedWritable<BattleState>('cogochi.battle.v4', initialState);
   const { subscribe, update } = store;
 
   return {

@@ -22,27 +22,27 @@ export interface BattleCommandDefinition {
 
 export const battleCommandDefinitions: BattleCommandDefinition[] = [
   {
-    id: 'FOCUS_TAP',
-    label: 'Focus Tap',
-    summary: 'Supercharge the next push through the active lane.',
+    id: 'LONG',
+    label: 'LONG',
+    summary: 'Commit upward and try to break through resistance or ride the rebound.',
     hotkey: '1',
   },
   {
-    id: 'MEMORY_PULSE',
-    label: 'Memory Pulse',
-    summary: 'Force one retrieval spike before the squad commits.',
+    id: 'SHORT',
+    label: 'SHORT',
+    summary: 'Commit downward and force the rejection or breakdown before it recovers.',
     hotkey: '2',
   },
   {
-    id: 'RISK_VETO',
-    label: 'Risk Veto',
-    summary: 'Cancel a dangerous line and protect the floor.',
+    id: 'HOLD',
+    label: 'HOLD',
+    summary: 'Pause the commit, gather one cleaner read, and keep the structure stable.',
     hotkey: '3',
   },
   {
-    id: 'RETARGET',
-    label: 'Retarget',
-    summary: 'Redirect squad pressure straight into the live objective.',
+    id: 'RUN',
+    label: 'RUN',
+    summary: 'Disengage before the trap snaps shut and preserve the squad for the next turn.',
     hotkey: '4',
   },
 ];
@@ -75,15 +75,12 @@ function phaseForTurn(turn: number, outcome: BattleOutcome): BattlePhaseId {
 
 export function recommendBattleCommand(session: BattleSession, agent: OwnedAgent): BattleCommandId {
   if (session.trapRisk >= 64 || session.supportIntegrity <= 42) {
-    return 'RISK_VETO';
+    return 'RUN';
   }
   if (session.revealLevel === 0 || agent.lastComparison?.deltas.retrievalScore === undefined) {
-    return 'MEMORY_PULSE';
+    return 'HOLD';
   }
-  if (session.structureIntegrity <= 48 || session.phase === 'COMMIT') {
-    return 'RETARGET';
-  }
-  return 'FOCUS_TAP';
+  return evaluateAgentLoadout(agent, agent.loadout, session.scenarioId).action;
 }
 
 function createLog(turn: number, commandId: BattleCommandId | null, title: string, summary: string, tone: BattleTone): BattleTurnLog {
@@ -131,7 +128,7 @@ export function createBattleSession(
     turn: 1,
     phase: 'APPROACH',
     outcome: 'ONGOING',
-    selectedCommandId: 'FOCUS_TAP',
+    selectedCommandId: scenario.targetAction,
     lastCommandId: null,
     structureIntegrity: clamp(118 - Math.round(report.totalScore * 0.55) + gateStructureBias, 32, 96),
     supportIntegrity: clamp(Math.round(report.riskScore * 0.62) + supportBias, 28, 92),
@@ -225,39 +222,59 @@ export function executeBattleCommand(session: BattleSession, agent: OwnedAgent):
   let title = '';
   let summary = '';
 
-  if (commandId === 'FOCUS_TAP') {
-    pushGain = 10 + Math.round(report.accuracyScore * 0.08) + Math.round(session.focusCharge * 0.45);
-    structureDamage = 8 + Math.round(report.coordinationScore * 0.07) + (session.revealLevel > 0 ? 4 : 0);
-    trapDelta = report.riskScore >= 72 ? 4 : 10;
-    rivalDelta = 3;
-    focusDelta = -Math.min(session.focusCharge, 2);
-    title = scenario.targetAction === 'LONG' ? 'Focus Tap sharpened the climb' : 'Focus Tap sharpened the collapse';
-    summary = 'One agent was supercharged and the next lane push hit harder, but speed increased exposure.';
-  } else if (commandId === 'MEMORY_PULSE') {
+  if (commandId === 'LONG') {
+    if (report.action === 'LONG') {
+      pushGain = 10 + Math.round(report.accuracyScore * 0.08) + Math.round(session.focusCharge * 0.45);
+      structureDamage = 8 + Math.round(report.coordinationScore * 0.07) + (session.revealLevel > 0 ? 4 : 0);
+      trapDelta = report.riskScore >= 72 ? 4 : 10;
+      rivalDelta = 3;
+      focusDelta = -Math.min(session.focusCharge, 2);
+      title = 'LONG sharpened the climb';
+      summary = 'The squad committed upward and turned support into clean forward pressure.';
+    } else {
+      pushGain = 1 + Math.round(report.accuracyScore * 0.02);
+      structureDamage = 2 + Math.round(report.reasoningScore * 0.02);
+      trapDelta = 18;
+      rivalDelta = -2;
+      supportDelta = -8;
+      title = 'LONG climbed into resistance';
+      summary = 'The squad forced the wrong side of the chart and exposed itself to the rival response.';
+    }
+  } else if (commandId === 'SHORT') {
+    if (report.action === 'SHORT') {
+      pushGain = 10 + Math.round(report.accuracyScore * 0.08) + Math.round(session.focusCharge * 0.45);
+      structureDamage = 8 + Math.round(report.coordinationScore * 0.07) + (session.revealLevel > 0 ? 4 : 0);
+      trapDelta = report.riskScore >= 72 ? 4 : 10;
+      rivalDelta = 3;
+      focusDelta = -Math.min(session.focusCharge, 2);
+      title = 'SHORT forced the collapse';
+      summary = 'The squad committed downward and pressed the breakdown before the rebound could form.';
+    } else {
+      pushGain = 1 + Math.round(report.accuracyScore * 0.02);
+      structureDamage = 2 + Math.round(report.reasoningScore * 0.02);
+      trapDelta = 18;
+      rivalDelta = -2;
+      supportDelta = -8;
+      title = 'SHORT got squeezed under the rebound';
+      summary = 'The squad pressed down at the wrong time and the rival used the rebound to seize control.';
+    }
+  } else if (commandId === 'HOLD') {
     pushGain = 5 + Math.round(report.reasoningScore * 0.05);
     structureDamage = 6 + Math.round(report.retrievalScore * 0.05);
     trapDelta = -15 - Math.round(report.retrievalScore * 0.05);
     rivalDelta = 6;
     focusDelta = 1;
     revealDelta = 1;
-    title = 'Memory Pulse pulled an old replay into the fight';
-    summary = 'Retrieval spiked, the trap pattern became clearer, and the squad committed with better context.';
-  } else if (commandId === 'RISK_VETO') {
+    title = 'HOLD pulled a cleaner read into the fight';
+    summary = 'The squad waited, reviewed the lane, and lowered trap pressure before the next commit.';
+  } else {
     pushGain = 2 + Math.round(report.riskScore * 0.03);
     structureDamage = 4 + Math.round(report.riskScore * 0.04);
     trapDelta = -18 - Math.round(report.riskScore * 0.05);
     rivalDelta = 12;
     supportDelta = 16 + Math.round(report.riskScore * 0.06);
-    title = 'Risk Veto protected the floor';
-    summary = 'A dangerous line was canceled, support was reinforced, and rival pressure lost momentum.';
-  } else {
-    pushGain = 8 + Math.round(report.coordinationScore * 0.06);
-    structureDamage = 12 + Math.round(report.accuracyScore * 0.08) + (session.revealLevel > 0 ? 6 : 0);
-    trapDelta = session.revealLevel > 0 ? 1 : 8;
-    rivalDelta = 4;
-    focusDelta = -Math.min(session.focusCharge, 1);
-    title = 'Retarget redirected the squad into the live objective';
-    summary = 'The team stopped drifting and pushed directly into the wall zone.';
+    title = 'RUN preserved the squad';
+    summary = 'The squad disengaged early, reinforced its footing, and kept the gate playable for the next call.';
   }
 
   const rivalStrike = clamp(

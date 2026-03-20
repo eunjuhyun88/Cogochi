@@ -27,5 +27,8 @@ export const load: PageServerLoad = ({ url }) => {
   return {
     runtime: readRuntimeArtifacts(),
     returnContext,
+    selectedAgentId: url.searchParams.get('agent'),
+    selectedDoctrineSessionId: url.searchParams.get('session'),
+    selectedProofPackId: url.searchParams.get('pack'),
   };
 };

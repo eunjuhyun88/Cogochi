@@ -13,6 +13,7 @@
     scriptPresetLabels,
     trainerSummarySeed,
   } from '$lib/data/seed';
+  import { labStore } from '$lib/stores/labStore';
   import { hubStore, type CareMode, type HubPanel, type StylePreview } from '$lib/stores/hubStore';
   import { rosterStore } from '$lib/stores/rosterStore';
   import type { CareState, MutationGene, OwnedAgent } from '$lib/types';
@@ -35,6 +36,23 @@
     title: string;
     note: string;
   };
+
+  type LoopBeat = {
+    label: string;
+    title: string;
+    note: string;
+  };
+
+  function buildRouteHref(pathname: '/field' | '/battle' | '/proof' | '/lab', entries: Array<[string, string | null | undefined]>): string {
+    const params = new URLSearchParams();
+    for (const [key, value] of entries) {
+      if (value) {
+        params.set(key, value);
+      }
+    }
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }
 
   let careReceipt = $state<HubActionReceipt | null>(null);
 
@@ -122,6 +140,7 @@
   });
 
   const hubState = $derived($hubStore);
+  const labState = $derived($labStore);
   const activePanel = $derived(hubState.activePanel);
   const stylePreview = $derived(hubState.stylePreview);
   const careMode = $derived(hubState.careMode);
@@ -133,7 +152,12 @@
     return $rosterStore.agents.filter((agent) => agent.id !== featuredAgent.id).slice(0, 3);
   });
 
-  const activeScenario = $derived(evalScenarios.find((scenario) => scenario.id === trainer.activeScenarioId) ?? evalScenarios[0] ?? null);
+  const activeScenario = $derived(evalScenarios.find((scenario) => scenario.id === labState.activeScenarioId) ?? evalScenarios[0] ?? null);
+  const activeDoctrineSessionId = $derived.by(() => (featuredAgent ? labState.activeDoctrineSessionIds[featuredAgent.id] ?? null : null));
+  const activeDoctrineSession = $derived.by(() =>
+    featuredAgent && activeDoctrineSessionId ? labStore.getDoctrineSession(featuredAgent.id, activeDoctrineSessionId) : null,
+  );
+  const activeProofPackId = $derived(activeDoctrineSession?.recommendedProofPackId ?? null);
 
   const featuredStats = $derived.by(() => {
     if (!featuredAgent) {
@@ -182,19 +206,120 @@
     return featuredAgent.memoryBank.slice(0, 2);
   });
 
-  const highlightedScenarioChoices = $derived.by(() => {
-    if (!activeScenario) {
-      return evalScenarios.slice(0, 3);
-    }
-    return [activeScenario, ...evalScenarios.filter((scenario) => scenario.id !== activeScenario.id)].slice(0, 3);
-  });
-
   const currentPanelSummary = $derived.by(() => (featuredAgent ? panelSummary(activePanel, featuredAgent) : null));
 
-  const proofHref = $derived(featuredAgent ? `/proof?agent=${featuredAgent.id}` : '/proof');
-  const labHref = $derived(featuredAgent ? `/lab?agent=${featuredAgent.id}` : '/lab');
+  const fieldHref = $derived.by(() =>
+    featuredAgent
+      ? buildRouteHref('/field', [
+          ['agent', featuredAgent.id],
+          ['session', activeDoctrineSessionId],
+          ['pack', activeProofPackId],
+        ])
+      : '/field',
+  );
+  const battleHref = $derived.by(() =>
+    featuredAgent
+      ? buildRouteHref('/battle', [
+          ['agent', featuredAgent.id],
+          ['session', activeDoctrineSessionId],
+          ['pack', activeProofPackId],
+        ])
+      : '/battle',
+  );
+  const proofHref = $derived.by(() =>
+    featuredAgent
+      ? buildRouteHref('/proof', [
+          ['agent', featuredAgent.id],
+          ['session', activeDoctrineSessionId],
+          ['pack', activeProofPackId],
+        ])
+      : '/proof',
+  );
+  const labHref = $derived.by(() =>
+    featuredAgent
+      ? buildRouteHref('/lab', [
+          ['agent', featuredAgent.id],
+          ['session', activeDoctrineSessionId],
+          ['pack', activeProofPackId],
+        ])
+      : '/lab',
+  );
   const passportHref = $derived(featuredAgent ? `/passport/${featuredAgent.id}` : '/passport');
   const agentHref = $derived(featuredAgent ? `/agent/${featuredAgent.id}` : '/roster');
+  const resumeWaypoint = $derived.by(() => {
+    if (!featuredAgent) {
+      return 'Trail pending';
+    }
+    if (featuredAgent.careState === 'DOCTRINE_BLUR') {
+      return activeDoctrineSession ? `Lab bench armed with ${activeDoctrineSession.title}` : 'Lab bench first';
+    }
+    if (featuredAgent.careState === 'MEMORY_DRIFT') {
+      return 'Archive clue on return';
+    }
+    if (featuredAgent.careState === 'CONFIDENCE_SHAKE') {
+      return 'Spar gate first';
+    }
+    if (featuredAgent.careState === 'SQUAD_FRICTION') {
+      return 'Camp regroup before proof';
+    }
+    return activeScenario ? `${activeScenario.symbol} · ${activeScenario.timeframe}` : 'Field route live';
+  });
+  const resumeLoopTitle = $derived.by(() => {
+    if (!featuredAgent) {
+      return 'Resume the next route.';
+    }
+    if (featuredAgent.careState === 'DOCTRINE_BLUR') {
+      return 'Carry one cleaner doctrine line back into the trail.';
+    }
+    if (featuredAgent.careState === 'MEMORY_DRIFT') {
+      return 'Re-enter the field with one lesson pinned.';
+    }
+    if (featuredAgent.careState === 'CONFIDENCE_SHAKE') {
+      return 'Take the safer gate and rebuild the read.';
+    }
+    if (featuredAgent.careState === 'SQUAD_FRICTION') {
+      return 'Regroup the squad before the next hard proof.';
+    }
+    return `${featuredAgent.name} is ready to resume ${activeScenario?.label ?? 'the night route'}.`;
+  });
+  const resumeLoopDetail = $derived.by(() => {
+    if (!featuredAgent) {
+      return 'Choose the next route and leave the room with one clear intent.';
+    }
+    const doctrineLead = activeDoctrineSession ? `Bound doctrine: ${activeDoctrineSession.title}. ` : '';
+    return `${doctrineLead}${featuredAgent.nextCareAction}`;
+  });
+  const resumePrimaryLabel = $derived.by(() => {
+    if (!featuredAgent) {
+      return 'Enter field';
+    }
+    if (featuredAgent.careState === 'CONFIDENCE_SHAKE') {
+      return 'Take spar route';
+    }
+    return 'Resume trail';
+  });
+  const loopBeats = $derived.by<LoopBeat[]>(() => {
+    if (!featuredAgent) {
+      return [];
+    }
+    return [
+      {
+        label: 'Read',
+        title: activeScenario?.structureHint ?? 'Read the current shelf first.',
+        note: activeScenario ? `${activeScenario.symbol} · ${activeScenario.timeframe}` : 'Route pending',
+      },
+      {
+        label: 'Call',
+        title: activeScenario?.targetAction ?? 'HOLD',
+        note: activeScenario?.objective ?? 'Answer with one clean LONG, SHORT, HOLD, or RUN call.',
+      },
+      {
+        label: 'Return',
+        title: featuredAgent.careState === 'CLEAR' ? 'Bring one lesson back to camp.' : careStateLabels[featuredAgent.careState],
+        note: featuredAgent.nextCareAction,
+      },
+    ];
+  });
 
   const stylePreviewCopy = {
     field: {
@@ -225,20 +350,6 @@
       note: 'Pins the latest lesson in place before it drifts into noise.',
     },
   } as const;
-
-  const terminalReadout = $derived.by(() => {
-    if (!featuredAgent) {
-      return [];
-    }
-
-    return [
-      { label: 'Market', value: activeScenario ? `${activeScenario.symbol}-${activeScenario.timeframe}` : 'Route pending' },
-      { label: 'Role', value: `${featuredAgent.role} / ${agentFamilyLabels[featuredAgent.family]}` },
-      { label: 'Shell', value: stylePreviewCopy[stylePreview].label },
-      { label: 'Weak link', value: featuredAgent.weakLink },
-      { label: 'Target', value: activeScenario?.targetAction ?? 'HOLD' },
-    ] as const;
-  });
 
   const activePanelFeed = $derived.by<FeedCard[]>(() => {
     if (!featuredAgent) {
@@ -411,6 +522,11 @@
       weakLink: featuredAgent.weakLink,
       keepsakes: featuredAgent.keepsakes,
       companions: companions.map((companion) => companion.name),
+      activeDoctrineSessionId,
+      fieldHref,
+      battleHref,
+      labHref,
+      resumeWaypoint,
     });
 
     return () => {
@@ -426,15 +542,47 @@
         <article class="hub-stage panel">
           <div class="hub-stage__header">
             <div class="hub-stage__title-block">
-              <p class="section-kicker">Macro World Feed</p>
-              <h1>{activeScenario ? `${activeScenario.label} is tonight's route.` : `${featuredAgent.name} is ready to deploy.`}</h1>
-              <p>{currentPanelSummary?.description ?? 'Choose the next route, steady the companion, and leave the room with one clear intent.'}</p>
+              <p class="section-kicker">Judgment RPG</p>
+              <h1>Read the shelf. Make one call.</h1>
+              <p>Cogochi turns chart analysis into a field loop: read the structure, answer with LONG, SHORT, HOLD, or RUN, then return with one consequence that changes the next route.</p>
             </div>
 
             <div class="hub-stage__chips">
               <span class="chip">{trainer.trainerName}</span>
               <span class="chip">{trainer.streakLabel}</span>
               <span class="chip">{trainer.focus}</span>
+            </div>
+          </div>
+
+          <div class="hub-stage__mission">
+            <div class="hub-stage__mission-copy">
+              <small>Resume Loop</small>
+              <strong>{resumeLoopTitle}</strong>
+              <p>{resumeLoopDetail}</p>
+            </div>
+
+            <div class="hub-stage__mission-meta">
+              <span class="chip">{featuredAgent.name}</span>
+              <span class="chip chip--quiet">{resumeWaypoint}</span>
+              {#if activeDoctrineSession}
+                <span class="chip chip--quiet">{activeDoctrineSession.title}</span>
+              {/if}
+            </div>
+
+            <div class="hub-stage__mission-actions">
+              <a class="link-button" href={fieldHref}>{resumePrimaryLabel}</a>
+              <a class="link-button secondary" href={battleHref}>Jump to battle</a>
+              <a class="link-button ghost" href={labHref}>Tune lab</a>
+            </div>
+
+            <div class="hub-stage__loop">
+              {#each loopBeats as beat}
+                <article class="hub-stage__loop-card">
+                  <small>{beat.label}</small>
+                  <strong>{beat.title}</strong>
+                  <p>{beat.note}</p>
+                </article>
+              {/each}
             </div>
           </div>
 
@@ -475,54 +623,14 @@
               <strong>{activeScenario?.structureHint ?? 'Shelf still readable'}</strong>
             </div>
 
-            <div class="hub-stage__tag hub-stage__tag--risk">
-              <small>Weak link</small>
-              <strong>{featuredAgent.weakLink}</strong>
-            </div>
-
             <div class={`hub-stage__tag hub-stage__tag--form hub-stage__tag--${formTone(featuredAgent.careState)}`}>
               <small>Body read</small>
               <strong>{careStateLabels[featuredAgent.careState]}</strong>
             </div>
 
-            <div class="hub-stage__future">
-              <small>Hidden next candle</small>
-              <strong>{activeScenario?.targetAction ?? 'HOLD'} bias</strong>
-              <p>{activeScenario?.objective ?? 'Route objective not loaded yet.'}</p>
-            </div>
-
             <div class="hub-stage__bark">
               <small>{featuredAgent.name}</small>
               <strong>{activeScenario?.structureHint ?? featuredAgent.nextCareAction}</strong>
-            </div>
-
-            <div class="hub-stage__terminal">
-              <div class="hub-stage__terminal-head">
-                <small>ops start</small>
-                <span>macro feed</span>
-              </div>
-              <div class="hub-stage__terminal-list">
-                {#each terminalReadout as row}
-                  <div>
-                    <span>{row.label}</span>
-                    <strong>{row.value}</strong>
-                  </div>
-                {/each}
-              </div>
-            </div>
-
-            <div class="hub-stage__squad">
-              {#each companions as companion, index}
-                <button
-                  class="hub-stage__wingmate"
-                  style={`--slot:${index};`}
-                  onclick={() => rosterStore.selectAgent(companion.id)}
-                  type="button"
-                >
-                  <PixelSprite agent={companion} homeStyle={companion.homeStyle} presentation="hub" size={54} />
-                  <span>{companion.name}</span>
-                </button>
-              {/each}
             </div>
 
             <div class="hub-stage__hero">
@@ -541,24 +649,24 @@
 
           <div class="hub-stage__dock">
             <button class:active={activePanel === 'customize'} type="button" onclick={() => hubStore.setActivePanel('customize')}>
-              <span>Shell</span>
-              <small>body read</small>
+              <span>Gear</span>
+              <small>shell</small>
             </button>
             <button class:active={activePanel === 'care'} type="button" onclick={() => hubStore.setActivePanel('care')}>
-              <span>Care</span>
-              <small>room fix</small>
+              <span>Camp</span>
+              <small>recover</small>
             </button>
             <button class:active={activePanel === 'growth'} type="button" onclick={() => hubStore.setActivePanel('growth')}>
-              <span>Growth</span>
-              <small>role edge</small>
+              <span>Edge</span>
+              <small>sharpen</small>
             </button>
             <button class:active={activePanel === 'memory'} type="button" onclick={() => hubStore.setActivePanel('memory')}>
-              <span>Memory</span>
-              <small>pin lesson</small>
+              <span>Recall</span>
+              <small>pin clue</small>
             </button>
             <button class:active={activePanel === 'doctrine'} type="button" onclick={() => hubStore.setActivePanel('doctrine')}>
-              <span>Doctrine</span>
-              <small>write rule</small>
+              <span>Rule</span>
+              <small>route line</small>
             </button>
           </div>
 
@@ -574,9 +682,9 @@
             </div>
 
             <div class="hub-stage__actions">
-              <a class="link-button" href="/field">Enter field</a>
               <a class="link-button secondary" href={proofHref}>Open proof</a>
               <a class="link-button ghost" href={passportHref}>Passport</a>
+              <a class="link-button ghost" href={agentHref}>Companion file</a>
             </div>
           </div>
         </article>
@@ -584,9 +692,9 @@
         <aside class="hub-sidebar">
           <section class="hub-card panel">
             <div class="hub-card__header">
-              <p class="section-kicker">Active Sortie</p>
-              <h2>{activeScenario?.label ?? 'Route pending'}</h2>
-              <p>{activeScenario?.objective ?? 'Pick a route and leave the room once the body looks right.'}</p>
+              <p class="section-kicker">Judgment Loop</p>
+              <h2>Read one shelf. Make one call.</h2>
+              <p>{activeScenario?.objective ?? 'The field should ask one clear question, then send the player back with consequence.'}</p>
             </div>
 
             {#if activeScenario}
@@ -604,23 +712,40 @@
 
             <div class="hub-card__list">
               <div>
-                <small>Family</small>
-                <strong>{agentFamilyLabels[featuredAgent.family]}</strong>
+                <small>Chart</small>
+                <strong>{activeScenario ? `${activeScenario.symbol} · ${activeScenario.timeframe}` : 'Route pending'}</strong>
               </div>
               <div>
-                <small>Stage</small>
-                <strong>{growthStageLabels[featuredAgent.growthStage]}</strong>
+                <small>Weak link</small>
+                <strong>{featuredAgent.weakLink}</strong>
               </div>
               <div>
-                <small>Saved shell</small>
-                <strong>{stylePreviewCopy[featuredAgent.homeStyle].label}</strong>
+                <small>Return</small>
+                <strong>{featuredAgent.careState === 'CLEAR' ? 'Camp then field' : careStateLabels[featuredAgent.careState]}</strong>
+              </div>
+            </div>
+
+            <div class="hub-card__bench">
+              <small>Quick switch</small>
+              <div class="hub-bench">
+                {#each [featuredAgent, ...companions] as agent}
+                  <button
+                    class:active={agent.id === featuredAgent.id}
+                    class="hub-bench__card"
+                    onclick={() => rosterStore.selectAgent(agent.id)}
+                    type="button"
+                  >
+                    <PixelSprite agent={agent} homeStyle={agent.homeStyle} presentation="hub" size={52} />
+                    <span>{agent.name}</span>
+                  </button>
+                {/each}
               </div>
             </div>
           </section>
 
           <section class="hub-card panel">
             <div class="hub-card__header">
-              <p class="section-kicker">Selected Module</p>
+              <p class="section-kicker">Camp Prep</p>
               <h2>{currentPanelSummary?.title}</h2>
               <p>{currentPanelSummary?.description}</p>
             </div>
@@ -666,7 +791,7 @@
             {:else if activePanel === 'growth'}
               <div class="hub-inline-actions">
                 <a class="link-button" href={proofHref}>Run proof</a>
-                <a class="link-button secondary" href="/battle">Open battle</a>
+                <a class="link-button secondary" href={battleHref}>Open battle</a>
               </div>
             {:else if activePanel === 'memory'}
               <div class="hub-inline-actions">
@@ -692,48 +817,17 @@
                 <strong>{careReceipt.title}</strong>
                 <p>{careReceipt.detail}</p>
               {:else}
-                <small>Operator note</small>
+                <small>Prep note</small>
                 <strong>Keep the room edits short and legible.</strong>
                 <p>Only one correction should compete with the next route at a time.</p>
               {/if}
-            </div>
-          </section>
-
-          <section class="hub-card panel">
-            <div class="hub-card__header">
-              <p class="section-kicker">Route Radar</p>
-              <h2>Three routes worth attention</h2>
-            </div>
-
-            <div class="hub-radar">
-              {#each highlightedScenarioChoices as scenario}
-                <div class:active={scenario.id === activeScenario?.id} class="hub-radar__card">
-                  <small>{scenario.symbol} / {scenario.timeframe}</small>
-                  <strong>{scenario.label}</strong>
-                  <p>{scenario.structureHint}</p>
-                </div>
-              {/each}
-            </div>
-
-            <div class="hub-bench">
-              {#each [featuredAgent, ...companions] as agent}
-                <button
-                  class:active={agent.id === featuredAgent.id}
-                  class="hub-bench__card"
-                  onclick={() => rosterStore.selectAgent(agent.id)}
-                  type="button"
-                >
-                  <PixelSprite agent={agent} homeStyle={agent.homeStyle} presentation="hub" size={52} />
-                  <span>{agent.name}</span>
-                </button>
-              {/each}
             </div>
           </section>
         </aside>
       </section>
     {:else}
       <article class="hub-empty panel">
-        <p class="section-kicker">Macro World Feed</p>
+        <p class="section-kicker">Judgment RPG</p>
         <h1>No featured agent yet</h1>
         <p>Open the roster, pick one companion, then come back here to choose the next route.</p>
         <a class="link-button" href="/roster">Open roster</a>
@@ -843,7 +937,7 @@
 
   .hub-home__grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) 340px;
+    grid-template-columns: minmax(0, 1.3fr) 320px;
     gap: 18px;
     align-items: start;
   }
@@ -857,6 +951,92 @@
   .hub-stage__header {
     display: grid;
     gap: 12px;
+  }
+
+  .hub-stage__mission {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 18px;
+    border-radius: 24px;
+    border: 1px solid rgba(120, 146, 140, 0.14);
+    background:
+      linear-gradient(180deg, rgba(227, 168, 93, 0.1), rgba(98, 163, 141, 0.06)),
+      rgba(255, 255, 255, 0.03);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 18px 30px rgba(0, 0, 0, 0.14);
+  }
+
+  .hub-stage__mission-copy {
+    display: grid;
+    gap: 6px;
+  }
+
+  .hub-stage__mission-copy strong {
+    font-size: 1.08rem;
+  }
+
+  .hub-stage__mission-copy p {
+    margin: 0;
+    max-width: 62ch;
+    color: rgba(202, 216, 210, 0.74);
+    line-height: 1.5;
+  }
+
+  .hub-stage__mission-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hub-stage__mission-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .hub-stage__loop {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .hub-stage__loop-card {
+    display: grid;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(123, 148, 141, 0.12);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+      rgba(11, 15, 19, 0.38);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 12px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .hub-stage__loop-card small {
+    color: rgba(221, 230, 225, 0.56);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .hub-stage__loop-card strong {
+    color: rgba(247, 241, 225, 0.96);
+    font-size: 0.92rem;
+    line-height: 1.25;
+  }
+
+  .hub-stage__loop-card p {
+    margin: 0;
+    color: rgba(203, 216, 211, 0.72);
+    font-size: 0.8rem;
+    line-height: 1.45;
   }
 
   .hub-stage__title-block {
@@ -884,7 +1064,7 @@
 
   .hub-stage__screen {
     position: relative;
-    min-height: 560px;
+    min-height: 500px;
     border-radius: 26px;
     overflow: hidden;
     border: 1px solid rgba(124, 145, 140, 0.16);
@@ -966,17 +1146,13 @@
   }
 
   .hub-stage__tag,
-  .hub-stage__future,
   .hub-stage__bark,
-  .hub-stage__terminal,
-  .hub-stage__squad,
   .hub-stage__hero {
     position: absolute;
     z-index: 1;
   }
 
   .hub-stage__tag,
-  .hub-stage__future,
   .hub-stage__bark {
     border-radius: 18px;
     border: 1px solid rgba(126, 147, 141, 0.16);
@@ -986,29 +1162,24 @@
   }
 
   .hub-stage__tag {
-    padding: 12px 14px;
+    padding: 10px 12px;
     display: grid;
-    gap: 6px;
-    min-width: 170px;
+    gap: 4px;
+    min-width: 150px;
   }
 
   .hub-stage__tag strong {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
   }
 
   .hub-stage__tag--support {
-    top: 24px;
-    left: 22px;
-  }
-
-  .hub-stage__tag--risk {
-    top: 96px;
-    left: 42px;
+    top: 20px;
+    left: 20px;
   }
 
   .hub-stage__tag--form {
-    right: 22px;
-    top: 26px;
+    right: 20px;
+    top: 20px;
   }
 
   .hub-stage__tag--clear {
@@ -1023,104 +1194,26 @@
     border-color: rgba(220, 121, 101, 0.24);
   }
 
-  .hub-stage__future {
-    right: 24px;
-    top: 116px;
-    max-width: 220px;
-    padding: 14px;
-    display: grid;
-    gap: 7px;
-  }
-
-  .hub-stage__future p {
-    color: rgba(204, 218, 212, 0.74);
-    line-height: 1.45;
-  }
-
   .hub-stage__bark {
     left: 50%;
-    bottom: 28px;
+    bottom: 22px;
     transform: translateX(-50%);
-    min-width: min(420px, calc(100% - 40px));
-    padding: 14px 18px;
+    min-width: min(360px, calc(100% - 40px));
+    padding: 12px 16px;
     display: grid;
-    gap: 6px;
+    gap: 4px;
     text-align: center;
   }
 
   .hub-stage__bark strong {
-    font-size: 1rem;
-  }
-
-  .hub-stage__terminal {
-    right: 28px;
-    bottom: 120px;
-    width: min(280px, calc(100% - 44px));
-    padding: 14px 16px;
-    border-radius: 18px;
-    border: 1px solid rgba(137, 150, 138, 0.16);
-    background:
-      linear-gradient(180deg, rgba(8, 11, 12, 0.96), rgba(14, 17, 18, 0.96));
-    box-shadow:
-      0 18px 30px rgba(0, 0, 0, 0.26),
-      inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    font-family: 'IBM Plex Mono', 'SFMono-Regular', monospace;
-  }
-
-  .hub-stage__terminal-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 10px;
-    color: rgba(178, 192, 184, 0.62);
-  }
-
-  .hub-stage__terminal-list {
-    display: grid;
-    gap: 8px;
-  }
-
-  .hub-stage__terminal-list div {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    color: rgba(193, 209, 201, 0.74);
-    font-size: 0.82rem;
-  }
-
-  .hub-stage__terminal-list strong {
-    color: rgba(245, 237, 221, 0.94);
-    text-align: right;
-  }
-
-  .hub-stage__squad {
-    left: 22px;
-    bottom: 120px;
-    display: grid;
-    gap: 10px;
-  }
-
-  .hub-stage__wingmate {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 16px;
-    border: 1px solid rgba(124, 146, 140, 0.12);
-    background: rgba(9, 14, 17, 0.7);
-    color: rgba(236, 240, 233, 0.84);
-    transform: translateX(calc(var(--slot) * 18px));
-  }
-
-  .hub-stage__wingmate span {
-    font-size: 0.85rem;
+    font-size: 0.94rem;
   }
 
   .hub-stage__hero {
     left: 50%;
-    bottom: 88px;
+    bottom: 84px;
     transform: translateX(-50%);
-    width: 320px;
+    width: 280px;
     display: grid;
     justify-items: center;
   }
@@ -1133,16 +1226,16 @@
   }
 
   .hub-stage__hero-ring--outer {
-    width: 218px;
-    height: 218px;
-    bottom: 38px;
+    width: 196px;
+    height: 196px;
+    bottom: 34px;
     background: radial-gradient(circle, rgba(92, 176, 150, 0.14), transparent 72%);
   }
 
   .hub-stage__hero-ring--inner {
-    width: 164px;
-    height: 164px;
-    bottom: 68px;
+    width: 146px;
+    height: 146px;
+    bottom: 58px;
     background: radial-gradient(circle, rgba(227, 171, 97, 0.16), transparent 72%);
   }
 
@@ -1151,8 +1244,8 @@
     z-index: 1;
     display: grid;
     place-items: center;
-    width: 260px;
-    height: 260px;
+    width: 224px;
+    height: 224px;
   }
 
   .hub-stage__hero-label {
@@ -1306,9 +1399,19 @@
 
   .hub-card__list small,
   .hub-feed__card p,
-  .hub-radar__card p,
   .hub-receipt p {
     color: rgba(193, 208, 202, 0.68);
+  }
+
+  .hub-card__bench {
+    display: grid;
+    gap: 10px;
+  }
+
+  .hub-card__bench > small {
+    color: rgba(193, 208, 202, 0.68);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   .hub-feed {
@@ -1376,26 +1479,6 @@
     border-color: rgba(122, 143, 138, 0.16);
   }
 
-  .hub-radar {
-    display: grid;
-    gap: 10px;
-  }
-
-  .hub-radar__card {
-    display: grid;
-    gap: 6px;
-    padding: 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(122, 143, 138, 0.12);
-    background: rgba(255, 255, 255, 0.03);
-  }
-
-  .hub-radar__card.active {
-    border-color: rgba(226, 157, 84, 0.24);
-    background:
-      linear-gradient(180deg, rgba(226, 157, 84, 0.1), rgba(255, 255, 255, 0.03));
-  }
-
   .hub-bench {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1445,25 +1528,21 @@
       padding: 18px;
     }
 
+    .hub-stage__mission {
+      grid-template-columns: 1fr;
+    }
+
+    .hub-stage__loop {
+      grid-template-columns: 1fr;
+    }
+
     .hub-stage__screen {
-      min-height: 640px;
-    }
-
-    .hub-stage__terminal {
-      right: 18px;
-      left: 18px;
-      width: auto;
-      bottom: 130px;
-    }
-
-    .hub-stage__squad {
-      left: 16px;
-      bottom: 230px;
+      min-height: 560px;
     }
 
     .hub-stage__hero {
-      bottom: 160px;
-      width: 280px;
+      bottom: 120px;
+      width: 248px;
     }
 
     .hub-stage__dock,
@@ -1477,13 +1556,11 @@
 
   @media (max-width: 640px) {
     .hub-stage__screen {
-      min-height: 720px;
+      min-height: 520px;
     }
 
     .hub-stage__tag--support,
-    .hub-stage__tag--risk,
-    .hub-stage__tag--form,
-    .hub-stage__future {
+    .hub-stage__tag--form {
       position: relative;
       top: auto;
       right: auto;
@@ -1491,12 +1568,8 @@
       margin: 16px 16px 0;
     }
 
-    .hub-stage__tag--risk {
-      margin-top: 8px;
-    }
-
     .hub-stage__hero {
-      bottom: 200px;
+      bottom: 120px;
     }
 
     .hub-stage__bark {
@@ -1511,6 +1584,7 @@
       grid-template-columns: 1fr;
     }
 
+    .hub-stage__mission-actions,
     .hub-stage__actions {
       flex-direction: column;
     }

@@ -238,11 +238,27 @@ Use this file as an evidence log for task start/end, not as the main design auth
   - `npm run autoresearch:field`
   - `npm run autoresearch:raising`
   - `npm run autoresearch:score`
-  - `npm run docs:refresh`
-  - `npm run docs:check`
-  - `npm run ctx:check -- --strict`
 - Push/Merge status: not pushed, not merged
 - Final working tree: Memento-style memory/runtime layer added, roster writeback refactored through memory service, agent and lab surfaces now expose tiered memory, context-kit now reflects real game surfaces, and autoresearch now scores runtime readiness alongside field and raising progress
+
+### START
+
+- Work ID: `chart-game-20260320`
+- Branch: `codex/chart-game`
+- Base: `main`
+- Working tree: field route already existed with traversal and landmarks; adding the missing in-field chart command loop
+- Task summary: build the playable chart-game core on `/field` by adding deterministic `LONG` / `SHORT` / `HOLD` / `RUN` encounters directly on the chart surface
+- Owned files:
+  - `src/lib/types.ts`
+  - `src/lib/engine/field-encounter.ts`
+  - `src/lib/stores/fieldStore.ts`
+  - `src/routes/field/+page.svelte`
+  - `src/components/shared/FieldScene.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/chart-game-20260320.md`
+  - `.agent-context/coordination/claims/chart-game-20260320.json`
 
 ### START
 
@@ -2703,3 +2719,246 @@ Use this file as an evidence log for task start/end, not as the main design auth
   - captured fresh evidence at `.agent-context/harness/immersive-field-vibe-pass-20260317-v5/browser/screenshots/page_field.png`
 - Residual note:
   - the route now matches the target screen grammar much better, but the underlying world renderer is still chart-derived; a full chart-world reset still needs dedicated tile/zone art and route-specific landmark logic rather than CSS silhouettes alone
+
+### FINISH
+
+- Work ID: `chart-game-20260320`
+- Branch: `codex/chart-game`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client evidence at `.agent-context/browser-checks/chart-game/shot-0.png`
+  - Playwright text state at `.agent-context/browser-checks/chart-game/state-0.json`
+  - Playwright clear-state evidence at `.agent-context/browser-checks/chart-game-clear/shot-0.png`
+  - Playwright clear-state text at `.agent-context/browser-checks/chart-game-clear/state-0.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - added deterministic in-field chart encounters with `LONG` / `SHORT` / `HOLD` / `RUN` in `src/lib/engine/field-encounter.ts`
+  - extended `fieldStore` and `FieldState` so `/field` now tracks run HP, gold, XP, streaks, and the active candle encounter
+  - rebuilt `/field` around a real bottom command dock with mouse, `1-4`, and arrow-plus-Enter control paths
+  - updated `FieldScene.svelte` so the active chart frame now exposes revealed versus hidden candles plus support, resistance, and hazard guides directly on the stage
+
+### START
+
+- Work ID: `battle-command-alignment-20260320`
+- Branch: `codex/chart-game`
+- Base: `main`
+- Working tree: `/field` already had the canonical chart command loop, but `/battle` still exposed legacy `Focus/Memory/Risk/Retarget` labels and the command grid could fall below the fold
+- Task summary: migrate `/battle` to the same `LONG` / `SHORT` / `HOLD` / `RUN` grammar as `/field` and tighten the layout so the full command deck stays visible in one view
+- Coordination note:
+  - created semantic checkpoint `battle-command-alignment-20260320`
+  - claimed `src/lib/types.ts`, `src/lib/engine/battle-session.ts`, `src/lib/engine/battle-view.ts`, `src/lib/stores/battleStore.ts`, `src/routes/battle/+page.svelte`, `progress.md`, and `docs/AGENT_WATCH_LOG.md` under the `battle` surface after releasing `chart-game-20260320`
+- Owned files:
+  - `src/lib/types.ts`
+  - `src/lib/engine/battle-session.ts`
+  - `src/lib/engine/battle-view.ts`
+  - `src/lib/stores/battleStore.ts`
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/battle-command-alignment-20260320.md`
+  - `.agent-context/coordination/claims/battle-command-alignment-20260320.json`
+
+### FINISH
+
+- Work ID: `battle-command-alignment-20260320`
+- Branch: `codex/chart-game`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Playwright client evidence at `.agent-context/browser-checks/battle-commands-v4/shot-0.png`
+  - Playwright text state at `.agent-context/browser-checks/battle-commands-v4/state-0.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - replaced legacy battle command IDs with canonical `LONG` / `SHORT` / `HOLD` / `RUN` across shared types, deterministic battle resolution, and battle view-model copy
+  - bumped `battleStore` persistence to `cogochi.battle.v4` so stale legacy sessions do not pollute the new command deck
+  - updated `/battle` so the visible dock reads as `Climb`, `Break`, `Wait`, and `Escape` while preserving the canonical command IDs underneath
+  - tightened the route with the `immersive` shell and smaller stage/menu sizing so the full 2x2 command grid remains visible without scrolling
+- Residual note:
+  - `/battle` now matches the canonical command grammar, but turn-to-turn feedback still relies more on state shifts and text than on explicit transition animation
+
+### START
+
+- Work ID: `premium-uiux-pass-20260320`
+- Branch: `codex/chart-game`
+- Base: `main`
+- Working tree: the field chart-game loop and canonical battle grammar were already in place, but the surfaces still needed a unified premium presentation pass to feel less like functional prototype UI and more like a finished game product
+- Task summary: optimize `/field` and `/battle` with clearer Nintendo-like play readability and more Apple-like glass, spacing, and material polish without changing the command grammar
+- Coordination note:
+  - created semantic checkpoint `premium-uiux-pass-20260320`
+  - released `battle-command-alignment-20260320`
+  - claimed `src/routes/field`, `src/routes/battle`, `src/components/shared/FieldScene.svelte`, `src/components/shared/ChartBattlefield.svelte`, `src/components/shared/PageShell.svelte`, `progress.md`, and `docs/AGENT_WATCH_LOG.md` under the `core` surface
+- Owned files:
+  - `src/components/shared/PageShell.svelte`
+  - `src/components/shared/FieldScene.svelte`
+  - `src/components/shared/ChartBattlefield.svelte`
+  - `src/routes/field/+page.svelte`
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/premium-uiux-pass-20260320.md`
+  - `.agent-context/coordination/claims/premium-uiux-pass-20260320.json`
+
+### FINISH
+
+- Work ID: `premium-uiux-pass-20260320`
+- Branch: `codex/chart-game`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - Field browser evidence at `.agent-context/browser-checks/premium-uiux-field/shot-0.png`
+  - Field text state at `.agent-context/browser-checks/premium-uiux-field/state-0.json`
+  - Battle browser evidence at `.agent-context/browser-checks/premium-uiux-battle-final/shot-0.png`
+  - Battle text state at `.agent-context/browser-checks/premium-uiux-battle-final/state-0.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - upgraded `PageShell.svelte` with a calmer black-glass, warm-metal presentation layer so dense routes feel like one product instead of isolated screens
+  - refined `/field` and `FieldScene.svelte` into a brighter, more tactile world surface with a cleaner plaque, stronger command dock, and denser companion rail
+  - refined `/battle` and `ChartBattlefield.svelte` into a more polished boss-cut-in surface with stronger command contrast, better toolbar materials, and more readable stage layering
+  - corrected the battle resolve-label mapping so `HOLD` and `RUN` surface battle-native wording instead of falling through old label logic
+- Residual note:
+  - the visual finish is much stronger now, but between-turn motion still needs one dedicated animation pass if the goal is full premium game feel rather than premium static presentation alone
+
+### START
+
+- Work ID: `flow-optimization-20260320`
+- Branch: `codex/chart-game`
+- Base: `main`
+- Working tree: the premium visual pass was already in place, but `/`, `/field`, and `/journal` still broke route continuity and made the next action feel like a multi-card dashboard instead of one clear loop
+- Task summary: optimize full UI/UX flow by making home-to-field the obvious primary path, preserving `agent / session / pack / artifact` context across route transitions, and turning `/journal` into a tighter return deck instead of a detached destination
+- Coordination note:
+  - created semantic checkpoint `flow-optimization-20260320`
+  - claimed `src/routes/+page.svelte`, `src/routes/field`, `src/routes/battle`, `src/routes/journal`, `src/components/shared/PageShell.svelte`, `progress.md`, and `docs/AGENT_WATCH_LOG.md` under the `core` surface
+- Owned files:
+  - `src/routes/+page.svelte`
+  - `src/routes/field/+page.server.ts`
+  - `src/routes/field/+page.svelte`
+  - `src/routes/journal/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/flow-optimization-20260320.md`
+  - `.agent-context/coordination/claims/flow-optimization-20260320.json`
+
+### FINISH
+
+- Work ID: `flow-optimization-20260320`
+- Branch: `codex/chart-game`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - browser review evidence at:
+    - `.agent-context/browser-checks/flow-opt-review/home/shot-0.png`
+    - `.agent-context/browser-checks/flow-opt-review/field/shot-0.png`
+    - `.agent-context/browser-checks/flow-opt-review/journal/shot-0.png`
+    - `.agent-context/browser-checks/flow-opt-review/battle/shot-0.png`
+  - matching text-state captures at:
+    - `.agent-context/browser-checks/flow-opt-review/home/state-0.json`
+    - `.agent-context/browser-checks/flow-opt-review/field/state-0.json`
+    - `.agent-context/browser-checks/flow-opt-review/journal/state-0.json`
+    - `.agent-context/browser-checks/flow-opt-review/battle/state-0.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - rebuilt `/` around a `Resume Loop` mission strip so the primary CTA hierarchy now points straight back into the field loop, with battle/lab/proof links inheriting the selected route context
+  - updated `/field` server + client flow so incoming `agent / session / pack` context sets the field leader, survives `replaceState`, and carries through battle, journal, and lab exits
+  - tightened `/journal` into a return deck with one recommended next move and route-aware return links instead of a context-dropping `Return to field` button
+- Residual note:
+  - the flow is much more coherent now, but the shared route-context URL builder should be centralized before any larger navigation refactor to avoid copy drift between routes
+
+### START
+
+- Work ID: `apple-clean-uiux-20260320`
+- Branch: `codex/chart-game`
+- Base: `main`
+- Working tree: the flow pass was functional, but `/`, `/field`, and `/journal` still felt too dashboard-like; the next action was clearer than before, not obvious enough at a glance
+- Task summary: refactor UI/UX so the product reads cleaner and more Apple-like, with less chrome and a much faster read on what the player should do next
+- Coordination note:
+  - created semantic checkpoint `apple-clean-uiux-20260320`
+  - attempted to claim `src/routes`, `src/components/shared`, `progress.md`, and `docs/AGENT_WATCH_LOG.md`, but the existing `flow-optimization-20260320` claim was still active on the same surface
+  - continued on the already-owned surface rather than creating a conflicting second claim
+- Owned files:
+  - `src/components/shared/PageShell.svelte`
+  - `src/routes/+page.svelte`
+  - `src/routes/field/+page.svelte`
+  - `src/routes/journal/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/apple-clean-uiux-20260320.md`
+
+### FINISH
+
+- Work ID: `apple-clean-uiux-20260320`
+- Branch: `codex/chart-game`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - browser review evidence at:
+    - `.agent-context/browser-checks/apple-clean-pass/home/shot-0.png`
+    - `.agent-context/browser-checks/apple-clean-pass/field/shot-0.png`
+    - `.agent-context/browser-checks/apple-clean-pass/journal-v2/shot-0.png`
+    - `.agent-context/browser-checks/apple-clean-pass/battle/shot-0.png`
+  - matching text-state captures at:
+    - `.agent-context/browser-checks/apple-clean-pass/home/state-0.json`
+    - `.agent-context/browser-checks/apple-clean-pass/field/state-0.json`
+    - `.agent-context/browser-checks/apple-clean-pass/journal-v2/state-0.json`
+    - `.agent-context/browser-checks/apple-clean-pass/battle/state-0.json`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - rebuilt `PageShell.svelte` into a thinner product shell with one calm brand block, one status pill, and a compact horizontal route dock instead of the previous heavy dashboard header
+  - simplified `/` so the mission strip and lead companion own the hierarchy, while secondary route and squad controls no longer fight for attention
+  - simplified `/field` so the right console acts like a true action rail: fewer bubbles, no fake composer, no topic noise, and one clear helper sentence while the dock resolves the slice
+  - simplified `/journal` so the recommended return CTA is visible immediately and the lower information density is compressed into one summary grid
+- Residual note:
+  - the product now reads much cleaner, but a final premium pass would still tighten the home nav further and demote the journal care queue so the return CTA dominates even harder
+
+### START
+
+- Work ID: `uiux-fusion-pass-20260320`
+- Branch: `codex/chart-game`
+- Base: `main`
+- Working tree: the Apple-clean pass reduced chrome well, but `/`, `/field`, and `/battle` still repeated route/encounter context and did not make the fused `chart read -> judgment -> return` loop obvious enough at first glance
+- Task summary: make the experience cleaner and more Apple-like while also clarifying that Cogochi is one game loop combining chart analysis and RPG consequence, not several separate tools
+- Coordination note:
+  - reused the already-owned route/core surface from earlier passes instead of creating a conflicting new claim
+  - created semantic checkpoint `.agent-context/checkpoints/uiux-fusion-pass-20260320.md`
+- Owned files:
+  - `src/routes/+page.svelte`
+  - `src/routes/field/+page.svelte`
+  - `src/routes/battle/+page.svelte`
+  - `progress.md`
+  - `docs/AGENT_WATCH_LOG.md`
+- Validation snapshot:
+  - `.agent-context/checkpoints/uiux-fusion-pass-20260320.md`
+
+### FINISH
+
+- Work ID: `uiux-fusion-pass-20260320`
+- Branch: `codex/chart-game`
+- Commit: not created
+- Validation:
+  - `npm run check`
+  - `npm run build`
+  - browser review evidence at:
+    - `.agent-context/browser-checks/uiux-fusion-pass/home/shot-0.png`
+    - `.agent-context/browser-checks/uiux-fusion-pass/field/shot-0.png`
+    - `.agent-context/browser-checks/uiux-fusion-pass/battle/shot-0.png`
+  - matching text-state captures at:
+    - `.agent-context/browser-checks/uiux-fusion-pass/home/state-0.json`
+    - `.agent-context/browser-checks/uiux-fusion-pass/field/state-0.json`
+    - `.agent-context/browser-checks/uiux-fusion-pass/battle/state-0.json`
+  - dev server confirmed on `http://127.0.0.1:4198/`
+- Push/Merge status: not pushed, not merged
+- Final working tree:
+  - rebuilt the home hero and mission strip around an explicit `Read / Call / Return` judgment loop so the product explains itself on first view instead of repeating scenario metadata
+  - locked field travel behind unresolved encounters, rewrote the field plaque as route context, and made the console/keyline change with the current interaction mode
+  - compressed battle’s top summary into `Chart read` plus `Best answer`, renamed top controls to player-facing labels, and reduced the sense of dashboard duplication
+- Residual note:
+  - the overall loop now reads coherently, but battle-side chart callouts can still crowd the stage on tighter widths and should be thinned in the next visual pass

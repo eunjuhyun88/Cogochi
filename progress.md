@@ -218,13 +218,98 @@ TODO
 - Updated the founder goal, org plan, scorecard, bottlenecks, and program so the next optimization target is now:
   - ship `/field`
   - remove dino placeholders from the active path
-  - make travel and battle motion real
+
+2026-03-20
+
+- Began `chart-game-20260320` on branch `codex/chart-game` to turn `/field` into a true chart-command game loop instead of a travel-only surface.
+- Added a deterministic field encounter engine in `src/lib/engine/field-encounter.ts` with:
+  - frame-local `LONG` / `SHORT` / `HOLD` / `RUN` resolution
+  - support / resistance / hazard reads derived from the next hidden candle
+  - run stats for HP, gold, XP, cleared frames, and streaks
+  - camp healing support
+- Extended `FieldState` and `fieldStore` so the active historical frame now boots and advances an encounter without leaking scoring into the route.
+- Updated `/field` to add:
+  - a sacred bottom command dock
+  - `1-4` hotkeys for the four commands
+  - encounter-aware console copy and `render_game_to_text` state
+  - a gate rule that blocks boss entry until the current slice is cleared
+- Updated `FieldScene.svelte` so the active frame now shows:
+  - revealed vs hidden candles
+  - support / resistance / hazard guide lines
+  - the recommended command directly on the chart
+- Added controller-friendly dock navigation so the field test loop can move selection with arrow keys and resolve with `Enter` while travel remains on `WASD`.
+- Verified:
+  - `npm run check`
+  - Playwright client pass on `/field` with command execution evidence:
+    - `.agent-context/browser-checks/chart-game/shot-0.png`
+    - `.agent-context/browser-checks/chart-game/state-0.json`
+  - Playwright client pass on `/field` with clear-state evidence:
+    - `.agent-context/browser-checks/chart-game-clear/shot-0.png`
+    - `.agent-context/browser-checks/chart-game-clear/state-0.json`
+  - `npm run build`
+
+TODO
+
+- Make travel and battle motion feel more animated between command resolutions, not just before and after each reveal.
 
 TODO
 
 - Import the chosen itch prototype family into `static/assets/` and remove dino from the main path.
 - Build the actual `/field` route with camp, lab, archive, and gate.
 - Make battle results return to camp with keepsake and care writeback.
+
+2026-03-20
+
+- Followed `chart-game-20260320` with `battle-command-alignment-20260320` so `/battle` now speaks the same `LONG` / `SHORT` / `HOLD` / `RUN` grammar as `/field`.
+- Replaced legacy battle command IDs across `src/lib/types.ts`, `src/lib/engine/battle-session.ts`, and `src/lib/engine/battle-view.ts` so recommendation, role copy, and deterministic resolution all align around the canonical four-command model.
+- Updated `src/lib/stores/battleStore.ts` to use `cogochi.battle.v4` so stale local sessions from the legacy command deck do not leak into the new grammar.
+- Reworked `src/routes/battle/+page.svelte` so the battle dock now reads as:
+  - `Climb / LONG`
+  - `Break / SHORT`
+  - `Wait / HOLD`
+  - `Escape / RUN`
+- Tightened the battle route into the `immersive` shell and reduced the stage/menu height budget so the full 2x2 command deck stays visible without scrolling.
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Playwright battle grammar/layout pass:
+    - `.agent-context/browser-checks/battle-commands-v4/shot-0.png`
+    - `.agent-context/browser-checks/battle-commands-v4/state-0.json`
+
+TODO
+
+- Add explicit between-turn animation beats on `/battle` so correct `LONG` / `SHORT` plays feel more physical than meter and log changes alone.
+
+2026-03-20
+
+- Added `premium-uiux-pass-20260320` to push the playable surfaces toward a `Nintendo-clear + Apple-polished` feel instead of stopping at functional readability.
+- Reworked `src/components/shared/PageShell.svelte` so the whole product now shares one premium presentation layer:
+  - calmer black-glass shell background
+  - warmer metal highlights
+  - cleaner navigation card depth and active-state feedback
+- Reworked `src/routes/field/+page.svelte` and `src/components/shared/FieldScene.svelte` so `/field` now reads more like a premium toy-world screen:
+  - brighter depth in the chart-world sky and terrain
+  - tighter glass plaque and command dock surfaces
+  - more tactile `LONG` / `SHORT` / `HOLD` / `RUN` buttons
+  - denser, cleaner companion console chrome on the right rail
+- Reworked `src/routes/battle/+page.svelte` and `src/components/shared/ChartBattlefield.svelte` so `/battle` now reads more like a polished JRPG cut-in:
+  - stronger battlefield glass and metal layering
+  - improved command-card contrast and command-specific tone backgrounds
+  - more legible bottom action bar and toolbar controls
+  - fixed the resolve label mapping so `HOLD` and `RUN` no longer fall back to legacy battle wording
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - Premium field browser pass:
+    - `.agent-context/browser-checks/premium-uiux-field/shot-0.png`
+    - `.agent-context/browser-checks/premium-uiux-field/state-0.json`
+  - Premium battle settled browser pass:
+    - `.agent-context/browser-checks/premium-uiux-battle-final/shot-0.png`
+    - `.agent-context/browser-checks/premium-uiux-battle-final/state-0.json`
+
+TODO
+
+- Add one or two short transition animations between command selection and outcome reveal so the upgraded visuals also carry a stronger hit/response rhythm.
 
 2026-03-12
 
@@ -1769,3 +1854,99 @@ TODO
   - `npm run check`
   - `npm run build`
   - `bash scripts/dev/run-browser-context-harness.sh --run-id immersive-field-vibe-pass-20260317-v5 --base-url http://127.0.0.1:4198 --page /field`
+
+2026-03-20
+
+- Tightened route continuity instead of doing another pure visual pass.
+- Reworked `/` so the macro world now leads with a single `Resume Loop` mission strip:
+  - primary CTA goes into `/field`
+  - `/battle`, `/lab`, and `/proof` now inherit the selected `agent / session / pack` context
+  - the previous footer CTA cluster is demoted to support links so the next move reads clearly
+- Reworked `/journal` into a real return deck:
+  - added one recommended next-move block with `Resume field loop`
+  - `Return to field` / `Open lab` now preserve `artifact / agent / session / pack` context
+  - syncing the selected agent back into roster/lab state on entry so the room no longer feels detached
+- Reworked `/field` route continuity:
+  - `+page.server.ts` now parses `agent / session / pack`
+  - field party leadership now honors incoming `agent`
+  - battle, journal, and lab exits preserve current route context instead of collapsing to bare paths
+  - the old `history.replaceState('/field')` reset now preserves contextual query state
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - browser review artifacts at:
+    - `.agent-context/browser-checks/flow-opt-review/home/shot-0.png`
+    - `.agent-context/browser-checks/flow-opt-review/field/shot-0.png`
+    - `.agent-context/browser-checks/flow-opt-review/journal/shot-0.png`
+    - `.agent-context/browser-checks/flow-opt-review/battle/shot-0.png`
+    - matching `state-0.json` files in each folder
+
+TODO
+
+- If we want the macro route to feel fully diegetic, the global route tab strip in `PageShell` should eventually collapse further on `/` as well.
+- The route-context query builder is duplicated across `/`, `/field`, and `/journal`; move it into a shared helper before the next big navigation pass.
+- `/battle` still benefits from direct full-page Playwright fallback because the generic canvas-oriented client can capture the loading placeholder too early.
+
+- Ran an Apple-clean simplification pass instead of another effect-heavy visual pass.
+- Reworked `src/components/shared/PageShell.svelte` so non-immersive routes now read like one calm product shell:
+  - reduced the brand block to `Cogochi + current zone`
+  - collapsed status chrome to one pill
+  - turned the heavy route grid into a compact horizontal pill dock
+- Reworked `/` in `src/routes/+page.svelte` so the hub is easier to scan:
+  - removed the stage-side risk/future/terminal/squad overlays
+  - kept the mission strip and main companion as the dominant read
+  - folded squad switching into the `Active Sortie` card
+  - removed the old `Route Radar` card
+- Reworked `/field` in `src/routes/field/+page.svelte` for one-decision clarity:
+  - `FieldScene` now follows the context-selected party instead of the fallback party
+  - trail console now shows fewer bubbles, no topic/tool noise, no fake composer, and one explicit helper line
+  - right console palette is calmer black-metal instead of the previous purple-heavy treatment
+- Reworked `/journal` in `src/routes/journal/+page.svelte` into a faster return room:
+  - moved the `Recommended next move` strip higher so the return CTA is visible immediately
+  - compressed the note board and tightened highlight cards
+  - replaced the separate lower ledgers/history sections with one summary grid
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - browser review artifacts at:
+    - `.agent-context/browser-checks/apple-clean-pass/home/shot-0.png`
+    - `.agent-context/browser-checks/apple-clean-pass/field/shot-0.png`
+    - `.agent-context/browser-checks/apple-clean-pass/journal-v2/shot-0.png`
+    - `.agent-context/browser-checks/apple-clean-pass/battle/shot-0.png`
+    - matching `state-0.json` files in each folder
+
+TODO
+
+- The global shell is much better, but if the home route should feel even more Apple-like, the nav dock can shrink to icon-first with a single overflow menu.
+- `/journal` is now action-forward, but the care queue still competes visually with the return CTA; next pass could demote it into a lighter secondary rail.
+
+2026-03-20
+
+- Ran a fusion clean-up pass so the product reads more like one judgment loop than several adjacent dashboards.
+- Reworked `/` in `src/routes/+page.svelte`:
+  - changed the hero to explicit loop language: `Read the shelf. Make one call.`
+  - added a three-beat `Read / Call / Return` strip inside the mission card
+  - renamed secondary room modules so the dock reads more like game verbs and less like admin panels
+  - tightened the right rail around one `Judgment Loop` explainer plus lighter `Camp Prep`
+- Reworked `/field` in `src/routes/field/+page.svelte`:
+  - added a hard unresolved-slice travel lock so `E` and the right CTA cannot move the player while the command dock still owns the decision
+  - rewrote the top plaque to carry route context instead of repeating the same encounter title/clue already shown in the dock
+  - changed the console prompt to `Next move`, swapped the helper keyline based on current mode, and trimmed the footer down to route-relevant status only
+- Reworked `/battle` in `src/routes/battle/+page.svelte`:
+  - compressed the top summary from three pills to two: `Chart read` and `Best answer`
+  - renamed controls to `Companion` and `Chart`, added select `aria-label`s, and changed `Dossier` to `Guide`
+  - let the turn question breathe to two lines instead of clipping too early
+- Verified:
+  - `npm run check`
+  - `npm run build`
+  - browser review artifacts at:
+    - `.agent-context/browser-checks/uiux-fusion-pass/home/shot-0.png`
+    - `.agent-context/browser-checks/uiux-fusion-pass/field/shot-0.png`
+    - `.agent-context/browser-checks/uiux-fusion-pass/battle/shot-0.png`
+    - matching `state-0.json` files in each folder
+  - dev server is running at `http://127.0.0.1:4198/`
+
+TODO
+
+- `/battle` still has some chart-side callout overlap on narrower widths; the next polish pass should reduce side-panel stacking density inside `ChartBattlefield.svelte`.
+- The shared route/context URL builder is still duplicated across routes and should be centralized before another loop-wide navigation refactor.

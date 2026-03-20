@@ -9,16 +9,18 @@
     resolveHistoricalFieldFrameIndex,
   } from '$lib/engine/chart-frame-model';
   import { fieldBarriers, fieldNodes } from '$lib/stores/fieldStore';
-  import type { FieldState, OwnedAgent } from '$lib/types';
+  import type { FieldEncounterState, FieldState, OwnedAgent } from '$lib/types';
 
   let {
     state: fieldState,
     agents,
+    encounter = null,
     runtimeCueNodeId = null,
     runtimeCueVerb = null,
   }: {
     state: FieldState;
     agents: OwnedAgent[];
+    encounter?: FieldEncounterState | null;
     runtimeCueNodeId?: string | null;
     runtimeCueVerb?: string | null;
   } = $props();
@@ -126,6 +128,19 @@
     return candle.close >= candle.open ? 'rgba(76, 236, 161, 0.9)' : 'rgba(246, 101, 120, 0.88)';
   }
 
+  function candleReadState(frameId: string, candleIndex: number) {
+    if (!encounter || encounter.frameId !== frameId) {
+      return 'revealed';
+    }
+    if (candleIndex < encounter.visibleCount) {
+      return 'revealed';
+    }
+    if (candleIndex === encounter.visibleCount) {
+      return 'incoming';
+    }
+    return 'hidden';
+  }
+
   const historicalFrames = $derived(getFieldHistoricalFrames());
   const routeWaypoints = $derived(
     routeNodeIds
@@ -171,6 +186,9 @@
       };
     });
   });
+  const encounterFrame = $derived(
+    encounter ? fieldFrames.find((frame) => frame.id === encounter.frameId) ?? null : null,
+  );
   const leaderFrameIndex = $derived.by(() => {
     if (!leader || fieldFrames.length === 0) {
       return 0;
@@ -282,6 +300,7 @@
       {#each fieldFrames as frame}
         <rect
           class:active={leaderFrameIndex === frame.index}
+          class:encounter={encounterFrame?.id === frame.id}
           class={`field-scene__frame field-scene__frame--${frame.tone}`}
           height={frame.height}
           rx="38"
@@ -297,7 +316,10 @@
         <polyline class="field-scene__chart-line" fill="none" points={frame.polyline}></polyline>
 
         {#each frame.candles as candle, candleIndex}
+          {@const readState = candleReadState(frame.id, candleIndex)}
           <line
+            class:hidden={readState === 'hidden'}
+            class:incoming={readState === 'incoming'}
             class="field-scene__wick"
             stroke={candleColor(candle)}
             x1={frameCandleX(frame, candleIndex, frame.candles.length)}
@@ -306,6 +328,9 @@
             y2={frameInnerY(frame, candle.low, frame.priceRange.min, frame.priceRange.max)}
           ></line>
           <rect
+            class:hidden={readState === 'hidden'}
+            class:incoming={readState === 'incoming'}
+            class="field-scene__candle-body"
             fill={candleColor(candle)}
             height={Math.max(
               22,
@@ -323,6 +348,35 @@
             )}
           ></rect>
         {/each}
+
+        {#if encounter && encounter.frameId === frame.id}
+          <line
+            class="field-scene__read-line field-scene__read-line--support"
+            x1={frame.x + 20}
+            x2={frame.x + frame.width - 20}
+            y1={frameInnerY(frame, encounter.supportPrice, frame.priceRange.min, frame.priceRange.max)}
+            y2={frameInnerY(frame, encounter.supportPrice, frame.priceRange.min, frame.priceRange.max)}
+          ></line>
+          <line
+            class="field-scene__read-line field-scene__read-line--resistance"
+            x1={frame.x + 20}
+            x2={frame.x + frame.width - 20}
+            y1={frameInnerY(frame, encounter.resistancePrice, frame.priceRange.min, frame.priceRange.max)}
+            y2={frameInnerY(frame, encounter.resistancePrice, frame.priceRange.min, frame.priceRange.max)}
+          ></line>
+          {#if encounter.hazardPrice !== null}
+            <line
+              class="field-scene__read-line field-scene__read-line--hazard"
+              x1={frame.x + 20}
+              x2={frame.x + frame.width - 20}
+              y1={frameInnerY(frame, encounter.hazardPrice, frame.priceRange.min, frame.priceRange.max)}
+              y2={frameInnerY(frame, encounter.hazardPrice, frame.priceRange.min, frame.priceRange.max)}
+            ></line>
+          {/if}
+          <text class="field-scene__encounter-call" x={frame.x + frame.width - 26} y={frame.y + 34}>
+            {encounter.recommendedCommandId}
+          </text>
+        {/if}
       {/each}
 
       {#if routePath}
@@ -426,28 +480,51 @@
     position: relative;
     overflow: hidden;
     border-radius: 28px;
-    border: 1px solid rgba(246, 193, 112, 0.18);
+    border: 1px solid rgba(246, 208, 141, 0.3);
     background:
-      radial-gradient(circle at top left, rgba(255, 244, 195, 0.42), transparent 22%),
-      radial-gradient(circle at 88% 8%, rgba(117, 230, 255, 0.26), transparent 26%),
-      linear-gradient(180deg, rgba(117, 224, 249, 0.98) 0%, rgba(128, 221, 236, 0.98) 28%, rgba(241, 195, 119, 0.96) 28.1%, rgba(227, 170, 85, 0.98) 100%);
+      radial-gradient(circle at top left, rgba(255, 247, 214, 0.58), transparent 20%),
+      radial-gradient(circle at 88% 10%, rgba(144, 240, 255, 0.28), transparent 24%),
+      linear-gradient(180deg, rgba(131, 228, 247, 0.98) 0%, rgba(150, 230, 238, 0.98) 24%, rgba(247, 214, 154, 0.97) 24.1%, rgba(238, 189, 110, 0.98) 62%, rgba(216, 150, 79, 0.98) 100%);
     box-shadow:
-      inset 0 0 0 1px rgba(255, 252, 240, 0.08),
-      0 22px 50px rgba(0, 0, 0, 0.24);
+      inset 0 0 0 1px rgba(255, 250, 238, 0.16),
+      inset 0 18px 34px rgba(255, 255, 255, 0.08),
+      0 28px 70px rgba(11, 19, 24, 0.26);
+  }
+
+  .field-scene::before,
+  .field-scene::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .field-scene::before {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 18%),
+      radial-gradient(circle at 50% 100%, rgba(151, 95, 36, 0.14), transparent 44%);
+    opacity: 0.9;
+  }
+
+  .field-scene::after {
+    z-index: 3;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%, transparent 82%, rgba(41, 28, 13, 0.08)),
+      radial-gradient(circle at center, transparent 58%, rgba(39, 27, 12, 0.18) 100%);
   }
 
   .field-scene__sun {
     position: absolute;
-    top: 20px;
-    right: 54px;
-    width: 126px;
-    height: 126px;
+    top: 26px;
+    right: 64px;
+    width: 144px;
+    height: 144px;
     border-radius: 999px;
     background:
-      radial-gradient(circle, rgba(255, 250, 214, 0.92) 0 24%, rgba(255, 201, 105, 0.44) 25% 56%, rgba(255, 223, 145, 0) 57% 100%);
-    opacity: 0.92;
+      radial-gradient(circle, rgba(255, 252, 225, 0.96) 0 20%, rgba(255, 218, 123, 0.52) 21% 54%, rgba(255, 223, 145, 0) 55% 100%);
+    opacity: 0.94;
     pointer-events: none;
-    filter: blur(0.5px);
+    filter: blur(0.5px) drop-shadow(0 0 28px rgba(255, 214, 124, 0.24));
   }
 
   .field-world {
@@ -464,9 +541,9 @@
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(circle at 14% 66%, rgba(87, 207, 238, 0.9) 0 13%, transparent 14%),
-      radial-gradient(circle at 76% 14%, rgba(255, 244, 199, 0.28), transparent 18%),
-      linear-gradient(180deg, rgba(123, 224, 247, 0.98) 0%, rgba(133, 224, 236, 0.98) 26%, rgba(246, 199, 124, 0.96) 26.1%, rgba(231, 179, 95, 0.98) 72%, rgba(214, 152, 78, 0.98) 100%);
+      radial-gradient(circle at 14% 66%, rgba(110, 220, 248, 0.88) 0 12%, transparent 13%),
+      radial-gradient(circle at 78% 16%, rgba(255, 245, 204, 0.32), transparent 18%),
+      linear-gradient(180deg, rgba(140, 229, 248, 0.98) 0%, rgba(153, 228, 235, 0.98) 24%, rgba(251, 214, 148, 0.96) 24.1%, rgba(233, 185, 103, 0.98) 68%, rgba(210, 147, 73, 0.98) 100%);
   }
 
   .field-world__grid {
@@ -488,7 +565,7 @@
         rgba(201, 162, 95, 0.04) 59px,
         rgba(201, 162, 95, 0.04) 60px
       );
-    opacity: 0.24;
+    opacity: 0.18;
   }
 
   .field-scene__skyline {
@@ -497,7 +574,7 @@
     height: 44%;
     background:
       radial-gradient(circle at 14% 18%, rgba(255, 248, 224, 0.24), transparent 18%),
-      linear-gradient(180deg, rgba(255, 225, 170, 0), rgba(236, 181, 96, 0.12) 20%, rgba(189, 124, 58, 0.26) 100%);
+      linear-gradient(180deg, rgba(255, 231, 180, 0), rgba(239, 189, 110, 0.14) 20%, rgba(168, 104, 45, 0.28) 100%);
   }
 
   .field-cloud {
@@ -508,8 +585,9 @@
       radial-gradient(circle at 48% 42%, rgba(255, 255, 255, 0.94) 0 30%, transparent 31%),
       radial-gradient(circle at 68% 50%, rgba(255, 255, 255, 0.9) 0 24%, transparent 25%),
       linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(230, 240, 244, 0.68));
-    opacity: 0.52;
+    opacity: 0.62;
     filter: drop-shadow(0 10px 12px rgba(85, 128, 143, 0.16));
+    animation: field-cloud-drift 26s linear infinite;
   }
 
   .field-scene__chart {
@@ -521,9 +599,9 @@
   }
 
   .field-scene__frame {
-    stroke: rgba(161, 120, 69, 0.18);
+    stroke: rgba(170, 124, 67, 0.2);
     stroke-width: 2;
-    filter: drop-shadow(0 10px 16px rgba(120, 84, 42, 0.14));
+    filter: drop-shadow(0 12px 18px rgba(120, 84, 42, 0.14));
   }
 
   .field-scene__frame--bull {
@@ -539,8 +617,13 @@
   }
 
   .field-scene__frame.active {
-    stroke: rgba(191, 115, 57, 0.42);
-    fill: rgba(255, 239, 193, 0.18);
+    stroke: rgba(195, 120, 58, 0.48);
+    fill: rgba(255, 244, 208, 0.24);
+  }
+
+  .field-scene__frame.encounter {
+    stroke: rgba(94, 198, 165, 0.56);
+    fill: rgba(229, 252, 243, 0.18);
   }
 
   .field-scene__terrain {
@@ -549,6 +632,7 @@
     stroke-linecap: round;
     stroke-linejoin: round;
     opacity: 0.98;
+    filter: drop-shadow(0 18px 18px rgba(117, 82, 40, 0.12));
   }
 
   .field-scene__terrain--bull {
@@ -577,11 +661,11 @@
   }
 
   .field-scene__chart-line {
-    stroke: rgba(131, 93, 48, 0.46);
-    stroke-width: 8;
+    stroke: rgba(129, 91, 45, 0.42);
+    stroke-width: 7;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 2px 8px rgba(131, 93, 48, 0.16));
+    filter: drop-shadow(0 4px 10px rgba(131, 93, 48, 0.18));
   }
 
   .field-scene__route-shadow,
@@ -593,27 +677,29 @@
   }
 
   .field-scene__route-shadow {
-    stroke: rgba(118, 85, 43, 0.18);
+    stroke: rgba(118, 85, 43, 0.2);
     stroke-width: 78;
   }
 
   .field-scene__route-bed {
-    stroke: rgba(163, 116, 57, 0.82);
+    stroke: rgba(169, 120, 58, 0.84);
     stroke-width: 58;
-    filter: drop-shadow(0 10px 12px rgba(127, 89, 42, 0.18));
+    filter: drop-shadow(0 12px 14px rgba(127, 89, 42, 0.2));
   }
 
   .field-scene__route-center {
-    stroke: rgba(251, 232, 181, 0.82);
+    stroke: rgba(255, 242, 202, 0.92);
     stroke-width: 8;
     stroke-dasharray: 16 18;
+    filter: drop-shadow(0 0 10px rgba(255, 246, 220, 0.18));
     animation: route-center-flow 4s linear infinite;
   }
 
   .field-scene__route-stop {
-    fill: rgba(106, 178, 198, 0.92);
-    stroke: rgba(255, 235, 191, 0.72);
+    fill: rgba(97, 186, 205, 0.96);
+    stroke: rgba(255, 241, 210, 0.88);
     stroke-width: 4;
+    filter: drop-shadow(0 4px 12px rgba(53, 100, 117, 0.18));
   }
 
   .field-scene__route-stop.objective {
@@ -627,18 +713,61 @@
 
   .field-scene__cue-guide {
     fill: none;
-    stroke: rgba(255, 241, 202, 0.78);
+    stroke: rgba(255, 245, 212, 0.88);
     stroke-width: 8;
     stroke-linecap: round;
     stroke-dasharray: 18 14;
-    filter: drop-shadow(0 0 14px rgba(244, 223, 150, 0.18));
+    filter: drop-shadow(0 0 16px rgba(244, 223, 150, 0.24));
     animation: cue-guide-flow 2.4s linear infinite;
   }
 
   .field-scene__wick {
     stroke-width: 5;
     stroke-linecap: round;
-    opacity: 0.84;
+    opacity: 0.9;
+  }
+
+  .field-scene__wick.incoming,
+  .field-scene__candle-body.incoming {
+    opacity: 0.36;
+  }
+
+  .field-scene__wick.hidden,
+  .field-scene__candle-body.hidden {
+    opacity: 0.12;
+  }
+
+  .field-scene__candle-body {
+    transition: opacity 140ms ease;
+  }
+
+  .field-scene__read-line {
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 18 14;
+    filter: drop-shadow(0 0 12px rgba(0, 0, 0, 0.12));
+  }
+
+  .field-scene__read-line--support {
+    stroke: rgba(65, 183, 136, 0.88);
+  }
+
+  .field-scene__read-line--resistance {
+    stroke: rgba(205, 116, 88, 0.9);
+  }
+
+  .field-scene__read-line--hazard {
+    stroke: rgba(242, 205, 119, 0.92);
+  }
+
+  .field-scene__encounter-call {
+    fill: rgba(255, 248, 226, 0.96);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-anchor: end;
+    text-transform: uppercase;
+    filter: drop-shadow(0 2px 6px rgba(122, 84, 38, 0.16));
   }
 
   .field-prop {
@@ -652,7 +781,7 @@
     z-index: 1;
     pointer-events: none;
     border-radius: 18px;
-    filter: drop-shadow(0 12px 16px rgba(128, 84, 32, 0.16));
+    filter: drop-shadow(0 18px 18px rgba(128, 84, 32, 0.18));
   }
 
   .field-landmark::before,
@@ -849,10 +978,10 @@
     border: 1px solid rgba(142, 115, 72, 0.18);
     box-sizing: border-box;
     overflow: hidden;
-    opacity: 0.58;
+    opacity: 0.64;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.22),
-      0 10px 20px rgba(136, 104, 54, 0.12);
+      0 14px 24px rgba(136, 104, 54, 0.14);
   }
 
   .field-barrier--support {
@@ -1112,6 +1241,20 @@
 
     100% {
       stroke-dashoffset: -64;
+    }
+  }
+
+  @keyframes field-cloud-drift {
+    0% {
+      transform: translateX(0);
+    }
+
+    50% {
+      transform: translateX(10px);
+    }
+
+    100% {
+      transform: translateX(0);
     }
   }
 
